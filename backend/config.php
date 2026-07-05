@@ -3,9 +3,11 @@
 define('DB_CONNECTION', 'pgsql'); // Changed to pgsql for Neon
 
 // Neon PostgreSQL Configuration
-define('DB_DSN', 'pgsql:host=ep-gentle-lab-at2wepx2-pooler.c-9.us-east-1.aws.neon.tech;port=5432;dbname=neondb;sslmode=require');
+define('DB_HOST', 'ep-gentle-lab-at2wepx2-pooler.c-9.us-east-1.aws.neon.tech');
+define('DB_NAME', 'neondb');
 define('DB_USER', 'neondb_owner');
 define('DB_PASS', 'npg_S8GTJ7bfBdjx');
+define('DB_DSN', 'pgsql:host=' . DB_HOST . ';port=5432;dbname=' . DB_NAME . ';sslmode=require;options=endpoint=ep-gentle-lab-at2wepx2');
 
 // SQLite Configuration (Deprecated, kept for legacy variable references if any)
 define('DB_PATH', __DIR__ . '/facturapro.sqlite');

@@ -45,12 +45,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
 
 // ─── DATABASE ─────────────────────────────────────────────────────────────────
 try {
-    $dbExists = file_exists(DB_PATH);
-    $pdo = new PDO('sqlite:' . DB_PATH);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-    $pdo->exec("PRAGMA journal_mode=WAL");
-    $pdo->exec("PRAGMA busy_timeout=5000");
+    if (defined('DB_CONNECTION') && DB_CONNECTION === 'pgsql') {
+        $pdo = new PDO(DB_DSN, DB_USER, DB_PASS);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        $dbExists = true;
+    } else {
+        $dbExists = file_exists(DB_PATH);
+        $pdo = new PDO('sqlite:' . DB_PATH);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        $pdo->exec("PRAGMA journal_mode=WAL");
+        $pdo->exec("PRAGMA busy_timeout=5000");
+    }
 
     // Initialisation DB si fichier nouveau
     if (!$dbExists) {

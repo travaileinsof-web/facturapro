@@ -1,0 +1,45 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "backend/api.php",
+      "use": "vercel-php@0.6.0"
+    },
+    {
+      "src": "backend/admin_api.php",
+      "use": "vercel-php@0.6.0"
+    },
+    {
+      "src": "backend/check_db.php",
+      "use": "vercel-php@0.6.0"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/admin(.*)",
+      "dest": "/backend/admin_api.php"
+    },
+    {
+      "src": "/api/check_db(.*)",
+      "dest": "/backend/check_db.php"
+    },
+    {
+      "src": "/api(.*)",
+      "dest": "/backend/api.php"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}
