@@ -46,6 +46,9 @@ require_once __DIR__ . '/controllers/SuperAdminController.php';
 try {
     if (defined('DB_CONNECTION') && DB_CONNECTION === 'pgsql') {
         $pdo = new PDO(DB_DSN, DB_USER, DB_PASS);
+        if (class_exists('MyPDOStatement')) {
+            $pdo->setAttribute(PDO::ATTR_STATEMENT_CLASS, ['MyPDOStatement', []]);
+        }
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
         $dbExists = true;
