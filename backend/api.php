@@ -201,6 +201,10 @@ try {
                 exit;
             }
             break;
+        case 'debug':
+            $stmt = $pdo->query("SELECT table_name FROM information_schema.tables WHERE table_schema='public'");
+            echo json_encode($stmt->fetchAll(PDO::FETCH_COLUMN));
+            exit;
         default:
             http_response_code(404);
             echo json_encode(["error" => "Endpoint not found"]);

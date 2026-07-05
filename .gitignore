@@ -10,3 +10,4 @@ backend/*.sqlite
 backend/*.sqlite-journal
 
 .vercel
+.env*
