@@ -1,0 +1,6 @@
+{
+  "name": "FacturaPro",
+  "description": "Outil de gestion centralisée pour les factures proformat, les reçus et le suivi des paiements avec assistance IA.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

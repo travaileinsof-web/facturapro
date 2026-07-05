@@ -1,0 +1,16 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # CORS (Cross-Origin Resource Sharing) headers if needed
+  Header set Access-Control-Allow-Origin "*"
+  
+  # API Routing: Redirect /api/... to backend/api.php
+  RewriteCond %{REQUEST_URI} ^/api/(.*)$ [OR]
+  RewriteCond %{REQUEST_URI} api/(.*)$
+  RewriteRule ^(?:.*)?api/(.*)$ backend/api.php?endpoint=$1 [L,QSA]
+
+  # React Router DOM: Fallback to index.html for SPA routing
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(.*)$ index.html [L,QSA]
+</IfModule>

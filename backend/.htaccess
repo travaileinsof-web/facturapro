@@ -1,0 +1,11 @@
+# Bloquer l'accès aux fichiers sensibles
+<FilesMatch "\.(sqlite|sql|db|ini|log)$">
+    # Apache 2.2
+    Order allow,deny
+    Deny from all
+    # Apache 2.4
+    Require all denied
+</FilesMatch>
+
+# Désactiver le listage des répertoires pour des raisons de sécurité
+Options -Indexes
