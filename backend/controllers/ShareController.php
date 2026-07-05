@@ -14,21 +14,44 @@ class ShareController {
             $pdfData = base64_decode(preg_replace('#^data:application/pdf;base64,#i', '', $pdfBase64));
             
             if ($type === 'whatsapp') {
-                $uploadDir = __DIR__ . '/../uploads/';
-                if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
                 $uniqueName = uniqid() . '_' . preg_replace('/[^a-zA-Z0-9_\.-]/', '', $filename);
-                $filePath = $uploadDir . $uniqueName;
-                file_put_contents($filePath, $pdfData);
+                $blobToken = getenv('BLOB_READ_WRITE_TOKEN');
                 
-                // URL builder
-                $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
-                $host = $_SERVER['HTTP_HOST'];
-                $baseDir = dirname($_SERVER['SCRIPT_NAME']);
-                if ($baseDir === '/' || $baseDir === '\\') $baseDir = '';
-                $publicUrl = $protocol . '://' . $host . $baseDir . '/uploads/' . $uniqueName;
+                if ($blobToken) {
+                    $ch = curl_init('https://blob.vercel-storage.com/' . $uniqueName);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, $pdfData);
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                        'authorization: Bearer ' . $blobToken,
+                        'x-api-version: 7'
+                    ]);
+                    $response = curl_exec($ch);
+                    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    curl_close($ch);
+                    
+                    if ($httpCode === 200) {
+                        $blobData = json_decode($response, true);
+                        $publicUrl = $blobData['url'];
+                    } else {
+                        http_response_code(500);
+                        echo json_encode(["error" => "Erreur upload Vercel Blob: " . $response]);
+                        exit;
+                    }
+                } else {
+                    $uploadDir = __DIR__ . '/../uploads/';
+                    if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+                    $filePath = $uploadDir . $uniqueName;
+                    file_put_contents($filePath, $pdfData);
+                    
+                    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+                    $host = $_SERVER['HTTP_HOST'];
+                    $baseDir = dirname($_SERVER['SCRIPT_NAME']);
+                    if ($baseDir === '/' || $baseDir === '\\') $baseDir = '';
+                    $publicUrl = $protocol . '://' . $host . $baseDir . '/uploads/' . $uniqueName;
+                }
                 
                 echo json_encode(["success" => true, "url" => $publicUrl]);
-                
             } elseif ($type === 'email') {
                 $to = $body['to'] ?? '';
                 $subject = $body['subject'] ?? 'Votre document';

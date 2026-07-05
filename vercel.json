@@ -14,6 +14,10 @@
       "use": "vercel-php@0.9.0"
     },
     {
+      "src": "backend/cron_reminders.php",
+      "use": "vercel-php@0.9.0"
+    },
+    {
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
@@ -27,6 +31,10 @@
       "dest": "/backend/admin_api.php"
     },
     {
+      "src": "/api/cron/reminders",
+      "dest": "/backend/cron_reminders.php"
+    },
+    {
       "src": "/api/check_db(.*)",
       "dest": "/backend/check_db.php"
     },
@@ -35,11 +43,21 @@
       "dest": "/backend/api.php"
     },
     {
+      "src": "/backend/(.*)",
+      "status": 403
+    },
+    {
       "handle": "filesystem"
     },
     {
       "src": "/(.*)",
       "dest": "/index.html"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/reminders",
+      "schedule": "0 8 * * *"
     }
   ]
 }

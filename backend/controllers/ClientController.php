@@ -1,9 +1,7 @@
 <?php
 class ClientController {
     public static function handle($pdo, $method, $id, $accountId, $body) {
-        file_put_contents('debug.log', "handle called! method=$method id=$id accountId=$accountId\n", FILE_APPEND);
         if ($method === 'GET') {
-            file_put_contents('debug.log', "GET block!\n", FILE_APPEND);
             $q = $_GET['q'] ?? '';
             if ($q) {
                 $stmt = $pdo->prepare("SELECT * FROM Client WHERE accountId = ? AND (name LIKE ? OR email LIKE ? OR phone LIKE ?) ORDER BY createdAt DESC");

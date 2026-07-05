@@ -40,16 +40,42 @@ class UploadController {
 
             $ext = $allowedMimes[$mime];
             $filename = 'file_' . $accountId . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
-            $uploadDir = __DIR__ . '/../uploads/';
-            $destination = $uploadDir . $filename;
+            $blobToken = getenv('BLOB_READ_WRITE_TOKEN');
+            
+            if ($blobToken) {
+                $fileData = file_get_contents($file['tmp_name']);
+                $ch = curl_init('https://blob.vercel-storage.com/' . $filename);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $fileData);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'authorization: Bearer ' . $blobToken,
+                    'x-api-version: 7'
+                ]);
+                $response = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+                
+                if ($httpCode === 200) {
+                    $blobData = json_decode($response, true);
+                    $publicUrl = $blobData['url'];
+                } else {
+                    http_response_code(500);
+                    echo json_encode(["error" => "Erreur Vercel Blob: " . $response]);
+                    exit;
+                }
+            } else {
+                $uploadDir = __DIR__ . '/../uploads/';
+                if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+                $destination = $uploadDir . $filename;
 
-            if (!move_uploaded_file($file['tmp_name'], $destination)) {
-                http_response_code(500);
-                echo json_encode(["error" => "Erreur lors de la sauvegarde du fichier."]);
-                exit;
+                if (!move_uploaded_file($file['tmp_name'], $destination)) {
+                    http_response_code(500);
+                    echo json_encode(["error" => "Erreur lors de la sauvegarde du fichier."]);
+                    exit;
+                }
+                $publicUrl = '/backend/uploads/' . $filename;
             }
-
-            $publicUrl = '/backend/uploads/' . $filename;
 
             echo json_encode(["url" => $publicUrl]);
             exit;

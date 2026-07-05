@@ -44,34 +44,13 @@ require_once __DIR__ . '/controllers/SuperAdminController.php';
 
 // Database Connection
 try {
-    if (defined('DB_CONNECTION') && DB_CONNECTION === 'pgsql') {
-        $pdo = new PDO(DB_DSN, DB_USER, DB_PASS);
-        if (class_exists('MyPDOStatement')) {
-            $pdo->setAttribute(PDO::ATTR_STATEMENT_CLASS, ['MyPDOStatement', []]);
-        }
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        $dbExists = true;
-    } elseif (defined('DB_CONNECTION') && DB_CONNECTION === 'mysql') {
-        $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4";
-        $pdo = new PDO($dsn, DB_USER, DB_PASS);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        $dbExists = true; // For MySQL, assume DB exists. Migration/schema creation should be handled externally.
-    } else {
-        $dbExists = file_exists(DB_PATH);
-        $pdo = new PDO("sqlite:" . DB_PATH);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        // Activer le mode WAL pour les accès simultanés multi-utilisateurs
-        $pdo->exec("PRAGMA journal_mode = WAL;");
-        // Attendre jusqu'à 5 secondes si la DB est verrouillée (évite "Database is locked")
-        $pdo->exec("PRAGMA busy_timeout = 5000;");
-        // Améliorer les performances de lecture
-        $pdo->exec("PRAGMA synchronous = NORMAL;");
-        $pdo->exec("PRAGMA cache_size = -64000;"); // 64 MB cache
-        $pdo->exec("PRAGMA foreign_keys = ON;");
+    $pdo = new PDO(DB_DSN, DB_USER, DB_PASS);
+    if (class_exists('MyPDOStatement')) {
+        $pdo->setAttribute(PDO::ATTR_STATEMENT_CLASS, ['MyPDOStatement', []]);
     }
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    $dbExists = true;
     
     if (!$dbExists) {
         $schema = file_get_contents(__DIR__ . '/database.sql');

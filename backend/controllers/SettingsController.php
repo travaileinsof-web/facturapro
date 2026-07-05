@@ -28,7 +28,6 @@ class SettingsController {
                     $params[] = $body[$field];
                 }
             }
-            file_put_contents(__DIR__ . '/debug_settings.log', print_r($body, true));
             
             if (count($updates) > 0) {
                 $params[] = $accountId;

@@ -58,9 +58,6 @@ if (!class_exists('MyPDOStatement')) {
     }
 }
 
-// SQLite Configuration (Deprecated, kept for legacy variable references if any)
-define('DB_PATH', __DIR__ . '/facturapro.sqlite');
-
 // =============================================================
 // PLANS D'ABONNEMENT
 // =============================================================
