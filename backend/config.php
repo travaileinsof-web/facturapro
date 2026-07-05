@@ -26,7 +26,15 @@ $GLOBALS['camelCaseCols'] = [
     'clientid' => 'clientId', 'invoiceid' => 'invoiceId', 'targetaccountid' => 'targetAccountId',
     'taxrate' => 'taxRate', 'taxamount' => 'taxAmount', 'issuedate' => 'issueDate',
     'duedate' => 'dueDate', 'lastreminderdate' => 'lastReminderDate',
-    'djomytransactionid' => 'djomyTransactionId'
+    'djomytransactionid' => 'djomyTransactionId',
+    'unitprice' => 'unitPrice', 'proformainvoiceid' => 'proformaInvoiceId',
+    'paymentmethod' => 'paymentMethod', 'paymentdate' => 'paymentDate',
+    'companyid' => 'companyId', 'expensedate' => 'expenseDate',
+    'receipturl' => 'receiptUrl', 'entitytype' => 'entityType',
+    'entityid' => 'entityId', 'filename' => 'fileName',
+    'fileurl' => 'fileUrl', 'filetype' => 'fileType',
+    'filesize' => 'fileSize', 'uploadedat' => 'uploadedAt',
+    'clientname' => 'clientName', 'invoicenumber' => 'invoiceNumber'
 ];
 
 if (!class_exists('MyPDOStatement')) {
