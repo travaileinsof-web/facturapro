@@ -68,9 +68,9 @@ try {
         $migrations = [
             'subscriptionPlan'      => "ALTER TABLE Account ADD COLUMN subscriptionPlan VARCHAR(50) DEFAULT 'free'",
             'subscriptionStatus'    => "ALTER TABLE Account ADD COLUMN subscriptionStatus VARCHAR(50) DEFAULT 'trial'",
-            'subscriptionExpiresAt' => "ALTER TABLE Account ADD COLUMN subscriptionExpiresAt DATETIME NULL",
+            'subscriptionExpiresAt' => "ALTER TABLE Account ADD COLUMN subscriptionExpiresAt TIMESTAMP NULL",
             'subscriptionAmount'    => "ALTER TABLE Account ADD COLUMN subscriptionAmount DECIMAL(10,2) DEFAULT 0",
-            'lastPaymentDate'       => "ALTER TABLE Account ADD COLUMN lastPaymentDate DATETIME NULL",
+            'lastPaymentDate'       => "ALTER TABLE Account ADD COLUMN lastPaymentDate TIMESTAMP NULL",
             'adminNotes'            => "ALTER TABLE Account ADD COLUMN adminNotes TEXT NULL",
             'isSuspended'           => "ALTER TABLE Account ADD COLUMN isSuspended INTEGER DEFAULT 0",
         ];
@@ -87,7 +87,7 @@ try {
         action VARCHAR(255) NOT NULL,
         targetAccountId VARCHAR(50) NULL,
         details TEXT NULL,
-        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )");
 
 } catch (Exception $e) {
