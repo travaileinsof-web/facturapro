@@ -83,7 +83,7 @@ class InvoiceController {
             $last = $stmt->fetchColumn();
             if ($last) {
                 $parts = explode('-', $last);
-                $seq = (int)array_pop($parts) + 1;
+                $seq = (int)end($parts) + 1;
             } else {
                 $seq = 1;
             }
@@ -128,7 +128,12 @@ class InvoiceController {
                 $stmt = $pdo->prepare("SELECT number FROM ProformaInvoice WHERE accountId = ? AND number LIKE ? ORDER BY number DESC LIMIT 1");
                 $stmt->execute([$accountId, "$prefix-$today-%"]);
                 $last = $stmt->fetchColumn();
-                $seq = $last ? ((int)array_pop(explode('-', $last)) + 1) : 1;
+                if ($last) {
+                    $parts = explode('-', $last);
+                    $seq = (int)array_pop($parts) + 1;
+                } else {
+                    $seq = 1;
+                }
                 $number = sprintf("%s-%s-%03d", $prefix, $today, $seq);
             }
 

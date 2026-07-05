@@ -7,13 +7,14 @@ class ExpenseController {
             echo json_encode($stmt->fetchAll());
         } elseif ($method === 'POST') {
             $newId = Helper::uuid();
+            $expenseDate = empty($body['expenseDate']) ? date('Y-m-d H:i:s') : $body['expenseDate'];
             $stmt = $pdo->prepare("INSERT INTO Expense (id, accountId, category, amount, expenseDate, description, receiptUrl) VALUES (?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $newId, 
                 $accountId, 
                 $body['category'], 
                 $body['amount'], 
-                $body['expenseDate'] ?? date('Y-m-d H:i:s'), 
+                $expenseDate, 
                 $body['description'] ?? null, 
                 $body['receiptUrl'] ?? null
             ]);
@@ -21,11 +22,12 @@ class ExpenseController {
             $stmt->execute([$newId]);
             echo json_encode($stmt->fetch());
         } elseif ($method === 'PUT' && $id) {
+            $expenseDate = empty($body['expenseDate']) ? date('Y-m-d H:i:s') : $body['expenseDate'];
             $stmt = $pdo->prepare("UPDATE Expense SET category=?, amount=?, expenseDate=?, description=?, receiptUrl=? WHERE id=? AND accountId=?");
             $stmt->execute([
                 $body['category'], 
                 $body['amount'], 
-                $body['expenseDate'] ?? date('Y-m-d H:i:s'), 
+                $expenseDate, 
                 $body['description'] ?? null, 
                 $body['receiptUrl'] ?? null,
                 $id, 

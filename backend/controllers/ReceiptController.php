@@ -57,7 +57,12 @@ class ReceiptController {
             $stmt = $pdo->prepare("SELECT number FROM Receipt WHERE accountId = ? AND number LIKE ? ORDER BY number DESC LIMIT 1");
             $stmt->execute([$accountId, "REC-$today-%"]);
             $last = $stmt->fetchColumn();
-            $seq = $last ? (int)array_pop(explode('-', $last)) + 1 : 1;
+            if ($last) {
+                $parts = explode('-', $last);
+                $seq = (int)array_pop($parts) + 1;
+            } else {
+                $seq = 1;
+            }
             $number = sprintf("REC-%s-%03d", $today, $seq);
 
             $invId = $body['proformaInvoiceId']??null;
