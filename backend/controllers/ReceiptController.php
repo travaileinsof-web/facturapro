@@ -61,10 +61,11 @@ class ReceiptController {
             $number = sprintf("REC-%s-%03d", $today, $seq);
 
             $invId = $body['proformaInvoiceId']??null;
+            $paymentDate = empty($body['paymentDate']) ? date('Y-m-d H:i:s') : $body['paymentDate'];
             $stmt = $pdo->prepare("INSERT INTO Receipt (id, accountId, number, proformaInvoiceId, clientId, amount, paymentMethod, paymentDate, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $newId, $accountId, $number, $invId, $body['clientId'], $body['amount'],
-                $body['paymentMethod']??null, $body['paymentDate'] ?? date('Y-m-d H:i:s'), $body['notes']??null
+                $body['paymentMethod']??null, $paymentDate, $body['notes']??null
             ]);
             
             if ($invId) {

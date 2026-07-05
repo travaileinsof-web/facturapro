@@ -95,7 +95,7 @@ class InvoiceController {
             $taxAmount = $subtotal * (($body['taxRate']??0) / 100);
             $total = $subtotal + $taxAmount - ($body['discount']??0);
 
-            $dueDate = $body['dueDate'] ?? null;
+            $dueDate = empty($body['dueDate']) ? null : $body['dueDate'];
             $stmt = $pdo->prepare("INSERT INTO ProformaInvoice (id, accountId, number, clientId, items, subtotal, taxRate, taxAmount, discount, total, status, type, notes, dueDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $newId, $accountId, $number, $body['clientId'], $items, $subtotal, $body['taxRate']??0, 
@@ -136,7 +136,7 @@ class InvoiceController {
                 $newStatus = $body['status'];
             }
 
-            $dueDate = $body['dueDate'] ?? null;
+            $dueDate = empty($body['dueDate']) ? null : $body['dueDate'];
             $stmt = $pdo->prepare("UPDATE ProformaInvoice SET clientId=?, items=?, subtotal=?, taxRate=?, taxAmount=?, discount=?, total=?, status=?, type=?, number=?, notes=?, dueDate=? WHERE id=? AND accountId=?");
             $stmt->execute([
                 $body['clientId'], $items, $subtotal, $body['taxRate']??0, 

@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS SubscriptionPayment (
 );
 
 CREATE TABLE IF NOT EXISTS AdminLog (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id SERIAL PRIMARY KEY,
     action VARCHAR(255) NOT NULL,
     targetAccountId VARCHAR(50) NULL,
     details TEXT NULL,

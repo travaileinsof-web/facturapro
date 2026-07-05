@@ -60,11 +60,11 @@ try {
     }
 
     // Vérifier si la table Account existe avant migrations
-    $tableExists = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name='Account'")->fetchColumn();
+    $tableExists = $pdo->query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND lower(table_name)='account'")->fetchColumn();
     
     if ($tableExists) {
         // Migrations : ajout des colonnes admin si elles n'existent pas
-        $cols = array_column($pdo->query("PRAGMA table_info(Account)")->fetchAll(), 'name');
+        $cols = array_column($pdo->query("SELECT column_name as name FROM information_schema.columns WHERE table_schema='public' AND lower(table_name)='account'")->fetchAll(), 'name');
         $migrations = [
             'subscriptionPlan'      => "ALTER TABLE Account ADD COLUMN subscriptionPlan VARCHAR(50) DEFAULT 'free'",
             'subscriptionStatus'    => "ALTER TABLE Account ADD COLUMN subscriptionStatus VARCHAR(50) DEFAULT 'trial'",
@@ -83,7 +83,7 @@ try {
 
     // Table de logs admin
     $pdo->exec("CREATE TABLE IF NOT EXISTS AdminLog (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         action VARCHAR(255) NOT NULL,
         targetAccountId VARCHAR(50) NULL,
         details TEXT NULL,
@@ -106,9 +106,13 @@ function checkIpWhitelist(): bool {
     $whitelist = ADMIN_IP_WHITELIST;
     if (empty($whitelist)) return true; // Désactivé
     
-    // Security: Only use REMOTE_ADDR. Do not trust X-Forwarded-For which can be spoofed by the client.
-    $clientIp = $_SERVER['REMOTE_ADDR'] ?? '';
-    return in_array($clientIp, $whitelist);
+    // Security: On Vercel, REMOTE_ADDR is internal. We must use X-Forwarded-For or X-Real-IP.
+    $clientIp = $_SERVER['HTTP_X_REAL_IP'] ?? $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '';
+    // X-Forwarded-For can contain multiple IPs, the first one is the client.
+    if (strpos($clientIp, ',') !== false) {
+        $clientIp = explode(',', $clientIp)[0];
+    }
+    return in_array(trim($clientIp), $whitelist);
 }
 
 // ─── VÉRIFICATION TOKEN ADMIN ─────────────────────────────────────────────────
