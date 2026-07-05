@@ -9,7 +9,7 @@ class SuperAdminController {
             $totalRevenue = $pdo->query("SELECT COALESCE(SUM(amount), 0) as r FROM SubscriptionPayment WHERE status = 'COMPLETED'")->fetch()['r'];
             $totalInvoices = $pdo->query("SELECT COUNT(*) as c FROM ProformaInvoice")->fetch()['c'];
             $totalClients = $pdo->query("SELECT COUNT(*) as c FROM Client")->fetch()['c'];
-            $newThisMonth = $pdo->query("SELECT COUNT(*) as c FROM Account WHERE strftime('%Y-%m', createdAt) = strftime('%Y-%m', 'now')")->fetch()['c'];
+            $newThisMonth = $pdo->query("SELECT COUNT(*) as c FROM Account WHERE TO_CHAR(createdAt, 'YYYY-MM') = TO_CHAR(CURRENT_DATE, 'YYYY-MM')")->fetch()['c'];
             
             // Comptes expirés bientôt (dans les 30 prochains jours)
             $expiringSoon = $pdo->query("SELECT COUNT(*) as c FROM Account WHERE subscriptionExpiresAt IS NOT NULL AND subscriptionExpiresAt BETWEEN date('now') AND date('now', '+30 days')")->fetch()['c'];
