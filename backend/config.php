@@ -42,11 +42,14 @@ if (!class_exists('MyPDOStatement')) {
             }
             return $newRow;
         }
+        #[\ReturnTypeWillChange]
         public function fetch($mode = PDO::FETCH_ASSOC, $cursorOrientation = PDO::FETCH_ORI_NEXT, $cursorOffset = 0) {
             $row = parent::fetch($mode, $cursorOrientation, $cursorOffset);
             if ($mode === PDO::FETCH_ASSOC && $row) return $this->camelize($row);
             return $row;
         }
+        
+        #[\ReturnTypeWillChange]
         public function fetchAll($mode = PDO::FETCH_ASSOC, ...$args) {
             $rows = parent::fetchAll($mode, ...$args);
             if ($mode === PDO::FETCH_ASSOC && $rows) return array_map([$this, 'camelize'], $rows);
