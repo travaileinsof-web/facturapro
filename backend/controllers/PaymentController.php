@@ -176,30 +176,49 @@ class PaymentController {
         }
 
         $eventType = $data['eventType'] ?? '';
+        $paymentData = $data['data'] ?? [];
+        $metadata = $data['metadata'] ?? [];
+        $reference = $metadata['reference'] ?? $paymentData['merchantPaymentReference'] ?? '';
+
+        // Log Webhook
+        try {
+            $stmtLog = $this->pdo->prepare("INSERT INTO WebhookLog (event_type, reference, payload) VALUES (?, ?, ?)");
+            $stmtLog->execute([$eventType, $reference, $rawPayload]);
+        } catch (Exception $e) {
+            // Ignorer l'erreur de log pour ne pas bloquer le traitement
+        }
         
         if ($eventType === 'payment.success') {
-            $paymentData = $data['data'] ?? [];
-            $metadata = $data['metadata'] ?? [];
-            $reference = $metadata['reference'] ?? $paymentData['merchantPaymentReference'] ?? '';
-            
             if ($reference) {
-                $stmt = $this->pdo->prepare("UPDATE SubscriptionPayment SET status = 'SUCCESS', djomyTransactionId = ? WHERE reference = ?");
-                $stmt->execute([$paymentData['transactionId'] ?? null, $reference]);
+                // Vérifier l'idempotence
+                $stmtCheck = $this->pdo->prepare("SELECT status, amount, accountId FROM SubscriptionPayment WHERE reference = ?");
+                $stmtCheck->execute([$reference]);
+                $paymentInfo = $stmtCheck->fetch(PDO::FETCH_ASSOC);
 
-                // Trouver le compte
-                $stmt = $this->pdo->prepare("SELECT accountId FROM SubscriptionPayment WHERE reference = ?");
-                $stmt->execute([$reference]);
-                $accountId = $stmt->fetchColumn();
+                if ($paymentInfo && $paymentInfo['status'] !== 'SUCCESS') {
+                    $stmt = $this->pdo->prepare("UPDATE SubscriptionPayment SET status = 'SUCCESS', djomyTransactionId = ? WHERE reference = ?");
+                    $stmt->execute([$paymentData['transactionId'] ?? null, $reference]);
 
-                if ($accountId) {
-                    $expiresAt = date('Y-m-d H:i:s', strtotime('+1 year'));
-                    $stmt = $this->pdo->prepare("UPDATE Account SET subscriptionPlan = 'annuel', subscriptionStatus = 'active', subscriptionExpiresAt = ?, lastPaymentDate = CURRENT_TIMESTAMP WHERE id = ?");
-                    $stmt->execute([$expiresAt, $accountId]);
+                    $accountId = $paymentInfo['accountId'];
+                    $amount = $paymentInfo['amount'];
+
+                    if ($accountId) {
+                        // Mettre à jour l'abonnement
+                        $expiresAt = date('Y-m-d H:i:s', strtotime('+1 year'));
+                        $stmt = $this->pdo->prepare("UPDATE Account SET subscriptionPlan = 'annuel', subscriptionStatus = 'active', subscriptionExpiresAt = ?, lastPaymentDate = CURRENT_TIMESTAMP WHERE id = ?");
+                        $stmt->execute([$expiresAt, $accountId]);
+
+                        // Générer une facture d'abonnement (Self-Billing)
+                        $invoiceId = uniqid('sub_inv_');
+                        $invoiceNumber = 'INV-SUB-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4));
+                        $stmtInv = $this->pdo->prepare("INSERT INTO SubscriptionInvoice (id, accountId, invoiceNumber, amount) VALUES (?, ?, ?, ?)");
+                        $stmtInv->execute([$invoiceId, $accountId, $invoiceNumber, $amount]);
+                        
+                        // TODO: Envoyer un email de confirmation avec la facture
+                    }
                 }
             }
         } elseif ($eventType === 'payment.failed' || $eventType === 'payment.cancelled') {
-            $metadata = $data['metadata'] ?? [];
-            $reference = $metadata['reference'] ?? $data['data']['merchantPaymentReference'] ?? '';
             if ($reference) {
                 $stmt = $this->pdo->prepare("UPDATE SubscriptionPayment SET status = 'FAILED' WHERE reference = ?");
                 $stmt->execute([$reference]);

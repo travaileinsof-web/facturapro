@@ -338,7 +338,34 @@ export function Settings() {
 
       </div>
 
-      {/* ── Save button ── */}
+      {/* ── Abonnement & Factures ── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '600px', margin: '24px auto 0' }}>
+        <Section title="Abonnement & Factures" desc="Gérez votre abonnement FacturaPro et téléchargez vos factures de paiement SaaS." icon={Banknote} delay={0.35}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border)', padding: '16px', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ fontSize: '13px', fontWeight: 600, color: 'var(--foreground)' }}>Plan Actuel : {settings?.subscriptionPlan?.toUpperCase() || 'FREE'}</p>
+                <p style={{ fontSize: '12px', color: 'var(--foreground-subtle)', marginTop: '4px' }}>
+                  {settings?.subscriptionExpiresAt 
+                    ? `Expire le ${new Date(settings.subscriptionExpiresAt).toLocaleDateString('fr-FR')}`
+                    : "Aucun abonnement actif"}
+                </p>
+              </div>
+              <button type="button" className="fp-btn-outline" style={{ fontSize: '12px', padding: '6px 12px' }} onClick={() => window.location.href='/pricing'}>
+                Gérer l'abonnement
+              </button>
+            </div>
+            
+            <div>
+              <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--foreground-muted)', marginBottom: '8px' }}>Historique des paiements</p>
+              <div style={{ textAlign: 'center', padding: '24px 16px', border: '1px dashed var(--border)', borderRadius: '6px', color: 'var(--foreground-subtle)' }}>
+                <FileText size={24} style={{ opacity: 0.3, margin: '0 auto 8px' }}/>
+                <p style={{ fontSize: '12px' }}>Vos factures d'abonnement apparaîtront ici.</p>
+              </div>
+            </div>
+          </div>
+        </Section>
+      </div>      {/* ── Save button ── */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '20px', borderTop: '1px solid var(--border)', marginTop: '16px' }}>
         <button type="submit" className="fp-btn-primary" style={{ padding: '11px 28px', fontSize: '14px' }}>
           <Save size={15}/> Enregistrer les modifications

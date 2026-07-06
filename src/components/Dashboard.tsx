@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import { Users, FileText, Banknote, Clock, TrendingUp, TrendingDown, ArrowRight, Minus } from 'lucide-react';
+import { Users, FileText, Banknote, Clock, TrendingUp, TrendingDown, ArrowRight, Minus, CheckCircle, XCircle } from 'lucide-react';
 import { formatCurrency, formatDate, useAppStore, apiFetch } from '../lib/store';
 import { PageHeader } from './ui/PageHeader';
+import { useSearchParams } from 'react-router-dom';
 
 /* ── Count-up animation hook ─────────────────────────────────────── */
 function useCountUp(target: number, duration = 900) {
@@ -132,6 +133,9 @@ export function Dashboard() {
     },
   });
 
+  const [searchParams, setSearchParams] = useSearchParams();
+  const paymentStatus = searchParams.get('payment');
+
   const header = <PageHeader title="Tableau de Bord" description="Vue d'ensemble de vos finances et performances" />;
 
   /* Skeleton loader */
@@ -161,6 +165,33 @@ export function Dashboard() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {header}
+
+      {/* ── Payment Status Alert ── */}
+      {paymentStatus === 'success' && (
+        <div style={{ background: 'var(--success-dim, rgba(34,197,94,0.1))', border: '1px solid var(--success, #22c55e)', padding: '16px 20px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', animation: 'fp-fade-up 0.5s ease forwards' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <CheckCircle style={{ color: 'var(--success, #22c55e)' }} size={24}/>
+            <div>
+              <h4 style={{ color: 'var(--foreground)', fontSize: '15px', fontWeight: 600, margin: '0 0 4px 0' }}>Paiement réussi !</h4>
+              <p style={{ color: 'var(--foreground-subtle)', fontSize: '13px', margin: 0 }}>Votre abonnement a été mis à jour avec succès. Merci de votre confiance.</p>
+            </div>
+          </div>
+          <button onClick={() => setSearchParams({})} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--foreground-subtle)' }}>✕</button>
+        </div>
+      )}
+      {paymentStatus === 'cancel' && (
+        <div style={{ background: 'var(--destructive-dim, rgba(239,68,68,0.1))', border: '1px solid var(--destructive, #ef4444)', padding: '16px 20px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', animation: 'fp-fade-up 0.5s ease forwards' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <XCircle style={{ color: 'var(--destructive, #ef4444)' }} size={24}/>
+            <div>
+              <h4 style={{ color: 'var(--foreground)', fontSize: '15px', fontWeight: 600, margin: '0 0 4px 0' }}>Paiement annulé ou échoué</h4>
+              <p style={{ color: 'var(--foreground-subtle)', fontSize: '13px', margin: 0 }}>La transaction n'a pas pu aboutir. Veuillez réessayer ou vérifier votre mode de paiement.</p>
+            </div>
+          </div>
+          <button onClick={() => setSearchParams({})} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--foreground-subtle)' }}>✕</button>
+        </div>
+      )}
+
       {/* ── KPI Grid ── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '30px' }}>
           <KpiCard 

@@ -180,3 +180,21 @@ CREATE TABLE IF NOT EXISTS Document (
     FOREIGN KEY (accountId) REFERENCES Account(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS WebhookLog (
+    id SERIAL PRIMARY KEY,
+    event_type VARCHAR(100) NULL,
+    reference VARCHAR(100) NULL,
+    payload TEXT NOT NULL,
+    status VARCHAR(50) DEFAULT 'success',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS SubscriptionInvoice (
+    id VARCHAR(50) PRIMARY KEY,
+    accountId VARCHAR(50) NOT NULL,
+    invoiceNumber VARCHAR(100) NOT NULL,
+    amount DECIMAL(15, 2) NOT NULL,
+    pdfUrl TEXT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (accountId) REFERENCES Account(id) ON DELETE CASCADE
+);

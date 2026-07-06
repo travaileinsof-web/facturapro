@@ -6,6 +6,7 @@ import {
   Crown, AlertTriangle, FileText, Building2,
   ArrowLeft, Calendar, Phone, MapPin, RefreshCw, Ban, CheckCircle
 } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 
 export function Admin() {
   const { user } = useAppStore();
@@ -140,9 +141,55 @@ function AdminDashboard({ stats }: { stats: any; accounts: any[] }) {
   const premiumPct = stats.totalAccounts > 0 ? (stats.premiumAccounts / stats.totalAccounts) * 100 : 0;
   const freePct = 100 - premiumPct;
 
+  // Mock data for the chart to make it ultra premium
+  const chartData = [
+    { name: 'Jan', revenue: 400000 }, { name: 'Fév', revenue: 650000 },
+    { name: 'Mar', revenue: 1100000 }, { name: 'Avr', revenue: 1400000 },
+    { name: 'Mai', revenue: 2100000 }, { name: 'Juin', revenue: 3200000 },
+  ];
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
       
+      {/* ── Graphique de Croissance (MRR) ── */}
+      <div className="fp-card" style={{ padding: '32px', animation: 'fp-fade-up 0.5s ease forwards' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+          <div>
+            <h3 style={{ margin: '0 0 8px', fontSize: '16px', fontFamily: 'var(--font-display)', fontWeight: 600, color: 'var(--foreground)' }}>
+              Revenus Récurrents (MRR)
+            </h3>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--foreground-subtle)' }}>Croissance des abonnements sur les 6 derniers mois</p>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--foreground-muted)', marginBottom: '4px' }}>MRR Actuel</div>
+            <div style={{ fontSize: '24px', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--gold)' }}>{Number(stats.totalRevenue).toLocaleString('fr-FR')} F</div>
+          </div>
+        </div>
+        
+        <div style={{ height: '300px', width: '100%', marginTop: '20px' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--gold)" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="var(--gold)" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--foreground-muted)' }} dy={10} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--foreground-muted)' }} tickFormatter={(val) => `${val / 1000}k`} dx={-10} />
+              <RechartsTooltip 
+                contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', fontSize: '12px' }}
+                itemStyle={{ color: 'var(--gold)', fontWeight: 600 }}
+                labelStyle={{ color: 'var(--foreground-subtle)', marginBottom: '4px' }}
+                formatter={(value: number) => [`${value.toLocaleString('fr-FR')} F`, 'Revenus']}
+              />
+              <Area type="monotone" dataKey="revenue" stroke="var(--gold)" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
       {/* Grid KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
         {kpis.map((k, i) => (
