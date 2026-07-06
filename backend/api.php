@@ -1,4 +1,6 @@
 <?php
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
 if (php_sapi_name() === 'cli-server') {
     $path = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
     if ($path !== '/api.php' && file_exists(__DIR__ . $path) && is_file(__DIR__ . $path)) {

@@ -114,7 +114,11 @@ class ShareController {
                     echo json_encode(["success" => true, "message" => "Email envoyé"]);
                 } catch (Exception $e) {
                     http_response_code(500);
-                    echo json_encode(["error" => "Erreur: {$mail->ErrorInfo}"]);
+                    $errorMsg = $mail->ErrorInfo;
+                    if (stripos($errorMsg, 'Could not authenticate') !== false) {
+                        $errorMsg = "Vos identifiants SMTP sont incorrects. Si vous utilisez Gmail, vous devez générer un 'Mot de passe d\'application' et l\'utiliser à la place de votre mot de passe habituel.";
+                    }
+                    echo json_encode(["error" => $errorMsg]);
                 }
             }
         }
