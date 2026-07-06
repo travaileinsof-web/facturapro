@@ -142,6 +142,21 @@ class SuperAdminController {
             exit;
         }
 
+        if ($method === 'DELETE' && str_starts_with($action, 'accounts/')) {
+            $targetId = explode('/', $action)[1];
+            
+            try {
+                $stmt = $pdo->prepare("INSERT INTO AdminLog (action, targetAccountId, details) VALUES (?, ?, ?)");
+                $stmt->execute(['DELETE_ACCOUNT', $targetId, "Admin $accountId deleted account $targetId"]);
+            } catch(Exception $e) {}
+
+            $stmt = $pdo->prepare("DELETE FROM Account WHERE id = ?");
+            $stmt->execute([$targetId]);
+
+            echo json_encode(["message" => "Compte supprimé avec succès"]);
+            exit;
+        }
+
         http_response_code(404);
         echo json_encode(["error" => "Endpoint introuvable"]);
     }

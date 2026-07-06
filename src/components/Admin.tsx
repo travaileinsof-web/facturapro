@@ -128,14 +128,14 @@ export function Admin() {
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 function AdminDashboard({ stats }: { stats: any; accounts: any[] }) {
   const kpis = [
-    { label: 'Utilisateurs', value: stats.totalAccounts, icon: Users, color: 'var(--blue-accent)' },
-    { label: 'Abonnés Premium', value: stats.premiumAccounts, icon: Crown, color: 'var(--gold)' },
-    { label: 'Comptes Gratuits', value: stats.freeAccounts, icon: Building2, color: 'var(--success)' },
-    { label: 'Revenus SaaS', value: `${Number(stats.totalRevenue).toLocaleString('fr-FR')} F`, icon: DollarSign, color: 'var(--gold)' },
-    { label: 'Factures Émises', value: stats.totalInvoices, icon: FileText, color: 'var(--foreground-muted)' },
-    { label: 'Clients Enregistrés', value: stats.totalClients, icon: Users, color: 'var(--foreground-muted)' },
-    { label: 'Suspendus', value: stats.suspendedAccounts, icon: Ban, color: 'var(--destructive)' },
-    { label: 'Expirations (<30j)', value: stats.expiringSoon, icon: AlertTriangle, color: 'var(--warning)' },
+    { label: 'Utilisateurs', value: stats.totalAccounts, icon: Users, color: 'var(--blue-accent)', desc: 'Nombre total de comptes créés sur la plateforme' },
+    { label: 'Abonnés Premium', value: stats.premiumAccounts, icon: Crown, color: 'var(--gold)', desc: 'Comptes ayant un abonnement payant actif' },
+    { label: 'Comptes Gratuits', value: stats.freeAccounts, icon: Building2, color: 'var(--success)', desc: 'Comptes en période d\'essai ou sur un plan gratuit' },
+    { label: 'Revenus SaaS', value: `${Number(stats.totalRevenue).toLocaleString('fr-FR')} F`, icon: DollarSign, color: 'var(--gold)', desc: 'Montant total encaissé via les abonnements' },
+    { label: 'Factures Émises', value: stats.totalInvoices, icon: FileText, color: 'var(--foreground-muted)', desc: 'Nombre total de factures générées par toutes les entreprises' },
+    { label: 'Clients Enregistrés', value: stats.totalClients, icon: Users, color: 'var(--foreground-muted)', desc: 'Nombre total de clients finaux enregistrés par vos utilisateurs' },
+    { label: 'Suspendus', value: stats.suspendedAccounts, icon: Ban, color: 'var(--destructive)', desc: 'Comptes bloqués par un administrateur' },
+    { label: 'Expirations (<30j)', value: stats.expiringSoon, icon: AlertTriangle, color: 'var(--warning)', desc: 'Comptes dont l\'abonnement expire dans moins de 30 jours' },
   ];
 
   const premiumPct = stats.totalAccounts > 0 ? (stats.premiumAccounts / stats.totalAccounts) * 100 : 0;
@@ -190,18 +190,20 @@ function AdminDashboard({ stats }: { stats: any; accounts: any[] }) {
         </div>
       </div>
 
-      {/* Grid KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
         {kpis.map((k, i) => (
           <div key={i} className="fp-kpi-card" style={{ opacity: 0, animation: `fp-fade-up 0.5s ease ${i * 0.05}s forwards` }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <div className="fp-kpi-label">{k.label}</div>
-              <div style={{ width: '32px', height: '32px', background: `${k.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${k.color}30` }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }} title={k.desc}>
+              <div className="fp-kpi-label" style={{ cursor: 'help' }}>{k.label}</div>
+              <div style={{ width: '32px', height: '32px', background: `${k.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${k.color}30`, borderRadius: '8px' }}>
                 <k.icon size={14} style={{ color: k.color }} />
               </div>
             </div>
             <div className="fp-kpi-value">
               {k.value}
+            </div>
+            <div style={{ fontSize: '11px', color: 'var(--foreground-muted)', marginTop: '8px', lineHeight: 1.4 }}>
+              {k.desc}
             </div>
           </div>
         ))}
@@ -466,6 +468,22 @@ function AdminAccountDetails({ accountId, token, onBack }: { accountId: string; 
     if (res.ok) { toast.success(newVal ? 'Institution suspendue' : 'Accès rétabli'); setData({ ...data, isSuspended: newVal }); }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm(`Êtes-vous sûr de vouloir SUPPRIMER DÉFINITIVEMENT l'institution ${data.companyName} et toutes ses données ? Cette action est irréversible.`)) return;
+    try {
+      const res = await fetch(`/api/admin/accounts/${accountId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        toast.success('Institution supprimée');
+        onBack();
+      } else {
+        toast.error('Erreur lors de la suppression');
+      }
+    } catch { toast.error('Erreur technique'); }
+  };
+
   if (!data) return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '40vh', gap: '16px' }}>
       <RefreshCw size={28} style={{ animation: 'spin 1s linear infinite', color: 'var(--gold)' }} />
@@ -589,8 +607,11 @@ function AdminAccountDetails({ accountId, token, onBack }: { accountId: string; 
             
             <div style={{ height: '1px', background: 'var(--border)', margin: '16px 0' }}></div>
             
-            <button onClick={() => updateSub('free', 'expired', 0)} className="fp-btn-primary" style={{ width: '100%', justifyContent: 'center', background: 'var(--surface)', color: 'var(--destructive)', borderColor: 'var(--destructive)' }}>
+            <button onClick={() => updateSub('free', 'expired', 0)} className="fp-btn-primary" style={{ width: '100%', justifyContent: 'center', background: 'var(--surface)', color: 'var(--warning)', borderColor: 'var(--warning)' }}>
               Forcer L'Expiration
+            </button>
+            <button onClick={handleDelete} className="fp-btn-primary" style={{ width: '100%', justifyContent: 'center', background: 'var(--surface)', color: 'var(--destructive)', borderColor: 'var(--destructive)' }}>
+              Supprimer le Compte Définitivement
             </button>
           </div>
         </div>
