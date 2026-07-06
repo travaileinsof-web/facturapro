@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { toast } from 'sonner';
+import { CurrencyConverter } from './CurrencyConverter';
 import { Plus, Trash2 } from 'lucide-react';
 import { buildInvoiceHTML } from '../lib/pdfTemplate';
 import { exportHTMLToPDF, generatePDFBase64 } from '../lib/pdfExport';
@@ -507,10 +508,11 @@ ${html}
                     </div>
                   ))}
                 </div>
-                <div style={{ padding: '12px 20px' }}>
+                <div style={{ padding: '12px 20px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                   <button type="button" style={{ padding: '7px 14px', background: 'transparent', border: '1px solid var(--border-hover)', color: 'var(--foreground-muted)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', letterSpacing: '0.2px' }} onClick={() => append({ description: '', quantity: 1, unitPrice: 0 })}>
                     <Plus size={12} /> Ajouter une ligne
                   </button>
+                  <CurrencyConverter />
                 </div>
               </div>
 
