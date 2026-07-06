@@ -128,8 +128,8 @@ export function generateInvoicePDF(invoice: any, settings: any) {
   const tableData = items.map((item: any) => [
      item.description,
      item.quantity,
-     formatCurrency(item.unitPrice).replace(' FCFA', ''),
-     formatCurrency(item.quantity * item.unitPrice).replace(' FCFA', '')
+     formatCurrency(item.unitPrice),
+     formatCurrency(item.quantity * item.unitPrice)
   ]);
 
   autoTable(doc, {

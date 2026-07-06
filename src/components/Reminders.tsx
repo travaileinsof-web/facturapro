@@ -46,7 +46,7 @@ export function Reminders() {
       const message = `Bonjour,\n\nSauf erreur de notre part, la facture ${inv.number} d'un reste à payer de ${formatCurrency(inv.amountRemaining)} est toujours en attente de règlement.\n\nMerci de faire le nécessaire dès que possible.\n\nCordialement,`;
 
       if (method === 'whatsapp') {
-        let phone = inv.client?.phone || "";
+        let phone = fullInv.client?.phone || "";
         if (phone) phone = phone.replace(/[^0-9]/g, '');
         if(!phone) throw new Error("Aucun numéro de téléphone pour ce client");
         
@@ -66,7 +66,7 @@ export function Reminders() {
         // Templating
         let baseMsg = settings.whatsappMessage ? settings.whatsappMessage : `Bonjour {client_name},\n\nSauf erreur de notre part, la facture {document_number} d'un reste à payer de {amount} est toujours en attente de règlement.\n\nMerci de faire le nécessaire dès que possible.\n\nCordialement, {company_name}`;
         
-        baseMsg = baseMsg.replace(/\{client_name\}/g, inv.client?.name || '');
+        baseMsg = baseMsg.replace(/\{client_name\}/g, fullInv.client?.name || inv.client?.name || '');
         baseMsg = baseMsg.replace(/\{document_number\}/g, inv.number || '');
         baseMsg = baseMsg.replace(/\{amount\}/g, formatCurrency(inv.amountRemaining) || '');
         baseMsg = baseMsg.replace(/\{company_name\}/g, fullInv.company?.name || settings.companyName || '');
@@ -77,7 +77,7 @@ export function Reminders() {
         window.open(waUrl, '_blank');
         
       } else {
-        const email = inv.client?.email;
+        const email = fullInv.client?.email;
         if(!email) throw new Error("Aucun email pour ce client");
         
         const res = await apiFetch('/api/share', {
@@ -162,11 +162,14 @@ export function Reminders() {
                         {formatDate(inv.lastReminderDate)}
                       </div>
                     ) : (
-                      <span style={{ fontSize: '12px', color: 'var(--foreground-subtle)' }}>Jamais relancé</span>
+                      <span style={{ fontSize: '13px', color: 'var(--foreground-muted)', fontStyle: 'italic' }}>Jamais relancé</span>
                     )}
                   </td>
                   <td style={{ textAlign: 'right' }}>
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                      <button className="fp-btn-ghost" onClick={() => sendReminder(inv, 'whatsapp')}>
+                        <MessageCircle size={14} style={{ color: '#25D366' }} /> WhatsApp
+                      </button>
                       <button className="fp-btn-ghost" onClick={() => sendReminder(inv, 'email')}>
                         <Mail size={14} style={{ color: '#4f46e5' }} /> Email
                       </button>

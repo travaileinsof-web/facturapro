@@ -330,7 +330,7 @@ export function buildReceiptHTML(receipt: any, settings: any): string {
     <div style="position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:40px;">
       <!-- Logo / Company -->
       <div>
-        ${companyInfo?.logo ? `<img src="${escapeHTML(companyInfo.logo)}" alt="logo" style="max-height:80px;max-width:220px;object-fit:contain;display:block;filter:brightness(0) invert(1);" />` : `<div style="font-size:28px;font-weight:900;color:#fff;letter-spacing:-1px;line-height:1;">${escapeHTML(companyInfo?.companyName || 'ENTREPRISE').toUpperCase()}</div>`}
+        ${companyInfo?.logo ? `<div style="background:#ffffff;padding:8px 12px;border-radius:6px;display:inline-block;"><img src="${escapeHTML(companyInfo.logo)}" alt="logo" style="max-height:70px;max-width:200px;object-fit:contain;display:block;" /></div>` : `<div style="font-size:28px;font-weight:900;color:#fff;letter-spacing:-1px;line-height:1;">${escapeHTML(companyInfo?.companyName || 'ENTREPRISE').toUpperCase()}</div>`}
         ${companyInfo?.slogan ? `<div style="font-size:12px;color:rgba(255,255,255,0.6);font-style:italic;margin-top:8px;">${escapeHTML(companyInfo.slogan)}</div>` : ''}
         <div style="font-size:11.5px;color:rgba(255,255,255,0.65);line-height:1.9;margin-top:12px;">
           ${companyInfo?.address ? `<div>${escapeHTML(companyInfo.address)}</div>` : ''}

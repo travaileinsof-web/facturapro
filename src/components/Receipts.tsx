@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown, Mail, MessageCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useForm } from 'react-hook-form';
 import { Textarea } from './ui/textarea';
@@ -159,9 +159,6 @@ export function Receipts() {
   };
 
   const shareViaWhatsApp = async (rec: any) => {
-    let phone = rec.client?.phone || "";
-    if (phone) phone = phone.replace(/[^0-9]/g, '');
-    
     const toastId = toast.loading("Génération du lien WhatsApp...");
     try {
       const [settingsRes, recRes] = await Promise.all([
@@ -172,6 +169,9 @@ export function Receipts() {
       const fullRec = await recRes.json();
       const html = buildReceiptHTML(fullRec, settings);
       const pdfBase64 = await generatePDFBase64(html);
+      
+      let phone = fullRec.client?.phone || "";
+      if (phone) phone = phone.replace(/[^0-9]/g, '');
       
       // Enregistrer le PDF sur le serveur pour obtenir un lien public
       const shareRes = await fetch('/api/share', {
@@ -193,7 +193,7 @@ export function Receipts() {
       // Templating dynamique
       let baseMsg = settings.whatsappMessage ? settings.whatsappMessage : `Bonjour {client_name},\n\nVoici votre reçu *{document_number}* d'un montant de *{amount}*.`;
       
-      baseMsg = baseMsg.replace(/\{client_name\}/g, rec.client?.name || '');
+      baseMsg = baseMsg.replace(/\{client_name\}/g, fullRec.client?.name || rec.client?.name || '');
       baseMsg = baseMsg.replace(/\{document_number\}/g, rec.number || '');
       baseMsg = baseMsg.replace(/\{amount\}/g, formatCurrency(rec.amount) || '');
       baseMsg = baseMsg.replace(/\{company_name\}/g, fullRec.company?.name || settings.companyName || '');
@@ -302,15 +302,14 @@ ${html}
                   <td>{formatDate(rec.paymentDate)}</td>
                   <td style={{ textAlign: 'right' }}>
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                      <button className="fp-btn-ghost" onClick={() => downloadPDF(rec)} title="Générer PDF">
-                        PDF
+                      <button className="fp-btn-ghost" onClick={() => downloadPDF(rec)}>Télécharger PDF</button>
+                      <button className="fp-btn-ghost" onClick={() => shareViaWhatsApp(rec)}>
+                        <MessageCircle size={14} style={{ color: '#25D366' }} /> WhatsApp
                       </button>
-                      <button className="fp-btn-ghost" onClick={() => shareViaEmail(rec)} title="Envoyer par Email">
-                        @
+                      <button className="fp-btn-ghost" onClick={() => shareViaEmail(rec)}>
+                        <Mail size={14} style={{ color: '#4f46e5' }} /> Email
                       </button>
-                      <button className="fp-btn-danger" onClick={() => deleteReceipt(rec.id)}>
-                        Sup.
-                      </button>
+                      <button className="fp-btn-ghost fp-text-rose" onClick={() => deleteReceipt(rec.id)}>Supprimer</button>
                     </div>
                   </td>
                 </tr>

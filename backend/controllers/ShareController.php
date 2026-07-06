@@ -40,9 +40,15 @@ class ShareController {
                     }
                 } else {
                     $uploadDir = __DIR__ . '/../uploads/';
-                    if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+                    if (!is_dir($uploadDir)) @mkdir($uploadDir, 0777, true);
                     $filePath = $uploadDir . $uniqueName;
-                    file_put_contents($filePath, $pdfData);
+                    $success = @file_put_contents($filePath, $pdfData);
+                    
+                    if ($success === false) {
+                        http_response_code(500);
+                        echo json_encode(["error" => "Stockage Vercel Blob non configuré et système de fichiers en lecture seule."]);
+                        exit;
+                    }
                     
                     $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
                     $host = $_SERVER['HTTP_HOST'];
@@ -65,11 +71,11 @@ class ShareController {
                 $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
                 try {
                     $mail->isSMTP();
-                    $mail->Host       = $currentAccount['smtpHost'] ?? 'smtp.gmail.com';
+                    $mail->Host       = $currentAccount['smtpHost'] ?? $currentAccount['smtphost'] ?? 'smtp.gmail.com';
                     $mail->SMTPAuth   = true;
                     
-                    $smtpUser = $currentAccount['smtpUser'] ?? '';
-                    $smtpPass = $currentAccount['smtpPass'] ?? '';
+                    $smtpUser = $currentAccount['smtpUser'] ?? $currentAccount['smtpuser'] ?? '';
+                    $smtpPass = $currentAccount['smtpPass'] ?? $currentAccount['smtppass'] ?? '';
                     
                     if (empty($smtpUser) || empty($smtpPass)) {
                         http_response_code(400);
@@ -80,7 +86,8 @@ class ShareController {
                     $mail->Username   = $smtpUser; 
                     $mail->Password   = $smtpPass; 
                     
-                    $encryption = strtolower($currentAccount['smtpEncryption'] ?? 'tls');
+                    $encryptionRaw = $currentAccount['smtpEncryption'] ?? $currentAccount['smtpencryption'] ?? 'tls';
+                    $encryption = strtolower($encryptionRaw);
                     if ($encryption === 'ssl') {
                         $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
                     } elseif ($encryption === 'none') {
@@ -90,9 +97,11 @@ class ShareController {
                         $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
                     }
                     
-                    $mail->Port       = $currentAccount['smtpPort'] ? (int)$currentAccount['smtpPort'] : 587;
+                    $portRaw = $currentAccount['smtpPort'] ?? $currentAccount['smtpport'] ?? 587;
+                    $mail->Port       = $portRaw ? (int)$portRaw : 587;
                     
-                    $mail->setFrom($smtpUser, $currentAccount['companyName'] ?? 'FacturaPro');
+                    $companyName = $currentAccount['companyName'] ?? $currentAccount['companyname'] ?? 'FacturaPro';
+                    $mail->setFrom($smtpUser, $companyName);
                     $mail->addAddress($to);
                     
                     $mail->isHTML(true);
