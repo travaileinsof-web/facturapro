@@ -12,7 +12,7 @@ class SuperAdminController {
             $newThisMonth = $pdo->query("SELECT COUNT(*) as c FROM Account WHERE TO_CHAR(createdAt, 'YYYY-MM') = TO_CHAR(CURRENT_DATE, 'YYYY-MM')")->fetch()['c'];
             
             // Comptes expirés bientôt (dans les 30 prochains jours)
-            $expiringSoon = $pdo->query("SELECT COUNT(*) as c FROM Account WHERE subscriptionExpiresAt IS NOT NULL AND subscriptionExpiresAt BETWEEN date('now') AND date('now', '+30 days')")->fetch()['c'];
+            $expiringSoon = $pdo->query("SELECT COUNT(*) as c FROM Account WHERE subscriptionExpiresAt IS NOT NULL AND subscriptionExpiresAt BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days'")->fetch()['c'];
 
             // Dernières inscriptions
             $recentAccounts = $pdo->query("SELECT email, companyName, firstName, lastName, subscriptionPlan, subscriptionStatus, createdAt FROM Account ORDER BY createdAt DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
