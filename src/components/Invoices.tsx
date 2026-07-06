@@ -440,24 +440,25 @@ ${html}
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[1400px] w-[95vw] h-[90vh] flex flex-col p-0">
-          <DialogHeader>
-            <DialogTitle>{editingInvoice ? 'Modifier Document' : 'Nouveau Document'}</DialogTitle>
+        <DialogContent className="sm:max-w-5xl max-w-5xl p-0 overflow-hidden border-0 shadow-2xl h-[90vh] flex flex-col bg-[var(--background)]">
+          <DialogHeader className="px-8 py-6 bg-[var(--surface-2)] border-b border-[var(--border)] shrink-0">
+            <DialogTitle className="text-xl font-display font-semibold text-[var(--foreground)] tracking-tight">
+              {editingInvoice ? 'Modifier Document' : 'Nouveau Document'}
+            </DialogTitle>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto p-6 bg-[var(--background)]">
-            <form id="invoice-form" onSubmit={handleSubmit(onSubmit)}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+          <div className="flex-1 overflow-y-auto px-8 py-8 bg-[var(--background)]">
+            <form id="invoice-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-10">
 
               {/* — Type de document — */}
               <div>
-                <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.6px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', marginBottom: '10px' }}>Type de document</p>
-                <div style={{ display: 'flex', gap: '0px', border: '1px solid var(--border-hover)', width: 'fit-content' }}>
+                <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-3">Type de document</label>
+                <div className="flex bg-[var(--surface-2)] rounded-lg p-1 w-fit border border-[var(--border)] shadow-sm">
                   {(['facture', 'proforma', 'devis'] as const).map((t) => {
                     const labels: Record<string, string> = { facture: 'Facture', proforma: 'Pro Forma', devis: 'Devis' };
                     const isActive = watch('type') === t;
                     return (
-                      <label key={t} style={{ cursor: 'pointer', padding: '8px 20px', fontSize: '12px', fontWeight: 600, letterSpacing: '0.3px', background: isActive ? 'var(--gold)' : 'var(--surface)', color: isActive ? '#000' : 'var(--foreground-muted)', borderRight: t !== 'devis' ? '1px solid var(--border-hover)' : 'none', transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <input type="radio" value={t} {...register('type')} style={{ display: 'none' }} />
+                      <label key={t} className={`cursor-pointer px-6 py-2 text-[13px] font-semibold rounded-md transition-all duration-200 ${isActive ? 'bg-white text-[var(--foreground)] shadow-sm' : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}`}>
+                        <input type="radio" value={t} {...register('type')} className="hidden" />
                         {labels[t]}
                       </label>
                     );
@@ -466,10 +467,10 @@ ${html}
               </div>
 
               {/* — Client + Date — */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
                 <div>
-                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Client *</label>
-                  <select {...register('clientId')} className="fp-input w-full">
+                  <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2">Client <span className="text-[var(--primary)]">*</span></label>
+                  <select {...register('clientId')} className="fp-input w-full bg-white shadow-sm">
                     <option value="">— Sélectionner un client —</option>
                     {clients?.map((c: any) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
@@ -477,104 +478,109 @@ ${html}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Date d'échéance</label>
-                  <input type="date" className="fp-input w-full" {...register('dueDate')} />
-                  <p className="text-[10px] text-[var(--foreground-muted)] mt-1">Requis pour les relances automatiques.</p>
+                  <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2 flex justify-between items-center">
+                    Date d'échéance
+                    <span className="text-[11px] font-normal text-[var(--foreground-muted)]">Requis pour relances auto.</span>
+                  </label>
+                  <input type="date" className="fp-input w-full bg-white shadow-sm" {...register('dueDate')} />
                 </div>
               </div>
 
               {/* — Articles — */}
-              <div style={{ border: '1px solid var(--border-hover)', background: 'var(--surface-2)' }}>
-                <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', display: 'flex', gap: '8px', alignItems: 'center', background: 'var(--surface)' }}>
-                  <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.6px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', flex: '1 1 0', paddingLeft: '228px' }}>Description</p>
-                  <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', width: '80px', textAlign: 'right', flexShrink: 0 }}>Qté</p>
-                  <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', width: '110px', textAlign: 'right', flexShrink: 0 }}>Prix U.</p>
-                  <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', width: '120px', textAlign: 'right', flexShrink: 0 }}>Total</p>
-                  <div style={{ width: '38px', flexShrink: 0 }} />
+              <div className="bg-white rounded-xl border border-[var(--border)] shadow-[0_4px_12px_rgba(0,0,0,0.02)] overflow-hidden">
+                <div className="grid grid-cols-[250px_1fr_100px_130px_130px_50px] gap-0 border-b border-[var(--border)] bg-[var(--surface-1)]">
+                  <div className="px-5 py-4 text-[12px] font-bold uppercase tracking-wider text-[var(--foreground-subtle)]">Catalogue</div>
+                  <div className="px-5 py-4 text-[12px] font-bold uppercase tracking-wider text-[var(--foreground-subtle)]">Description</div>
+                  <div className="px-5 py-4 text-[12px] font-bold uppercase tracking-wider text-[var(--foreground-subtle)] text-right">Qté</div>
+                  <div className="px-5 py-4 text-[12px] font-bold uppercase tracking-wider text-[var(--foreground-subtle)] text-right">Prix U.</div>
+                  <div className="px-5 py-4 text-[12px] font-bold uppercase tracking-wider text-[var(--foreground-subtle)] text-right">Total</div>
+                  <div className="px-5 py-4"></div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
+                <div className="flex flex-col">
                   {fields.map((field, index) => (
-                    <div key={field.id} style={{ display: 'flex', gap: '0px', alignItems: 'stretch', borderBottom: '1px solid var(--border)' }}>
-                      <div style={{ width: '220px', flexShrink: 0, borderRight: '1px solid var(--border)' }}>
-                        <select onChange={(e) => handleCatalogSelect(index, e.target.value)} defaultValue="" style={{ width: '100%', height: '100%', padding: '10px 12px', background: 'transparent', border: 'none', color: 'var(--foreground-muted)', fontSize: '12px', fontFamily: 'var(--font-sans)', cursor: 'pointer', outline: 'none' }}>
-                          <option value="">Catalogue...</option>
+                    <div key={field.id} className="grid grid-cols-[250px_1fr_100px_130px_130px_50px] gap-0 border-b border-[var(--border)] last:border-0 group hover:bg-[var(--surface-hover)] transition-colors">
+                      <div className="border-r border-[var(--border)]">
+                        <select onChange={(e) => handleCatalogSelect(index, e.target.value)} defaultValue="" className="w-full h-full px-5 py-4 bg-transparent border-none text-[13px] text-[var(--foreground)] outline-none cursor-pointer">
+                          <option value="">Sélectionner...</option>
                           {catalogItems?.map((cat: any) => (
                             <option key={cat.id} value={cat.id}>{cat.name}</option>
                           ))}
                         </select>
                       </div>
-                      <div style={{ flex: 1, borderRight: '1px solid var(--border)' }}>
-                        <input style={{ width: '100%', height: '100%', padding: '10px 12px', background: 'transparent', border: 'none', color: 'var(--foreground)', fontSize: '13px', fontFamily: 'var(--font-sans)', outline: 'none' }} placeholder="Description de l'article ou du service" {...register(`items.${index}.description` as const, { required: true })} />
+                      <div className="border-r border-[var(--border)]">
+                        <input className="w-full h-full px-5 py-4 bg-transparent border-none text-[13px] text-[var(--foreground)] outline-none placeholder-[var(--foreground-muted)]" placeholder="Description de l'article" {...register(`items.${index}.description` as const, { required: true })} />
                       </div>
-                      <div style={{ width: '80px', flexShrink: 0, borderRight: '1px solid var(--border)' }}>
-                        <input style={{ width: '100%', height: '100%', padding: '10px 10px', background: 'transparent', border: 'none', color: 'var(--foreground)', fontSize: '13px', textAlign: 'right', fontFamily: 'var(--font-mono)', outline: 'none' }} type="number" placeholder="1" {...register(`items.${index}.quantity` as const, { valueAsNumber: true })} />
+                      <div className="border-r border-[var(--border)]">
+                        <input className="w-full h-full px-5 py-4 bg-transparent border-none text-[13px] text-right font-mono text-[var(--foreground)] outline-none" type="number" placeholder="1" {...register(`items.${index}.quantity` as const, { valueAsNumber: true })} />
                       </div>
-                      <div style={{ width: '110px', flexShrink: 0, borderRight: '1px solid var(--border)' }}>
-                        <input style={{ width: '100%', height: '100%', padding: '10px 10px', background: 'transparent', border: 'none', color: 'var(--foreground)', fontSize: '13px', textAlign: 'right', fontFamily: 'var(--font-mono)', outline: 'none' }} type="number" placeholder="0" {...register(`items.${index}.unitPrice` as const, { valueAsNumber: true })} />
+                      <div className="border-r border-[var(--border)]">
+                        <input className="w-full h-full px-5 py-4 bg-transparent border-none text-[13px] text-right font-mono text-[var(--foreground)] outline-none" type="number" placeholder="0" {...register(`items.${index}.unitPrice` as const, { valueAsNumber: true })} />
                       </div>
-                      <div style={{ width: '120px', flexShrink: 0, textAlign: 'right', fontWeight: 600, fontSize: '13px', color: 'var(--foreground)', fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0 12px', borderRight: '1px solid var(--border)' }}>
+                      <div className="px-5 py-4 text-right font-semibold text-[14px] text-[var(--foreground)] font-mono flex items-center justify-end border-r border-[var(--border)]">
                         {formatCurrency((isNaN(watchItems[index]?.quantity) ? 0 : watchItems[index]?.quantity || 0) * (isNaN(watchItems[index]?.unitPrice) ? 0 : watchItems[index]?.unitPrice || 0))}
                       </div>
-                      <button type="button" style={{ width: '38px', flexShrink: 0, background: 'transparent', border: 'none', color: 'var(--foreground-subtle)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'color 0.15s' }} onMouseEnter={e => (e.currentTarget.style.color = 'var(--destructive)')} onMouseLeave={e => (e.currentTarget.style.color = 'var(--foreground-subtle)')} onClick={() => remove(index)}>
-                        <Trash2 size={13} />
+                      <button type="button" className="flex items-center justify-center text-[var(--foreground-subtle)] hover:text-[var(--destructive)] hover:bg-red-50 transition-colors" onClick={() => remove(index)}>
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   ))}
                 </div>
-                <div style={{ padding: '12px 20px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <button type="button" style={{ padding: '7px 14px', background: 'transparent', border: '1px solid var(--border-hover)', color: 'var(--foreground-muted)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', letterSpacing: '0.2px' }} onClick={() => append({ description: '', quantity: 1, unitPrice: 0 })}>
-                    <Plus size={12} /> Ajouter une ligne
+                <div className="px-5 py-4 bg-[var(--surface-1)] border-t border-[var(--border)] flex items-center justify-between">
+                  <button type="button" className="flex items-center gap-2 text-[13px] font-semibold text-[var(--foreground)] hover:text-[var(--primary)] transition-colors px-3 py-1.5 rounded-md hover:bg-white" onClick={() => append({ description: '', quantity: 1, unitPrice: 0 })}>
+                    <Plus size={14} /> Ajouter une ligne
                   </button>
                   <CurrencyConverter />
                 </div>
               </div>
 
               {/* — Notes + Totaux — */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: '20px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
+                <div className="flex flex-col gap-6">
                   {editingInvoice && (
-                    <div style={{ padding: '12px 16px', background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'flex', gap: '12px', alignItems: 'center' }}>
-                      <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--foreground-subtle)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Statut actuel</p>
-                      <span className={`fp-badge ${editingInvoice.status === 'payée' ? 'fp-badge-green' : editingInvoice.status === 'envoyée' ? 'fp-badge-blue' : 'fp-badge-neutral'}`} style={{ textTransform: 'capitalize' }}>{editingInvoice.status === 'brouillon' ? 'Non entamée' : editingInvoice.status}</span>
+                    <div className="bg-white rounded-xl border border-[var(--border)] shadow-sm px-6 py-4 flex items-center justify-between">
+                      <p className="text-[13px] font-semibold text-[var(--foreground)]">Statut actuel du document</p>
+                      <span className={`fp-badge ${editingInvoice.status === 'payée' ? 'fp-badge-green' : editingInvoice.status === 'envoyée' ? 'fp-badge-blue' : 'fp-badge-neutral'} capitalize`}>{editingInvoice.status === 'brouillon' ? 'Non entamée' : editingInvoice.status}</span>
                     </div>
                   )}
-                  <div style={{ flex: 1 }}>
-                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', marginBottom: '6px' }}>Remarques / Conditions</label>
-                    <textarea {...register('notes')} style={{ width: '100%', minHeight: '140px', padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--foreground)', fontSize: '13px', fontFamily: 'var(--font-sans)', resize: 'vertical' }} placeholder="Conditions de paiement, mentions légales..." />
+                  <div className="flex flex-col gap-2">
+                    <label className="block text-[13px] font-semibold text-[var(--foreground)]">Remarques / Conditions</label>
+                    <textarea {...register('notes')} className="fp-input w-full min-h-[140px] resize-y bg-white shadow-sm" placeholder="Conditions de paiement, mentions légales, informations bancaires..." />
                   </div>
                 </div>
 
-                <div style={{ background: 'var(--surface-2)', border: '1px solid var(--border-hover)', padding: '0' }}>
-                  <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
-                    <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.6px', textTransform: 'uppercase', color: 'var(--foreground-subtle)' }}>Récapitulatif</p>
+                <div className="bg-[var(--surface-2)] rounded-xl border border-[var(--border)] overflow-hidden flex flex-col">
+                  <div className="px-6 py-4 border-b border-[var(--border)] bg-[var(--surface-1)]">
+                    <h3 className="text-[14px] font-bold tracking-wide uppercase text-[var(--foreground)]">Récapitulatif</h3>
                   </div>
-                  <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '12px', color: 'var(--foreground-muted)' }}>Sous-total HT</span>
-                      <span style={{ fontWeight: 500, fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--foreground)' }}>{formatCurrency(subtotal)}</span>
+                  <div className="p-6 flex flex-col gap-5">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[13px] font-medium text-[var(--foreground-subtle)]">Sous-total HT</span>
+                      <span className="text-[14px] font-semibold font-mono text-[var(--foreground)]">{formatCurrency(subtotal)}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
-                      <span style={{ fontSize: '12px', color: 'var(--foreground-muted)', whiteSpace: 'nowrap' }}>TVA (%)</span>
-                      <input type="number" style={{ width: '90px', padding: '7px 10px', background: 'var(--surface)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', fontSize: '13px', textAlign: 'right', fontFamily: 'var(--font-mono)' }} {...register('taxRate', { valueAsNumber: true })} />
+                    <div className="flex justify-between items-center gap-4">
+                      <span className="text-[13px] font-medium text-[var(--foreground-subtle)]">TVA (%)</span>
+                      <input type="number" className="fp-input w-[100px] text-right font-mono bg-white" {...register('taxRate', { valueAsNumber: true })} />
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
-                      <span style={{ fontSize: '12px', color: 'var(--foreground-muted)', whiteSpace: 'nowrap' }}>Remise</span>
-                      <input type="number" style={{ width: '110px', padding: '7px 10px', background: 'var(--surface)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', fontSize: '13px', textAlign: 'right', fontFamily: 'var(--font-mono)' }} {...register('discount', { valueAsNumber: true })} />
+                    <div className="flex justify-between items-center gap-4">
+                      <span className="text-[13px] font-medium text-[var(--foreground-subtle)]">Remise globale</span>
+                      <div className="relative">
+                        <input type="number" className="fp-input w-[120px] text-right font-mono pr-8 bg-white" {...register('discount', { valueAsNumber: true })} />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-bold text-[var(--foreground-muted)]">€</span>
+                      </div>
                     </div>
-                    <div style={{ paddingTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '2px solid var(--border-hover)' }}>
-                      <span style={{ fontWeight: 700, color: 'var(--foreground)', textTransform: 'uppercase', fontSize: '11px', letterSpacing: '0.6px' }}>Total TTC</span>
-                      <span style={{ fontWeight: 800, fontSize: '24px', color: 'var(--gold)', fontFamily: 'var(--font-mono)' }}>{formatCurrency(total)}</span>
+                    <div className="pt-5 mt-2 border-t-2 border-[var(--border)] flex justify-between items-end">
+                      <span className="text-[14px] font-bold uppercase tracking-wider text-[var(--foreground)]">Total TTC</span>
+                      <span className="text-3xl font-bold font-mono text-[var(--primary)]">{formatCurrency(total)}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              </div>{/* end flex col */}
             </form>
           </div>
-          <DialogFooter>
+          <DialogFooter className="px-8 py-5 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end gap-3 shrink-0">
              <button type="button" className="fp-btn-outline" onClick={() => setIsModalOpen(false)}>Annuler</button>
-             <button form="invoice-form" type="submit" className="fp-btn-primary">{editingInvoice ? 'Mettre à jour' : 'Enregistrer'}</button>
+             <button form="invoice-form" type="submit" className="fp-btn-primary px-8">{editingInvoice ? 'Mettre à jour' : 'Enregistrer le document'}</button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

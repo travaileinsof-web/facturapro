@@ -154,43 +154,48 @@ export function Catalog() {
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>{editingItem ? 'Modifier l\'élément' : 'Ajouter au catalogue'}</DialogTitle>
+        <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-0 shadow-2xl">
+          <DialogHeader className="px-8 py-6 bg-[var(--surface-2)] border-b border-[var(--border)]">
+            <DialogTitle className="text-xl font-display font-semibold text-[var(--foreground)] tracking-tight">
+              {editingItem ? 'Modifier l\'élément' : 'Ajouter au catalogue'}
+            </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
-            <div className="p-6 grid gap-5">
-              <div className="grid grid-cols-2 gap-5">
+            <div className="px-8 py-8 grid gap-y-6 bg-[var(--background)]">
+              <div className="grid grid-cols-2 gap-x-6">
                 <div>
-                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Type</label>
-                  <select {...register('type')} className="fp-input w-full">
+                  <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2">Type</label>
+                  <select {...register('type')} className="fp-input w-full bg-[var(--surface-1)] focus:bg-[var(--background)]">
                     <option value="service">Service</option>
                     <option value="produit">Produit</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Catégorie</label>
-                  <input className="fp-input w-full" {...register('category')} placeholder="Ex: Développement, Plomberie..." required />
+                  <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2">Catégorie</label>
+                  <input className="fp-input w-full bg-[var(--surface-1)] focus:bg-[var(--background)]" {...register('category')} placeholder="Ex: Développement, Plomberie..." required />
                 </div>
               </div>
               
               <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Nom de la prestation / produit</label>
-                <input className="fp-input w-full" {...register('name')} required placeholder="Ex: Création Site Web Vitrine" />
+                <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2">Nom de la prestation / produit <span className="text-[var(--primary)]">*</span></label>
+                <input className="fp-input w-full bg-[var(--surface-1)] focus:bg-[var(--background)]" {...register('name')} required placeholder="Ex: Création Site Web Vitrine" />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Description détaillée</label>
-                <textarea {...register('description')} className="fp-input w-full min-h-[80px] resize-y" placeholder="Description qui apparaîtra sur la facture..." />
+                <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2">Description détaillée</label>
+                <textarea {...register('description')} className="fp-input w-full min-h-[100px] resize-y bg-[var(--surface-1)] focus:bg-[var(--background)]" placeholder="Description qui apparaîtra sur la facture..." />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Prix Unitaire par défaut (HT)</label>
-                <input className="fp-input w-full" type="number" step="0.01" {...register('unitPrice')} required />
+                <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2">Prix Unitaire par défaut (HT) <span className="text-[var(--primary)]">*</span></label>
+                <div className="relative">
+                  <input className="fp-input w-full bg-[var(--surface-1)] focus:bg-[var(--background)] pl-8" type="number" step="0.01" {...register('unitPrice')} required />
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] font-bold text-[var(--foreground-muted)]">€</span>
+                </div>
               </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="px-8 py-4 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end gap-3">
               <button type="button" className="fp-btn-outline" onClick={() => setIsModalOpen(false)}>Annuler</button>
               <button type="submit" className="fp-btn-primary">
                 {editingItem ? 'Mettre à jour' : 'Ajouter au catalogue'}

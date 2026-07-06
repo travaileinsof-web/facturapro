@@ -160,47 +160,49 @@ export function Clients() {
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-2xl max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Nouveau Client</DialogTitle>
+        <DialogContent className="sm:max-w-2xl max-w-2xl p-0 overflow-hidden border-0 shadow-2xl">
+          <DialogHeader className="px-8 py-6 bg-[var(--surface-2)] border-b border-[var(--border)]">
+            <DialogTitle className="text-xl font-display font-semibold text-[var(--foreground)] tracking-tight">Nouveau Client</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
-            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="px-8 py-8 grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-6 bg-[var(--background)]">
               <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Nom *</label>
-                <input className="fp-input w-full" {...register('name', { required: true })} />
+                <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2">Nom <span className="text-[var(--primary)]">*</span></label>
+                <input className="fp-input w-full bg-[var(--surface-1)] focus:bg-[var(--background)]" {...register('name', { required: true })} />
               </div>
               <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Email</label>
-                <input className="fp-input w-full" type="email" {...register('email')} />
+                <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2">Email</label>
+                <input className="fp-input w-full bg-[var(--surface-1)] focus:bg-[var(--background)]" type="email" {...register('email')} />
               </div>
               <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Téléphone</label>
-                <input className="fp-input w-full" {...register('phone')} />
+                <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2">Téléphone</label>
+                <input className="fp-input w-full bg-[var(--surface-1)] focus:bg-[var(--background)]" {...register('phone')} />
               </div>
               <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Ville</label>
-                <input className="fp-input w-full" {...register('city')} />
+                <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2">Ville</label>
+                <input className="fp-input w-full bg-[var(--surface-1)] focus:bg-[var(--background)]" {...register('city')} />
               </div>
               <div className="col-span-1 md:col-span-2">
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Adresse</label>
-                <input className="fp-input w-full" {...register('address')} />
+                <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2">Adresse</label>
+                <input className="fp-input w-full bg-[var(--surface-1)] focus:bg-[var(--background)]" {...register('address')} />
               </div>
               <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Pays</label>
-                <input className="fp-input w-full" {...register('country')} />
+                <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2">Pays</label>
+                <input className="fp-input w-full bg-[var(--surface-1)] focus:bg-[var(--background)]" {...register('country')} />
+              </div>
+              <div className="col-span-1 md:col-span-2">
+                <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2 flex items-center justify-between">
+                  Notes Internes
+                  <span className="text-[11px] font-normal text-[var(--foreground-muted)]">Services récurrents, préférences...</span>
+                </label>
+                <textarea
+                  {...register('notes')}
+                  className="fp-input w-full min-h-[100px] resize-y bg-[var(--surface-1)] focus:bg-[var(--background)]"
+                  placeholder="- Services habituellement demandés...&#10;- Conditions de paiement..." 
+                />
               </div>
             </div>
-            <div className="px-6 pb-6">
-              <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Notes Internes</label>
-              <p className="text-[11px] text-[var(--foreground-muted)] mb-2">Services récurrents, conditions tarifaires, préférences du client.</p>
-              <textarea
-                {...register('notes')}
-                className="fp-input w-full min-h-[100px] resize-y"
-                placeholder="- Services habituellement demandés...&#10;- Conditions de paiement..." 
-              />
-            </div>
-            <DialogFooter>
+            <DialogFooter className="px-8 py-4 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end gap-3">
               <button type="button" className="fp-btn-outline" onClick={() => setIsModalOpen(false)}>Annuler</button>
               <button type="submit" className="fp-btn-primary">Sauvegarder</button>
             </DialogFooter>
@@ -209,31 +211,36 @@ export function Clients() {
       </Dialog>
 
       <Dialog open={!!viewingClient} onOpenChange={(open) => !open && setViewingClient(null)}>
-        <DialogContent className="sm:max-w-5xl max-w-5xl h-[90vh] flex flex-col p-0">
-          <div className="bg-[var(--surface-2)] p-8 border-b border-[var(--border)] shrink-0 flex flex-col gap-6">
+        <DialogContent className="sm:max-w-5xl max-w-5xl h-[90vh] flex flex-col p-0 border-0 shadow-2xl overflow-hidden bg-[var(--background)]">
+          <div className="bg-[var(--surface-2)] px-8 py-8 border-b border-[var(--border)] shrink-0 flex flex-col gap-6">
             <div className="flex justify-between items-start">
-              <div>
-                <p className="text-[11px] font-bold tracking-[0.6px] uppercase text-[var(--foreground-subtle)] mb-1">Dossier Client</p>
-                <h2 className="text-3xl font-bold text-[var(--foreground)] tracking-tight font-display">{viewingClient?.name}</h2>
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-[var(--primary)] flex items-center justify-center text-white text-2xl font-bold font-display shadow-sm">
+                  {viewingClient?.name?.substring(0, 1).toUpperCase()}
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold tracking-[0.8px] uppercase text-[var(--foreground-muted)] mb-1">Dossier Client</p>
+                  <h2 className="text-3xl font-semibold text-[var(--foreground)] tracking-tight font-display">{viewingClient?.name}</h2>
+                </div>
               </div>
             </div>
             
-            <div className="flex flex-wrap gap-x-8 gap-y-3">
+            <div className="flex flex-wrap gap-x-8 gap-y-3 pt-2">
               {viewingClient?.email && (
-                <div className="flex items-center gap-2 text-sm text-[var(--foreground-muted)]">
-                  <Mail className="w-4 h-4 text-[var(--foreground-subtle)]" />
+                <div className="flex items-center gap-2 text-[13px] text-[var(--foreground-subtle)]">
+                  <Mail className="w-4 h-4" />
                   <span>{viewingClient.email}</span>
                 </div>
               )}
               {viewingClient?.phone && (
-                <div className="flex items-center gap-2 text-sm text-[var(--foreground-muted)]">
-                  <Phone className="w-4 h-4 text-[var(--foreground-subtle)]" />
+                <div className="flex items-center gap-2 text-[13px] text-[var(--foreground-subtle)]">
+                  <Phone className="w-4 h-4" />
                   <span>{viewingClient.phone}</span>
                 </div>
               )}
               {(viewingClient?.address || viewingClient?.city || viewingClient?.country) && (
-                <div className="flex items-center gap-2 text-sm text-[var(--foreground-muted)]">
-                  <MapPin className="w-4 h-4 text-[var(--foreground-subtle)]" />
+                <div className="flex items-center gap-2 text-[13px] text-[var(--foreground-subtle)]">
+                  <MapPin className="w-4 h-4" />
                   <span>{[viewingClient.address, viewingClient.city, viewingClient.country].filter(Boolean).join(', ')}</span>
                 </div>
               )}
@@ -241,50 +248,59 @@ export function Clients() {
           </div>
 
           {viewingClient && (
-            <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-10 bg-[var(--background)]">
+            <div className="flex-1 overflow-y-auto px-8 py-10 flex flex-col gap-12 bg-[var(--background)]">
 
               {/* — KPI Cards — */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-[var(--surface-1)] p-6 border border-[var(--border)] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col gap-2">
-                  <p className="text-[11px] font-bold tracking-[0.7px] uppercase text-[var(--foreground-subtle)]">Facturé Total</p>
-                  <p className="text-3xl font-extrabold text-[var(--foreground)] font-mono">{formatCurrency(viewingClient.totalInvoiced || 0)}</p>
+                <div className="bg-white rounded-xl p-6 border border-[var(--border)] shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col gap-2">
+                  <p className="text-[12px] font-bold tracking-[0.5px] uppercase text-[var(--foreground-subtle)] flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-[var(--foreground-muted)]" />
+                    Facturé Total
+                  </p>
+                  <p className="text-3xl font-bold text-[var(--foreground)] font-mono">{formatCurrency(viewingClient.totalInvoiced || 0)}</p>
                 </div>
-                <div className="bg-[var(--surface-1)] p-6 border border-[var(--border)] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col gap-2 relative overflow-hidden">
+                <div className="bg-white rounded-xl p-6 border border-[var(--border)] shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col gap-2 relative overflow-hidden">
                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-[var(--emerald)]" />
-                  <p className="text-[11px] font-bold tracking-[0.7px] uppercase text-[var(--emerald)]">Total Encaissé</p>
-                  <p className="text-3xl font-extrabold text-[var(--emerald)] font-mono">{formatCurrency(viewingClient.totalPaid || 0)}</p>
+                  <p className="text-[12px] font-bold tracking-[0.5px] uppercase text-[var(--emerald)] flex items-center gap-2">
+                    Total Encaissé
+                  </p>
+                  <p className="text-3xl font-bold text-[var(--emerald)] font-mono">{formatCurrency(viewingClient.totalPaid || 0)}</p>
                 </div>
-                <div className="bg-[var(--surface-1)] p-6 border border-[var(--border)] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col gap-2 relative overflow-hidden">
+                <div className="bg-white rounded-xl p-6 border border-[var(--border)] shadow-[0_4px_12px_rgba(0,0,0,0.02)] flex flex-col gap-2 relative overflow-hidden">
                   <div className={`absolute left-0 top-0 bottom-0 w-1 ${(viewingClient.totalRemaining || 0) > 0 ? 'bg-[var(--gold)]' : 'bg-[var(--border)]'}`} />
-                  <p className={`text-[11px] font-bold tracking-[0.7px] uppercase ${(viewingClient.totalRemaining || 0) > 0 ? 'text-[var(--gold)]' : 'text-[var(--foreground-subtle)]'}`}>Créances (Reste à payer)</p>
-                  <p className={`text-3xl font-extrabold font-mono ${(viewingClient.totalRemaining || 0) > 0 ? 'text-[var(--gold)]' : 'text-[var(--foreground)]'}`}>{formatCurrency(viewingClient.totalRemaining || 0)}</p>
+                  <p className={`text-[12px] font-bold tracking-[0.5px] uppercase flex items-center gap-2 ${(viewingClient.totalRemaining || 0) > 0 ? 'text-[var(--gold)]' : 'text-[var(--foreground-subtle)]'}`}>
+                    Créances (Reste à payer)
+                  </p>
+                  <p className={`text-3xl font-bold font-mono ${(viewingClient.totalRemaining || 0) > 0 ? 'text-[var(--gold)]' : 'text-[var(--foreground)]'}`}>{formatCurrency(viewingClient.totalRemaining || 0)}</p>
                 </div>
               </div>
 
               {/* — Historique factures — */}
               <div className="flex flex-col gap-4">
-                <h3 className="text-[13px] font-bold tracking-[0.6px] uppercase text-[var(--foreground)] border-b border-[var(--border)] pb-3">Historique des Factures</h3>
+                <div className="flex items-center justify-between border-b border-[var(--border)] pb-4">
+                  <h3 className="text-[14px] font-bold tracking-wide uppercase text-[var(--foreground)]">Historique des Factures</h3>
+                </div>
                 {viewingClient.invoices?.length > 0 ? (
-                  <div className="fp-card overflow-hidden overflow-x-auto">
+                  <div className="bg-white rounded-xl border border-[var(--border)] shadow-[0_4px_12px_rgba(0,0,0,0.02)] overflow-hidden">
                     <table className="fp-table w-full">
-                      <thead>
+                      <thead className="bg-[var(--surface-1)]">
                         <tr>
-                          <th>Numéro</th>
-                          <th>Date</th>
-                          <th className="text-right">Total TTC</th>
-                          <th className="text-right">Déjà Payé</th>
-                          <th className="text-center">Statut</th>
+                          <th className="py-4 px-5 text-[12px] font-bold uppercase tracking-wider text-[var(--foreground-subtle)]">Numéro</th>
+                          <th className="py-4 px-5 text-[12px] font-bold uppercase tracking-wider text-[var(--foreground-subtle)]">Date</th>
+                          <th className="py-4 px-5 text-[12px] font-bold uppercase tracking-wider text-[var(--foreground-subtle)] text-right">Total TTC</th>
+                          <th className="py-4 px-5 text-[12px] font-bold uppercase tracking-wider text-[var(--foreground-subtle)] text-right">Déjà Payé</th>
+                          <th className="py-4 px-5 text-[12px] font-bold uppercase tracking-wider text-[var(--foreground-subtle)] text-center">Statut</th>
                         </tr>
                       </thead>
                       <tbody>
                         {viewingClient.invoices.map((inv: any) => (
                           <React.Fragment key={inv.id}>
-                            <tr className="hover:bg-[var(--surface-hover)] transition-colors">
-                              <td className="font-semibold text-[var(--foreground)]">{inv.number}</td>
-                              <td className="text-[var(--foreground-muted)]">{formatDate(inv.createdAt)}</td>
-                              <td className="text-right font-semibold font-mono text-[var(--foreground)]">{formatCurrency(inv.total)}</td>
-                              <td className="text-right font-semibold font-mono text-[var(--emerald)]">{formatCurrency(inv.amountPaid || 0)}</td>
-                              <td className="text-center">
+                            <tr className="hover:bg-[var(--surface-hover)] transition-colors border-b border-[var(--border)] last:border-0">
+                              <td className="py-4 px-5 font-semibold text-[var(--foreground)]">{inv.number}</td>
+                              <td className="py-4 px-5 text-[13px] text-[var(--foreground-muted)]">{formatDate(inv.createdAt)}</td>
+                              <td className="py-4 px-5 text-right font-semibold font-mono text-[var(--foreground)]">{formatCurrency(inv.total)}</td>
+                              <td className="py-4 px-5 text-right font-semibold font-mono text-[var(--emerald)]">{formatCurrency(inv.amountPaid || 0)}</td>
+                              <td className="py-4 px-5 text-center">
                                 <span className={`fp-badge ${inv.status === 'payée' ? 'fp-badge-green' : inv.status === 'partielle' ? 'fp-badge-neutral' : 'fp-badge-neutral'}`}>
                                   {inv.status === 'brouillon' ? 'Non entamée' : inv.status}
                                 </span>
@@ -292,15 +308,15 @@ export function Clients() {
                             </tr>
                             {inv.receipts && inv.receipts.length > 0 && (
                               <tr className="bg-[var(--surface-2)]">
-                                <td colSpan={5} className="p-4 pl-6 border-l-[3px] border-[var(--emerald)]">
-                                  <div className="text-[10px] font-bold text-[var(--foreground-subtle)] uppercase tracking-wider mb-2">Historique des Versements :</div>
+                                <td colSpan={5} className="p-5 pl-8 border-l-[3px] border-[var(--emerald)]">
+                                  <div className="text-[11px] font-bold text-[var(--foreground-subtle)] uppercase tracking-wider mb-3">Historique des Versements :</div>
                                   <div className="flex flex-col gap-2">
                                     {inv.receipts.map((rec: any) => (
-                                      <div key={rec.id} className="flex justify-between items-center bg-[var(--surface-1)] px-4 py-2 border border-[var(--border)] shadow-sm">
-                                        <div className="text-xs text-[var(--foreground-muted)]">
-                                          <span className="font-semibold text-[var(--foreground)]">{rec.number}</span> ({formatDate(rec.paymentDate)})
+                                      <div key={rec.id} className="flex justify-between items-center bg-white rounded-md px-5 py-3 border border-[var(--border)] shadow-sm">
+                                        <div className="text-[13px] text-[var(--foreground-muted)]">
+                                          <span className="font-semibold text-[var(--foreground)]">{rec.number}</span> <span className="mx-2">•</span> {formatDate(rec.paymentDate)}
                                         </div>
-                                        <div className="text-[13px] font-bold text-[var(--emerald)] font-mono">+ {formatCurrency(rec.amount)}</div>
+                                        <div className="text-[14px] font-bold text-[var(--emerald)] font-mono">+ {formatCurrency(rec.amount)}</div>
                                       </div>
                                     ))}
                                   </div>
@@ -313,21 +329,25 @@ export function Clients() {
                     </table>
                   </div>
                 ) : (
-                  <p className="text-[13px] text-[var(--foreground-muted)] italic py-4">Aucune facture pour ce client.</p>
+                  <div className="bg-[var(--surface-1)] rounded-xl p-8 text-center border border-[var(--border)] border-dashed">
+                    <p className="text-[14px] text-[var(--foreground-muted)]">Aucune facture pour ce client.</p>
+                  </div>
                 )}
               </div>
 
               {/* — GED — */}
               <div className="flex flex-col gap-4">
-                <div className="flex justify-between items-center border-b border-[var(--border)] pb-3">
-                  <h3 className="text-[13px] font-bold tracking-[0.6px] uppercase text-[var(--foreground)]">Documents Associés (GED)</h3>
-                  <label className="flex items-center gap-2 text-xs font-semibold text-[var(--foreground-subtle)] cursor-pointer px-4 py-2 border border-[var(--border)] bg-[var(--surface-1)] hover:bg-[var(--surface-hover)] transition-colors shadow-sm">
+                <div className="flex justify-between items-center border-b border-[var(--border)] pb-4">
+                  <h3 className="text-[14px] font-bold tracking-wide uppercase text-[var(--foreground)]">Documents Associés (GED)</h3>
+                  <label className="flex items-center gap-2 text-[13px] font-semibold text-[var(--foreground)] cursor-pointer px-4 py-2 rounded-lg border border-[var(--border)] bg-white hover:bg-[var(--surface-hover)] transition-colors shadow-sm">
                     <PlusIcon className="w-4 h-4" />
                     Ajouter un document
                     <input type="file" className="hidden" onChange={(e) => { if (e.target.files?.[0]) { const fData = new FormData(); fData.append('file', e.target.files[0]); fData.append('entityType', 'client'); fData.append('entityId', viewingClient.id); fetch('/api/upload', { method: 'POST', body: fData, headers: { 'Authorization': `Bearer ${localStorage.getItem('facturapro_token')}` } }).then(r => r.json()).then(() => { toast.success('Document ajouté'); }); }}} />
                   </label>
                 </div>
-                <ClientDocuments clientId={viewingClient.id} />
+                <div className="bg-white rounded-xl border border-[var(--border)] shadow-[0_4px_12px_rgba(0,0,0,0.02)] p-6">
+                  <ClientDocuments clientId={viewingClient.id} />
+                </div>
               </div>
 
             </div>
