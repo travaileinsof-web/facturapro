@@ -162,6 +162,11 @@ try {
             UploadController::handle($method, $accountId);
             break;
         case 'settings':
+            if ($id === 'promote' && $method === 'POST') {
+                $pdo->prepare("UPDATE Account SET role = 'admin' WHERE id = ?")->execute([$accountId]);
+                echo json_encode(["success" => true, "message" => "Rôle admin attribué"]);
+                exit;
+            }
             SettingsController::handle($pdo, $method, $accountId, $body, $currentAccount);
             break;
         case 'companies':

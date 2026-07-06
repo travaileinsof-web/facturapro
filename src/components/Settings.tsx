@@ -168,6 +168,29 @@ export function Settings() {
                 </button>
               </div>
             </Field>
+
+            {/* Developer options */}
+            <div style={{ marginTop: '12px', padding: '16px', background: 'var(--surface-2)', border: '1px dashed var(--gold)', borderRadius: '8px' }}>
+              <h4 style={{ margin: '0 0 8px', color: 'var(--gold)', fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1px' }}>Mode Développeur</h4>
+              <button type="button" onClick={() => {
+                const toastId = toast.loading('Promotion en cours...');
+                fetch('/api/settings/promote', { method: 'POST', headers: { 'Authorization': \`Bearer \${user?.token}\` }})
+                  .then(res => res.json())
+                  .then(data => {
+                    if (data.success) {
+                      toast.success("Vous êtes maintenant Super-Admin ! Redirection...", { id: toastId });
+                      useAppStore.setState(s => ({ user: s.user ? { ...s.user, role: 'admin' } : s.user }));
+                      setTimeout(() => window.location.href = '/admin', 1000);
+                    } else {
+                      toast.error("Échec de la promotion", { id: toastId });
+                    }
+                  }).catch(() => toast.error("Erreur serveur", { id: toastId }));
+              }} style={{ background: 'var(--gold)', color: '#0A0A0F', border: 'none', padding: '8px 16px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', borderRadius: '4px', textTransform: 'uppercase' }}>
+                Forcer Super-Admin
+              </button>
+              <p style={{ margin: '8px 0 0', fontSize: '11px', color: 'var(--foreground-muted)' }}>Ce bouton permet de devenir administrateur sans toucher à la BDD. Pratique pour vos tests internes.</p>
+            </div>
+
           </div>
         </Section>
 
