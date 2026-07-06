@@ -22,10 +22,9 @@ export function Reminders() {
     }
   });
 
-  // Filtre: Seulement les factures (pas devis) qui ne sont pas "payée" ni "annulée"
+  // On filtre pour n'avoir que ce qui a un reste à payer et qui n'est pas un devis ou annulé
   const pendingInvoices = invoices?.filter((inv: any) => 
-     String(inv.type).toLowerCase() === 'facture' && 
-     String(inv.status).toLowerCase() !== 'payée' && 
+     String(inv.type).toLowerCase() !== 'devis' && 
      String(inv.status).toLowerCase() !== 'annulée' &&
      Number(inv.amountRemaining) > 0
   ) || [];
