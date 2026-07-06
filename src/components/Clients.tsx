@@ -58,33 +58,44 @@ export function Clients() {
   };
 
   const onSubmit = async (data: any) => {
+    setIsModalOpen(false); // Fermeture immédiate pour sensation de rapidité
     const url = editingClient ? `/api/clients/${editingClient.id}` : '/api/clients';
     const method = editingClient ? 'PUT' : 'POST';
-    const res = await apiFetch(url, { method, body: JSON.stringify(data) });
-    if (res.ok) {
-      toast.success(editingClient ? 'Client mis à jour' : 'Client créé');
-      setIsModalOpen(false);
+    
+    const promise = apiFetch(url, { method, body: JSON.stringify(data) }).then(async (res) => {
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Erreur lors de la sauvegarde');
+      }
       triggerRefresh('clients');
       triggerRefresh('stats');
       refetch();
-    } else {
-      const err = await res.json().catch(() => ({}));
-      toast.error(err.error || 'Erreur lors de la sauvegarde');
-    }
+      return true;
+    });
+
+    toast.promise(promise, {
+      loading: editingClient ? 'Mise à jour...' : 'Création en cours...',
+      success: editingClient ? 'Client mis à jour' : 'Client créé',
+      error: (err) => err.message
+    });
   };
 
   const deleteClient = async (id: string) => {
     if(!confirm("Supprimer ce client ?")) return;
-    const res = await apiFetch(`/api/clients/${id}`, { method: 'DELETE' });
-    if(res.ok) {
-       toast.success("Client supprimé");
-       triggerRefresh('clients');
-       triggerRefresh('stats');
-       refetch();
-    } else {
-       const err = await res.json().catch(() => ({}));
-       toast.error(err.error || "Erreur de suppression");
-    }
+    
+    const promise = apiFetch(`/api/clients/${id}`, { method: 'DELETE' }).then(async (res) => {
+      if(!res.ok) throw new Error("Erreur de suppression");
+      triggerRefresh('clients');
+      triggerRefresh('stats');
+      refetch();
+      return true;
+    });
+
+    toast.promise(promise, {
+      loading: 'Suppression...',
+      success: 'Client supprimé',
+      error: 'Erreur de suppression'
+    });
   };
 
   return (

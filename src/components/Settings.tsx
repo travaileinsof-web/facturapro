@@ -4,7 +4,7 @@ import { useAppStore, apiFetch } from '../lib/store';
 import { Input } from './ui/input';
 import { toast } from 'sonner';
 import { useState, useRef } from 'react';
-import { Eye, EyeOff, Upload, Loader2, Save, Building2, CreditCard, Lock, Mail, Zap, Palette, ChevronDown } from 'lucide-react';
+import { Eye, EyeOff, Upload, Loader2, Save, Building2, CreditCard, Lock, Mail, Zap, Palette, ChevronDown, Banknote, FileText } from 'lucide-react';
 
 /* ── Section wrapper ─────────────────────────────────────────────── */
 function Section({ title, desc, icon: Icon, children, delay = 0 }: {

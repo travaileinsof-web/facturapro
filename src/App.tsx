@@ -402,7 +402,7 @@ function AppLayout() {
             {currentModule === 'invoices'  && <Invoices />}
             {currentModule === 'receipts'  && <Receipts />}
             {currentModule === 'expenses'  && <Expenses />}
-            {currentModule === 'reminders' && (user?.subscriptionPlan === 'premium' ? <Reminders /> : <PremiumOverlay featureName="Relances Automatiques" />)}
+            {currentModule === 'reminders' && <Reminders />}
             {currentModule === 'chat'      && (user?.subscriptionPlan === 'premium' ? <ChatIA /> : <PremiumOverlay featureName="Assistant IA (ARIA)" />)}
             {currentModule === 'companies' && (user?.subscriptionPlan === 'premium' ? <Companies /> : <PremiumOverlay featureName="Multi-Entreprise" />)}
             {currentModule === 'settings'  && <Settings />}

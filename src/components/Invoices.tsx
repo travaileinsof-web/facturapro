@@ -147,31 +147,42 @@ export function Invoices() {
 
     const url = editingInvoice ? `/api/invoices/${editingInvoice.id}` : '/api/invoices';
     const method = editingInvoice ? 'PUT' : 'POST';
-    const res = await apiFetch(url, { method, body: JSON.stringify(payload) });
-    if (res.ok) {
-      toast.success(editingInvoice ? 'Facture mise à jour' : 'Facture créée');
-      setIsModalOpen(false);
+    setIsModalOpen(false); // UI reacts instantly
+
+    const promise = apiFetch(url, { method, body: JSON.stringify(payload) }).then(async (res) => {
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || "Erreur lors de l'enregistrement de la facture.");
+      }
       triggerRefresh('invoices');
       triggerRefresh('stats');
       refetch();
-    } else {
-      const err = await res.json().catch(() => ({}));
-      toast.error(err.error || "Erreur lors de l'enregistrement de la facture.");
-    }
+      return true;
+    });
+
+    toast.promise(promise, {
+      loading: 'Enregistrement en cours...',
+      success: editingInvoice ? 'Facture mise à jour' : 'Facture créée',
+      error: (err) => err.message
+    });
   };
 
   const deleteInvoice = async (id: string) => {
     if(!confirm("Supprimer cette facture ?")) return;
-    const res = await apiFetch(`/api/invoices/${id}`, { method: 'DELETE' });
-    if(res.ok) {
-       toast.success("Facture supprimée");
-       triggerRefresh('invoices');
-       triggerRefresh('stats');
-       refetch();
-    } else {
-       const err = await res.json().catch(() => ({}));
-       toast.error(err.error || "Erreur de suppression");
-    }
+    
+    const promise = apiFetch(`/api/invoices/${id}`, { method: 'DELETE' }).then(async (res) => {
+      if(!res.ok) throw new Error("Erreur de suppression");
+      triggerRefresh('invoices');
+      triggerRefresh('stats');
+      refetch();
+      return true;
+    });
+
+    toast.promise(promise, {
+      loading: 'Suppression...',
+      success: 'Facture supprimée',
+      error: 'Erreur de suppression'
+    });
   };
 
   const convertToFacture = async (inv: any, targetType: string) => {
@@ -181,15 +192,20 @@ export function Invoices() {
       type: targetType,
       items: safeJSONParse(inv.items)
     };
-    const res = await apiFetch(`/api/invoices/${inv.id}`, { method: 'PUT', body: JSON.stringify(payload) });
-    if(res.ok) {
-       toast.success("Document converti avec succès");
-       triggerRefresh('invoices');
-       triggerRefresh('stats');
-       refetch();
-    } else {
-       toast.error("Erreur de conversion");
-    }
+    
+    const promise = apiFetch(`/api/invoices/${inv.id}`, { method: 'PUT', body: JSON.stringify(payload) }).then(async (res) => {
+      if(!res.ok) throw new Error("Erreur de conversion");
+      triggerRefresh('invoices');
+      triggerRefresh('stats');
+      refetch();
+      return true;
+    });
+
+    toast.promise(promise, {
+      loading: 'Conversion...',
+      success: 'Document converti avec succès',
+      error: 'Erreur de conversion'
+    });
   };
 
   const shareViaWhatsApp = async (inv: any) => {

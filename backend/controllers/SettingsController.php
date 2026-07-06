@@ -1,30 +1,29 @@
 <?php
 class SettingsController {
     public static function handle($pdo, $method, $accountId, $body, $currentAccount) {
+        $safeAccount = $currentAccount;
+        unset($safeAccount['passwordhash'], $safeAccount['passwordHash'], $safeAccount['token'], $safeAccount['geminikey'], $safeAccount['geminiKey']);
+        
+        // Map lowercased postgres columns to camelCase
+        $camelMap = [
+            'companyname' => 'companyName',
+            'firstname' => 'firstName',
+            'lastname' => 'lastName',
+            'taxid' => 'taxId',
+            'bankname' => 'bankName',
+            'bankaccount' => 'bankAccount',
+            'primarycolor' => 'primaryColor',
+            'secondarycolor' => 'secondaryColor',
+            'accentcolor' => 'accentColor',
+            'whatsappmessage' => 'whatsappMessage',
+            'smtphost' => 'smtpHost',
+            'smtpport' => 'smtpPort',
+            'smtpencryption' => 'smtpEncryption',
+            'smtpuser' => 'smtpUser',
+            'smtppass' => 'smtpPass'
+        ];
+
         if ($method === 'GET') {
-            $safeAccount = $currentAccount;
-            unset($safeAccount['passwordhash'], $safeAccount['passwordHash'], $safeAccount['token'], $safeAccount['geminikey'], $safeAccount['geminiKey']);
-            
-            // Map lowercased postgres columns to camelCase
-            $camelMap = [
-                'companyname' => 'companyName',
-                'firstname' => 'firstName',
-                'lastname' => 'lastName',
-                'taxid' => 'taxId',
-                'bankname' => 'bankName',
-                'bankaccount' => 'bankAccount',
-                'primarycolor' => 'primaryColor',
-                'secondarycolor' => 'secondaryColor',
-                'accentcolor' => 'accentColor',
-                'whatsappmessage' => 'whatsappMessage',
-                'smtphost' => 'smtpHost',
-                'smtpport' => 'smtpPort',
-                'smtpencryption' => 'smtpEncryption',
-                'smtpuser' => 'smtpUser',
-                'smtppass' => 'smtpPass',
-                'autoremindersenabled' => 'autoRemindersEnabled',
-                'autoreminderdays' => 'autoReminderDays'
-            ];
             $mappedAccount = [];
             foreach ($safeAccount as $key => $value) {
                 if (isset($camelMap[$key])) {
@@ -52,7 +51,7 @@ class SettingsController {
                 $params[] = $newToken;
             }
 
-            foreach (['companyName', 'slogan', 'address', 'phone', 'website', 'taxId', 'bankName', 'bankAccount', 'logo', 'stamp', 'signature', 'primaryColor', 'secondaryColor', 'accentColor', 'whatsappMessage', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPass', 'smtpEncryption', 'currency', 'autoRemindersEnabled', 'autoReminderDays'] as $field) {
+            foreach (['companyName', 'slogan', 'address', 'phone', 'website', 'taxId', 'bankName', 'bankAccount', 'logo', 'stamp', 'signature', 'primaryColor', 'secondaryColor', 'accentColor', 'whatsappMessage', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPass', 'smtpEncryption', 'currency'] as $field) {
                 if (array_key_exists($field, $body)) {
                     $updates[] = "$field = ?";
                     $params[] = $body[$field];
