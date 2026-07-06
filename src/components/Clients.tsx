@@ -6,9 +6,11 @@ import { Input } from './ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { useForm } from 'react-hook-form';
+import { DownloadIcon, FileTextIcon, FilterIcon, MoreVerticalIcon, PlusIcon, PrinterIcon, ArrowUpRight, ArrowDownLeft, Building, Mail, Phone, MapPin } from 'lucide-react';
 import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
 import { PageHeader } from './ui/PageHeader';
+import { DialogFooter } from './ui/dialog';
 import { Plus } from 'lucide-react';
 import { ClientDocuments } from './ClientDocuments';
 
@@ -158,119 +160,147 @@ export function Clients() {
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-2xl max-w-2xl" style={{ borderRadius: 0, background: 'var(--surface)', border: '1px solid var(--border)' }}>
+        <DialogContent className="sm:max-w-2xl max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-xl">{editingClient ? 'Modifier Client' : 'Nouveau Client'}</DialogTitle>
+            <DialogTitle>Nouveau Client</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
               <div>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', marginBottom: '6px' }}>Nom *</label>
-                <input style={{ width: '100%', padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--foreground)', fontSize: '13px', fontFamily: 'var(--font-sans)' }} {...register('name', { required: true })} />
+                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Nom *</label>
+                <input className="fp-input w-full" {...register('name', { required: true })} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', marginBottom: '6px' }}>Email</label>
-                <input style={{ width: '100%', padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--foreground)', fontSize: '13px', fontFamily: 'var(--font-sans)' }} type="email" {...register('email')} />
+                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Email</label>
+                <input className="fp-input w-full" type="email" {...register('email')} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', marginBottom: '6px' }}>Téléphone</label>
-                <input style={{ width: '100%', padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--foreground)', fontSize: '13px', fontFamily: 'var(--font-sans)' }} {...register('phone')} />
+                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Téléphone</label>
+                <input className="fp-input w-full" {...register('phone')} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', marginBottom: '6px' }}>Ville</label>
-                <input style={{ width: '100%', padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--foreground)', fontSize: '13px', fontFamily: 'var(--font-sans)' }} {...register('city')} />
+                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Ville</label>
+                <input className="fp-input w-full" {...register('city')} />
               </div>
-              <div style={{ gridColumn: 'span 2' }}>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', marginBottom: '6px' }}>Adresse</label>
-                <input style={{ width: '100%', padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--foreground)', fontSize: '13px', fontFamily: 'var(--font-sans)' }} {...register('address')} />
+              <div className="col-span-1 md:col-span-2">
+                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Adresse</label>
+                <input className="fp-input w-full" {...register('address')} />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', marginBottom: '6px' }}>Pays</label>
-                <input style={{ width: '100%', padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--foreground)', fontSize: '13px', fontFamily: 'var(--font-sans)' }} {...register('country')} />
+                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Pays</label>
+                <input className="fp-input w-full" {...register('country')} />
               </div>
             </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', marginBottom: '6px' }}>Notes Internes</label>
-              <p style={{ fontSize: '11px', color: 'var(--foreground-muted)', marginBottom: '8px' }}>Services récurrents, conditions tarifaires, préférences du client.</p>
+            <div className="px-6 pb-6">
+              <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Notes Internes</label>
+              <p className="text-[11px] text-[var(--foreground-muted)] mb-2">Services récurrents, conditions tarifaires, préférences du client.</p>
               <textarea
                 {...register('notes')}
-                style={{ width: '100%', minHeight: '100px', padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--foreground)', fontSize: '13px', fontFamily: 'var(--font-sans)', resize: 'vertical' }}
+                className="fp-input w-full min-h-[100px] resize-y"
                 placeholder="- Services habituellement demandés...&#10;- Conditions de paiement..." 
               />
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '4px', borderTop: '1px solid var(--border)' }}>
-              <button type="button" style={{ padding: '10px 20px', fontSize: '13px', fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', cursor: 'pointer' }} onClick={() => setIsModalOpen(false)}>Annuler</button>
+            <DialogFooter>
+              <button type="button" className="fp-btn-outline" onClick={() => setIsModalOpen(false)}>Annuler</button>
               <button type="submit" className="fp-btn-primary">Sauvegarder</button>
-            </div>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!viewingClient} onOpenChange={(open) => !open && setViewingClient(null)}>
-        <DialogContent className="sm:max-w-4xl max-w-4xl max-h-[90vh] overflow-y-auto" style={{ borderRadius: 0, background: 'var(--background)', border: '1px solid var(--border)', padding: 0 }}>
-          <div style={{ padding: '24px 28px', borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
-            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.6px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', marginBottom: '4px' }}>Dossier Client</p>
-            <p style={{ fontSize: '22px', fontWeight: 700, color: 'var(--foreground)', letterSpacing: '-0.3px', fontFamily: 'var(--font-display)' }}>{viewingClient?.name}</p>
+        <DialogContent className="sm:max-w-5xl max-w-5xl h-[90vh] flex flex-col p-0">
+          <div className="bg-[var(--surface-2)] p-8 border-b border-[var(--border)] shrink-0 flex flex-col gap-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-[11px] font-bold tracking-[0.6px] uppercase text-[var(--foreground-subtle)] mb-1">Dossier Client</p>
+                <h2 className="text-3xl font-bold text-[var(--foreground)] tracking-tight font-display">{viewingClient?.name}</h2>
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap gap-x-8 gap-y-3">
+              {viewingClient?.email && (
+                <div className="flex items-center gap-2 text-sm text-[var(--foreground-muted)]">
+                  <Mail className="w-4 h-4 text-[var(--foreground-subtle)]" />
+                  <span>{viewingClient.email}</span>
+                </div>
+              )}
+              {viewingClient?.phone && (
+                <div className="flex items-center gap-2 text-sm text-[var(--foreground-muted)]">
+                  <Phone className="w-4 h-4 text-[var(--foreground-subtle)]" />
+                  <span>{viewingClient.phone}</span>
+                </div>
+              )}
+              {(viewingClient?.address || viewingClient?.city || viewingClient?.country) && (
+                <div className="flex items-center gap-2 text-sm text-[var(--foreground-muted)]">
+                  <MapPin className="w-4 h-4 text-[var(--foreground-subtle)]" />
+                  <span>{[viewingClient.address, viewingClient.city, viewingClient.country].filter(Boolean).join(', ')}</span>
+                </div>
+              )}
+            </div>
           </div>
+
           {viewingClient && (
-            <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '28px' }}>
+            <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-10 bg-[var(--background)]">
 
               {/* — KPI Cards — */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', border: '1px solid var(--border)', background: 'var(--border)' }}>
-                <div style={{ background: 'var(--surface)', padding: '20px 22px' }}>
-                  <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.7px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', marginBottom: '8px' }}>Facturé Total</p>
-                  <p style={{ fontSize: '28px', fontWeight: 800, color: 'var(--foreground)', fontFamily: 'var(--font-mono)' }}>{formatCurrency(viewingClient.totalInvoiced || 0)}</p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-[var(--surface-1)] p-6 border border-[var(--border)] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col gap-2">
+                  <p className="text-[11px] font-bold tracking-[0.7px] uppercase text-[var(--foreground-subtle)]">Facturé Total</p>
+                  <p className="text-3xl font-extrabold text-[var(--foreground)] font-mono">{formatCurrency(viewingClient.totalInvoiced || 0)}</p>
                 </div>
-                <div style={{ background: 'var(--surface)', padding: '20px 22px', borderLeft: '3px solid var(--emerald)' }}>
-                  <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.7px', textTransform: 'uppercase', color: 'var(--emerald)', marginBottom: '8px' }}>Total Encaissé</p>
-                  <p style={{ fontSize: '28px', fontWeight: 800, color: 'var(--emerald)', fontFamily: 'var(--font-mono)' }}>{formatCurrency(viewingClient.totalPaid || 0)}</p>
+                <div className="bg-[var(--surface-1)] p-6 border border-[var(--border)] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col gap-2 relative overflow-hidden">
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-[var(--emerald)]" />
+                  <p className="text-[11px] font-bold tracking-[0.7px] uppercase text-[var(--emerald)]">Total Encaissé</p>
+                  <p className="text-3xl font-extrabold text-[var(--emerald)] font-mono">{formatCurrency(viewingClient.totalPaid || 0)}</p>
                 </div>
-                <div style={{ background: 'var(--surface)', padding: '20px 22px', borderLeft: `3px solid ${(viewingClient.totalRemaining || 0) > 0 ? 'var(--gold)' : 'var(--border)'}` }}>
-                  <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.7px', textTransform: 'uppercase', color: (viewingClient.totalRemaining || 0) > 0 ? 'var(--gold)' : 'var(--foreground-subtle)', marginBottom: '8px' }}>Créances (Reste à payer)</p>
-                  <p style={{ fontSize: '28px', fontWeight: 800, color: (viewingClient.totalRemaining || 0) > 0 ? 'var(--gold)' : 'var(--foreground)', fontFamily: 'var(--font-mono)' }}>{formatCurrency(viewingClient.totalRemaining || 0)}</p>
+                <div className="bg-[var(--surface-1)] p-6 border border-[var(--border)] shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col gap-2 relative overflow-hidden">
+                  <div className={`absolute left-0 top-0 bottom-0 w-1 ${(viewingClient.totalRemaining || 0) > 0 ? 'bg-[var(--gold)]' : 'bg-[var(--border)]'}`} />
+                  <p className={`text-[11px] font-bold tracking-[0.7px] uppercase ${(viewingClient.totalRemaining || 0) > 0 ? 'text-[var(--gold)]' : 'text-[var(--foreground-subtle)]'}`}>Créances (Reste à payer)</p>
+                  <p className={`text-3xl font-extrabold font-mono ${(viewingClient.totalRemaining || 0) > 0 ? 'text-[var(--gold)]' : 'text-[var(--foreground)]'}`}>{formatCurrency(viewingClient.totalRemaining || 0)}</p>
                 </div>
               </div>
 
               {/* — Historique factures — */}
-              <div>
-                <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.6px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', marginBottom: '14px', paddingBottom: '10px', borderBottom: '1px solid var(--border)' }}>Historique des Factures</p>
+              <div className="flex flex-col gap-4">
+                <h3 className="text-[13px] font-bold tracking-[0.6px] uppercase text-[var(--foreground)] border-b border-[var(--border)] pb-3">Historique des Factures</h3>
                 {viewingClient.invoices?.length > 0 ? (
-                  <div className="fp-card" style={{ overflow: 'hidden', overflowX: 'auto', marginTop: '16px' }}>
-                    <table className="fp-table">
+                  <div className="fp-card overflow-hidden overflow-x-auto">
+                    <table className="fp-table w-full">
                       <thead>
                         <tr>
                           <th>Numéro</th>
                           <th>Date</th>
-                          <th style={{ textAlign: 'right' }}>Total TTC</th>
-                          <th style={{ textAlign: 'right' }}>Déjà Payé</th>
-                          <th style={{ textAlign: 'center' }}>Statut</th>
+                          <th className="text-right">Total TTC</th>
+                          <th className="text-right">Déjà Payé</th>
+                          <th className="text-center">Statut</th>
                         </tr>
                       </thead>
                       <tbody>
                         {viewingClient.invoices.map((inv: any) => (
                           <React.Fragment key={inv.id}>
-                            <tr>
-                              <td style={{ fontWeight: 600 }}>{inv.number}</td>
-                              <td>{formatDate(inv.createdAt)}</td>
-                              <td style={{ textAlign: 'right', fontWeight: 600 }}>{formatCurrency(inv.total)}</td>
-                              <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--emerald)' }}>{formatCurrency(inv.amountPaid || 0)}</td>
-                              <td style={{ textAlign: 'center' }}>
-                                <span style={{ padding: '4px 8px', borderRadius: 0, fontSize: '11px', fontWeight: 600, textTransform: 'capitalize', background: inv.status === 'payée' ? 'rgba(16,185,129,0.1)' : inv.status === 'partielle' ? 'rgba(245,158,11,0.1)' : 'rgba(100,116,139,0.1)', color: inv.status === 'payée' ? 'var(--emerald)' : inv.status === 'partielle' ? 'var(--amber)' : 'var(--foreground-muted)', border: `1px solid ${inv.status === 'payée' ? 'rgba(16,185,129,0.2)' : inv.status === 'partielle' ? 'rgba(245,158,11,0.2)' : 'rgba(100,116,139,0.2)'}` }}>
+                            <tr className="hover:bg-[var(--surface-hover)] transition-colors">
+                              <td className="font-semibold text-[var(--foreground)]">{inv.number}</td>
+                              <td className="text-[var(--foreground-muted)]">{formatDate(inv.createdAt)}</td>
+                              <td className="text-right font-semibold font-mono text-[var(--foreground)]">{formatCurrency(inv.total)}</td>
+                              <td className="text-right font-semibold font-mono text-[var(--emerald)]">{formatCurrency(inv.amountPaid || 0)}</td>
+                              <td className="text-center">
+                                <span className={`fp-badge ${inv.status === 'payée' ? 'fp-badge-green' : inv.status === 'partielle' ? 'fp-badge-neutral' : 'fp-badge-neutral'}`}>
                                   {inv.status === 'brouillon' ? 'Non entamée' : inv.status}
                                 </span>
                               </td>
                             </tr>
                             {inv.receipts && inv.receipts.length > 0 && (
-                              <tr style={{ background: 'var(--surface-hover)' }}>
-                                <td colSpan={5} style={{ padding: '12px 20px', borderLeft: '3px solid var(--emerald)' }}>
-                                  <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--foreground-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Historique des Versements :</div>
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <tr className="bg-[var(--surface-2)]">
+                                <td colSpan={5} className="p-4 pl-6 border-l-[3px] border-[var(--emerald)]">
+                                  <div className="text-[10px] font-bold text-[var(--foreground-subtle)] uppercase tracking-wider mb-2">Historique des Versements :</div>
+                                  <div className="flex flex-col gap-2">
                                     {inv.receipts.map((rec: any) => (
-                                      <div key={rec.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--surface)', padding: '6px 12px', borderRadius: 0, border: '1px solid var(--border)' }}>
-                                        <div style={{ fontSize: '12px', color: 'var(--foreground-muted)' }}>
-                                          <span style={{ fontWeight: 600, color: 'var(--foreground)' }}>{rec.number}</span> ({formatDate(rec.paymentDate)})
+                                      <div key={rec.id} className="flex justify-between items-center bg-[var(--surface-1)] px-4 py-2 border border-[var(--border)] shadow-sm">
+                                        <div className="text-xs text-[var(--foreground-muted)]">
+                                          <span className="font-semibold text-[var(--foreground)]">{rec.number}</span> ({formatDate(rec.paymentDate)})
                                         </div>
-                                        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--emerald)' }}>+ {formatCurrency(rec.amount)}</div>
+                                        <div className="text-[13px] font-bold text-[var(--emerald)] font-mono">+ {formatCurrency(rec.amount)}</div>
                                       </div>
                                     ))}
                                   </div>
@@ -283,18 +313,18 @@ export function Clients() {
                     </table>
                   </div>
                 ) : (
-                  <p style={{ fontSize: '13px', color: 'var(--foreground-muted)', fontStyle: 'italic', padding: '16px 0' }}>Aucune facture pour ce client.</p>
+                  <p className="text-[13px] text-[var(--foreground-muted)] italic py-4">Aucune facture pour ce client.</p>
                 )}
               </div>
 
               {/* — GED — */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', paddingBottom: '10px', borderBottom: '1px solid var(--border)' }}>
-                  <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.6px', textTransform: 'uppercase', color: 'var(--foreground-subtle)' }}>Documents Associés (GED)</p>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: 'var(--foreground-muted)', cursor: 'pointer', padding: '6px 12px', border: '1px solid var(--border-hover)', background: 'var(--surface)' }}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-center border-b border-[var(--border)] pb-3">
+                  <h3 className="text-[13px] font-bold tracking-[0.6px] uppercase text-[var(--foreground)]">Documents Associés (GED)</h3>
+                  <label className="flex items-center gap-2 text-xs font-semibold text-[var(--foreground-subtle)] cursor-pointer px-4 py-2 border border-[var(--border)] bg-[var(--surface-1)] hover:bg-[var(--surface-hover)] transition-colors shadow-sm">
+                    <PlusIcon className="w-4 h-4" />
                     Ajouter un document
-                    <input type="file" style={{ display: 'none' }} onChange={(e) => { if (e.target.files?.[0]) { const fData = new FormData(); fData.append('file', e.target.files[0]); fData.append('entityType', 'client'); fData.append('entityId', viewingClient.id); fetch('/api/upload', { method: 'POST', body: fData, headers: { 'Authorization': `Bearer ${localStorage.getItem('facturapro_token')}` } }).then(r => r.json()).then(() => { toast.success('Document ajouté'); }); }}} />
+                    <input type="file" className="hidden" onChange={(e) => { if (e.target.files?.[0]) { const fData = new FormData(); fData.append('file', e.target.files[0]); fData.append('entityType', 'client'); fData.append('entityId', viewingClient.id); fetch('/api/upload', { method: 'POST', body: fData, headers: { 'Authorization': `Bearer ${localStorage.getItem('facturapro_token')}` } }).then(r => r.json()).then(() => { toast.success('Document ajouté'); }); }}} />
                   </label>
                 </div>
                 <ClientDocuments clientId={viewingClient.id} />

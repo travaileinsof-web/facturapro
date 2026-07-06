@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { formatCurrency, formatDate, useAppStore, safeJSONParse, apiFetch } from '../lib/store';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -437,11 +440,11 @@ ${html}
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[1400px] w-[95vw] max-w-[1400px] h-[90vh] flex flex-col p-0 overflow-hidden" style={{ background: 'var(--background)', borderRadius: 0, border: '1px solid var(--border)' }}>
-          <DialogHeader className="px-8 py-5 border-b shrink-0" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
-            <DialogTitle style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: 700, color: 'var(--foreground)', letterSpacing: '-0.3px' }}>{editingInvoice ? 'Modifier Document' : 'Nouveau Document'}</DialogTitle>
+        <DialogContent className="sm:max-w-[1400px] w-[95vw] h-[90vh] flex flex-col p-0">
+          <DialogHeader>
+            <DialogTitle>{editingInvoice ? 'Modifier Document' : 'Nouveau Document'}</DialogTitle>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto px-8 py-6">
+          <div className="flex-1 overflow-y-auto p-6 bg-[var(--background)]">
             <form id="invoice-form" onSubmit={handleSubmit(onSubmit)}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
 
@@ -463,10 +466,10 @@ ${html}
               </div>
 
               {/* — Client + Date — */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', marginBottom: '6px' }}>Client *</label>
-                  <select {...register('clientId')} style={{ width: '100%', padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--foreground)', fontSize: '13px', fontFamily: 'var(--font-sans)', cursor: 'pointer' }}>
+                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Client *</label>
+                  <select {...register('clientId')} className="fp-input w-full">
                     <option value="">— Sélectionner un client —</option>
                     {clients?.map((c: any) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
@@ -474,9 +477,9 @@ ${html}
                   </select>
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', marginBottom: '6px' }}>Date d'échéance</label>
-                  <input type="date" style={{ width: '100%', padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--foreground)', fontSize: '13px', fontFamily: 'var(--font-sans)' }} {...register('dueDate')} />
-                  <p style={{ fontSize: '10px', color: 'var(--foreground-muted)', marginTop: '4px' }}>Requis pour les relances automatiques.</p>
+                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Date d'échéance</label>
+                  <input type="date" className="fp-input w-full" {...register('dueDate')} />
+                  <p className="text-[10px] text-[var(--foreground-muted)] mt-1">Requis pour les relances automatiques.</p>
                 </div>
               </div>
 
@@ -569,10 +572,10 @@ ${html}
               </div>{/* end flex col */}
             </form>
           </div>
-          <div className="px-8 py-4 flex justify-end gap-3 sticky bottom-0" style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)' }}>
-             <button type="button" className="fp-btn-ghost" onClick={() => setIsModalOpen(false)}>Annuler</button>
+          <DialogFooter>
+             <button type="button" className="fp-btn-outline" onClick={() => setIsModalOpen(false)}>Annuler</button>
              <button form="invoice-form" type="submit" className="fp-btn-primary">{editingInvoice ? 'Mettre à jour' : 'Enregistrer'}</button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

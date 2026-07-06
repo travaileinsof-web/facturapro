@@ -464,6 +464,31 @@ tbody tr:last-child td { border-bottom: none !important; }
 
 .fp-btn-primary:active { opacity: 0.9; }
 
+.fp-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: transparent;
+  color: var(--foreground);
+  border: 1px solid var(--border-hover);
+  border-radius: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: all 0.15s;
+}
+
+.fp-btn-outline:hover {
+  background: var(--surface-2);
+  border-color: var(--foreground-subtle);
+}
+
+.fp-btn-outline:active { opacity: 0.8; }
+
 .fp-btn-ghost {
   display: inline-flex;
   align-items: center;

@@ -4,7 +4,7 @@ import { formatCurrency, formatDate, useAppStore, apiFetch } from '../lib/store'
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import { useForm } from 'react-hook-form';
 import { PageHeader } from './ui/PageHeader';
 import { Plus } from 'lucide-react';
@@ -135,38 +135,40 @@ export function Expenses() {
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[425px]" style={{ borderRadius: 0, background: 'var(--surface)', border: '1px solid rgba(0,0,0,0.15)', padding: 0 }}>
-          <DialogHeader style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--border)' }}>
-            <DialogTitle style={{ fontFamily: 'var(--font-display)', fontSize: '16px', fontWeight: 700, color: 'var(--foreground)' }}>Enregistrer une Dépense</DialogTitle>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Enregistrer une Dépense</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', marginBottom: '6px' }}>Catégorie</label>
-              <select {...register('category')} style={{ width: '100%', padding: '10px 36px 10px 12px', background: 'var(--surface-2)', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--foreground)', fontSize: '13px', fontFamily: 'var(--font-sans)', cursor: 'pointer', appearance: 'none', backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}>
-                <option value="Achats">Achats &amp; Matériel</option>
-                <option value="Salaires">Salaires &amp; Primes</option>
-                <option value="Loyer">Loyer &amp; Utilitaires</option>
-                <option value="Abonnements">Abonnements Logiciels</option>
-                <option value="Marketing">Marketing &amp; Pub</option>
-                <option value="Général">Frais Généraux</option>
-              </select>
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
+            <div className="p-6 grid gap-5">
+              <div>
+                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Catégorie</label>
+                <select {...register('category')} className="fp-input w-full">
+                  <option value="Achats">Achats &amp; Matériel</option>
+                  <option value="Salaires">Salaires &amp; Primes</option>
+                  <option value="Loyer">Loyer &amp; Utilitaires</option>
+                  <option value="Abonnements">Abonnements Logiciels</option>
+                  <option value="Marketing">Marketing &amp; Pub</option>
+                  <option value="Général">Frais Généraux</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Montant</label>
+                <input className="fp-input w-full" type="number" step="0.01" {...register('amount')} required />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Date de dépense</label>
+                <input className="fp-input w-full" type="date" {...register('expenseDate')} required />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Description (facultative)</label>
+                <textarea className="fp-input w-full min-h-[80px] resize-y" {...register('description')} placeholder="Ex: Achat d'une nouvelle imprimante..." />
+              </div>
             </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', marginBottom: '6px' }}>Montant</label>
-              <input type="number" step="0.01" {...register('amount')} required style={{ width: '100%', padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--foreground)', fontSize: '13px', fontFamily: 'var(--font-sans)' }} />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', marginBottom: '6px' }}>Date de dépense</label>
-              <input type="date" {...register('expenseDate')} required style={{ width: '100%', padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--foreground)', fontSize: '13px', fontFamily: 'var(--font-sans)' }} />
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', marginBottom: '6px' }}>Description (facultative)</label>
-              <textarea {...register('description')} placeholder="Ex: Achat d'une nouvelle imprimante..." style={{ width: '100%', minHeight: '80px', padding: '10px 14px', background: 'var(--surface-2)', border: '1px solid rgba(0,0,0,0.12)', color: 'var(--foreground)', fontSize: '13px', fontFamily: 'var(--font-sans)', resize: 'vertical' }} />
-            </div>
-            <div style={{ paddingTop: '8px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <button type="button" style={{ padding: '10px 20px', fontSize: '13px', fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', cursor: 'pointer' }} onClick={() => setIsModalOpen(false)}>Annuler</button>
-              <button type="submit" className="fp-btn-primary">Économiser</button>
-            </div>
+            <DialogFooter>
+              <button type="button" className="fp-btn-outline" onClick={() => setIsModalOpen(false)}>Annuler</button>
+              <button type="submit" className="fp-btn-primary">Enregistrer</button>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
