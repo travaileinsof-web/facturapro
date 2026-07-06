@@ -263,6 +263,7 @@ function AppLayout() {
         const num = parseInt(c, 16);
         return `${num >> 16}, ${(num >> 8) & 255}, ${num & 255}`;
       };
+      
       const rgb = hexToRgb(pc);
       document.documentElement.style.setProperty('--gold', pc);
       document.documentElement.style.setProperty('--gold-light', pc);
@@ -271,6 +272,20 @@ function AppLayout() {
       document.documentElement.style.setProperty('--primary', pc);
       document.documentElement.style.setProperty('--border-gold', `rgba(${rgb}, 0.25)`);
       document.documentElement.style.setProperty('--ring', pc);
+      
+      if (sc) {
+        const rgbSc = hexToRgb(sc);
+        document.documentElement.style.setProperty('--blue-accent', sc);
+        document.documentElement.style.setProperty('--blue-dim', `rgba(${rgbSc}, 0.1)`);
+        document.documentElement.style.setProperty('--color-blue-accent', sc);
+        document.documentElement.style.setProperty('--secondary', sc);
+      }
+      
+      if (ac) {
+        document.documentElement.style.setProperty('--success', ac);
+        document.documentElement.style.setProperty('--color-success', ac);
+        document.documentElement.style.setProperty('--accent', ac);
+      }
     } else {
       document.documentElement.style.removeProperty('--gold');
       document.documentElement.style.removeProperty('--gold-light');
@@ -279,23 +294,13 @@ function AppLayout() {
       document.documentElement.style.removeProperty('--primary');
       document.documentElement.style.removeProperty('--border-gold');
       document.documentElement.style.removeProperty('--ring');
-    }
-    
-    if (sc) {
-      document.documentElement.style.setProperty('--blue-accent', sc);
-      document.documentElement.style.setProperty('--secondary', sc);
-    } else {
       document.documentElement.style.removeProperty('--blue-accent');
-      document.documentElement.style.removeProperty('--secondary');
+      document.documentElement.style.removeProperty('--blue-dim');
+      document.documentElement.style.removeProperty('--color-blue-accent');
+      document.documentElement.style.removeProperty('--success');
+      document.documentElement.style.removeProperty('--color-success');
     }
     
-    if (ac) {
-      document.documentElement.style.setProperty('--success', ac);
-      document.documentElement.style.setProperty('--accent', ac);
-    } else {
-      document.documentElement.style.removeProperty('--success');
-      document.documentElement.style.removeProperty('--accent');
-    }
   }, [user?.primaryColor, user?.secondaryColor, user?.accentColor]);
 
   // Desktop: sidebar always visible (240px margin)

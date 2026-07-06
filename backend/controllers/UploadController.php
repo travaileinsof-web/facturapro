@@ -9,10 +9,7 @@ class UploadController {
             }
 
             $file = $_FILES['file'];
-            
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mime = finfo_file($finfo, $file['tmp_name']);
-            finfo_close($finfo);
+            $mime = $file['type'];
 
             $allowedMimes = [
                 'image/jpeg' => 'jpg',
