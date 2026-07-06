@@ -89,7 +89,7 @@ function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boole
         }} className="sidebar-hide" />
       )}
 
-      <aside className={`app-sidebar ${open ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''}`}
+      <aside className={`app-sidebar ${open ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''} border-r-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)]`}
         style={{ transform: open ? 'translateX(0)' : undefined }}>
 
         {/* ── Logo ── */}
@@ -113,14 +113,15 @@ function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boole
               ><X size={14}/></button>
             )}
           </div>
-          <button onClick={onToggleCollapse} className="pub-nav-desktop" style={{
+          <button onClick={onToggleCollapse} className="pub-nav-desktop hover:shadow-sm" style={{
             position: 'absolute', top: '22px', right: '-12px', width: '24px', height: '24px',
-            background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '50%',
+            background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10,
             color: 'var(--foreground-muted)'
           }}
             onMouseEnter={e => (e.currentTarget.style.color = 'var(--foreground)')}
             onMouseLeave={e => (e.currentTarget.style.color = 'var(--foreground-muted)')}
+            title={isCollapsed ? 'Agrandir' : 'Réduire'}
           >
             <ChevronRight size={14} style={{ transform: isCollapsed ? 'rotate(0)' : 'rotate(180deg)', transition: 'transform 0.2s' }}/>
           </button>
@@ -138,10 +139,11 @@ function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boole
             return (
               <button key={item.id} onClick={() => handleNav(item.id)}
                 className={`app-nav-item ${active ? 'active' : ''}`}
-                style={{ opacity: 0, animation: `fp-fade-up 0.35s ease ${i * 0.035}s forwards` }}>
+                title={isCollapsed ? item.label : undefined}
+                style={{ opacity: 0, animation: `fp-fade-up 0.35s ease ${i * 0.035}s forwards`, display: 'flex', alignItems: 'center', justifyContent: isCollapsed ? 'center' : 'flex-start' }}>
                 <Icon className="nav-icon" style={{ width: '13px', height: '13px', flexShrink: 0, color: active ? 'var(--gold)' : 'var(--foreground-subtle)', transition: 'color 0.15s' }}/>
-                <span style={{ flex: 1 }}>{item.label}</span>
-                {active && <div className="nav-dot"/>}
+                {!isCollapsed && <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>}
+                {active && !isCollapsed && <div className="nav-dot"/>}
               </button>
             );
           })}
@@ -155,13 +157,16 @@ function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boole
             return (
               <button key={item.id} onClick={() => handleNav(item.id)}
                 className={`app-nav-item ${active ? 'active' : ''}`}
-                style={{ opacity: 0, animation: `fp-fade-up 0.35s ease ${(mainItems.length + i) * 0.035}s forwards` }}>
+                title={isCollapsed ? item.label : undefined}
+                style={{ opacity: 0, animation: `fp-fade-up 0.35s ease ${(mainItems.length + i) * 0.035}s forwards`, display: 'flex', alignItems: 'center', justifyContent: isCollapsed ? 'center' : 'flex-start' }}>
                 <Icon className="nav-icon" style={{ width: '13px', height: '13px', flexShrink: 0, color: active ? 'var(--gold)' : 'var(--foreground-subtle)', transition: 'color 0.15s' }}/>
-                <span style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  {item.label}
-                  {isPremium && <span style={{ fontSize: '8px', background: 'var(--gold-dim)', color: 'var(--gold)', padding: '2px 4px', borderRadius: '2px', fontWeight: 800 }}>BIENTÔT</span>}
-                </span>
-                {active && <div className="nav-dot"/>}
+                {!isCollapsed && (
+                  <span style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '6px', textAlign: 'left' }}>
+                    {item.label}
+                    {isPremium && <span style={{ fontSize: '8px', background: 'var(--gold-dim)', color: 'var(--gold)', padding: '2px 4px', borderRadius: '2px', fontWeight: 800 }}>BIENTÔT</span>}
+                  </span>
+                )}
+                {active && !isCollapsed && <div className="nav-dot"/>}
               </button>
             );
           })}

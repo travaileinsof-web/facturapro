@@ -90,76 +90,89 @@ export function ChatIA() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-50 relative">
+    <div className="flex flex-col h-[calc(100vh-8rem)] max-w-4xl mx-auto bg-[var(--background)] rounded-none shadow-[0_4px_30px_rgba(0,0,0,0.05)] border border-[var(--border)] relative overflow-hidden">
+      <div className="flex-1 overflow-y-auto p-8 bg-[var(--background)] pb-40">
         {messages.length === 0 && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400">
-             <Bot className="w-16 h-16 mb-4 text-slate-300" />
-             <p>Je suis ARIA, votre assistant ERP propulsé par Gemini.</p>
-             <p className="text-sm mt-2 text-center max-w-lg">
-                Utilisez le micro ou le texte pour tout faire : <br/>
-                "Ajoute le client TechMali", "Crée une facture de 5 PC pour Ali et envoie sur WhatsApp"...
+          <div className="flex flex-col items-center justify-center h-full text-center max-w-lg mx-auto">
+             <div className="w-24 h-24 flex items-center justify-center bg-[var(--surface-2)] mb-8 shadow-sm">
+               <Bot className="w-12 h-12 text-[var(--gold)]" />
+             </div>
+             <h2 className="text-4xl font-extrabold text-[var(--foreground)] tracking-tight mb-4 font-display">Je suis ARIA</h2>
+             <p className="text-[var(--foreground-muted)] text-base leading-relaxed">
+                Votre assistant intelligent propulsé par Gemini. <br/>
+                Demandez-moi d'analyser vos chiffres, de créer une facture ou de rechercher un document.
              </p>
           </div>
         )}
-        {messages.map((m, i) => (
-          <div key={i} className={`flex gap-4 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-             {m.role === 'model' && (
-               <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                 <Bot className="w-5 h-5 text-emerald-600" />
-               </div>
-             )}
-             <div className={`max-w-[80%] rounded-2xl p-4 ${m.role === 'user' ? 'bg-slate-900 text-white rounded-tr-none' : 'bg-white border border-slate-200 shadow-sm rounded-tl-none'}`}>
-               <p className="whitespace-pre-wrap">{m.text}</p>
-               {m.action && (
-                 <div className="mt-3 inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full text-xs font-medium border border-emerald-200">
-                   <CheckCircle2 className="w-4 h-4" />
-                   {m.action.type === 'REFETCH' && `Base de données mise à jour`}
-                   {m.action.type === 'WHATSAPP_SHARE' && `WhatsApp préparé`}
-                 </div>
-               )}
-             </div>
-             {m.role === 'user' && (
-               <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
-                 <User className="w-5 h-5 text-slate-600" />
-               </div>
-             )}
-          </div>
-        ))}
-        {isLoading && (
-          <div className="flex gap-4 justify-start">
-             <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                 <Bot className="w-5 h-5 text-emerald-600 animate-pulse" />
-             </div>
-             <div className="bg-white border border-slate-200 shadow-sm rounded-2xl rounded-tl-none p-4 flex items-center">
-                <span className="flex gap-1">
-                  <span className="w-2 h-2 rounded-full bg-slate-300 animate-bounce"></span>
-                  <span className="w-2 h-2 rounded-full bg-slate-300 animate-bounce" style={{animationDelay: '0.2s'}}></span>
-                  <span className="w-2 h-2 rounded-full bg-slate-300 animate-bounce" style={{animationDelay: '0.4s'}}></span>
+        <div className="flex flex-col gap-10">
+          {messages.map((m, i) => (
+            <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
+              <div className="flex items-center gap-2 mb-2">
+                {m.role === 'model' && <Bot className="w-4 h-4 text-[var(--emerald)]" />}
+                {m.role === 'user' && <User className="w-4 h-4 text-[var(--foreground-subtle)]" />}
+                <span className="text-[11px] font-bold tracking-[0.8px] uppercase text-[var(--foreground-subtle)]">
+                  {m.role === 'user' ? 'Vous' : 'ARIA'}
                 </span>
-             </div>
-          </div>
-        )}
-      </div>
-      <div className="p-4 bg-white border-t border-slate-200 flex flex-col gap-4 items-center">
-        <div className="w-full flex gap-4 items-end opacity-50 pointer-events-none">
-          <Button 
-             variant="outline" 
-             size="icon" 
-             className="h-14 w-14 shrink-0 rounded-xl transition-colors text-slate-500"
-          >
-            <Mic className="w-6 h-6" />
-          </Button>
-          <Textarea 
-            placeholder="Je vous écoute, ou tapez votre demande..." 
-            className="resize-none h-14 min-h-[56px] py-4 cursor-not-allowed"
-            disabled
-          />
-          <Button disabled size="icon" className="h-14 w-14 shrink-0 rounded-xl bg-slate-900 hover:bg-slate-800">
-            <Send className="w-6 h-6" />
-          </Button>
+              </div>
+              <div className={`w-full max-w-3xl ${m.role === 'user' ? 'text-right' : 'text-left pl-5 border-l-2 border-[var(--emerald)] bg-[rgba(16,185,129,0.02)] p-4 shadow-sm'}`}>
+                 <p className="whitespace-pre-wrap text-[var(--foreground)] leading-relaxed text-sm">{m.text}</p>
+                 {m.action && (
+                   <div className="mt-4 inline-flex items-center gap-2 bg-[var(--surface-1)] text-[var(--foreground)] px-4 py-2 border border-[var(--emerald)] shadow-[0_2px_10px_rgba(16,185,129,0.1)]">
+                     <CheckCircle2 className="w-4 h-4 text-[var(--emerald)]" />
+                     <span className="text-xs font-bold uppercase tracking-wider text-[var(--emerald)]">
+                       {m.action.type === 'REFETCH' && `Base de données mise à jour`}
+                       {m.action.type === 'WHATSAPP_SHARE' && `WhatsApp préparé`}
+                     </span>
+                   </div>
+                 )}
+              </div>
+            </div>
+          ))}
+          {isLoading && (
+            <div className="flex flex-col items-start gap-2">
+              <div className="flex items-center gap-2 mb-2">
+                <Bot className="w-4 h-4 text-[var(--emerald)]" />
+                <span className="text-[11px] font-bold tracking-[0.8px] uppercase text-[var(--foreground-subtle)]">ARIA</span>
+              </div>
+              <div className="pl-5 border-l-2 border-[var(--border)] flex items-center h-8">
+                  <span className="flex gap-1.5">
+                    <span className="w-1.5 h-1.5 bg-[var(--gold)] animate-pulse"></span>
+                    <span className="w-1.5 h-1.5 bg-[var(--gold)] animate-pulse" style={{animationDelay: '0.2s'}}></span>
+                    <span className="w-1.5 h-1.5 bg-[var(--gold)] animate-pulse" style={{animationDelay: '0.4s'}}></span>
+                  </span>
+              </div>
+            </div>
+          )}
         </div>
-        <span style={{ fontSize: '12px', background: 'var(--gold-dim)', color: 'var(--gold)', padding: '4px 12px', borderRadius: '4px', fontWeight: 600 }}>L'Assistant IA sera Bientôt disponible !</span>
+      </div>
+      
+      {/* Floating Input Area */}
+      <div className="absolute bottom-0 left-0 right-0 p-8 pt-20 bg-gradient-to-t from-[var(--background)] via-[var(--background)] to-transparent pointer-events-none flex flex-col items-center">
+        <div className="w-full max-w-3xl bg-[var(--surface-1)] border border-[var(--border)] shadow-[0_10px_40px_rgba(0,0,0,0.06)] pointer-events-auto flex flex-col p-2 relative overflow-hidden opacity-80 backdrop-blur-sm grayscale-[50%] cursor-not-allowed">
+          
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-[rgba(255,255,255,0.4)] backdrop-blur-[2px]">
+             <span className="text-[11px] font-bold tracking-[1px] uppercase bg-[var(--foreground)] text-[var(--background)] px-4 py-2 shadow-xl">Bientôt disponible</span>
+          </div>
+
+          <div className="flex gap-2">
+            <Button 
+               variant="ghost" 
+               size="icon" 
+               className="h-12 w-12 shrink-0 rounded-none text-[var(--foreground-muted)] hover:bg-[var(--surface-hover)]"
+               disabled
+            >
+              <Mic className="w-5 h-5" />
+            </Button>
+            <Textarea 
+              placeholder="Je vous écoute..." 
+              className="resize-none h-12 min-h-[48px] py-3 bg-transparent border-none shadow-none focus-visible:ring-0 text-[var(--foreground)] text-sm"
+              disabled
+            />
+            <Button disabled size="icon" className="h-12 w-12 shrink-0 rounded-none bg-[var(--gold)] text-black hover:bg-[#d4af37]">
+              <Send className="w-5 h-5" />
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
