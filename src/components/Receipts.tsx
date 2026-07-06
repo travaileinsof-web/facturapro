@@ -162,8 +162,8 @@ export function Receipts() {
     const toastId = toast.loading("Génération du lien WhatsApp...");
     try {
       const [settingsRes, recRes] = await Promise.all([
-        fetch('/api/settings'),
-        fetch(`/api/receipts/${rec.id}`)
+        apiFetch('/api/settings'),
+        apiFetch(`/api/receipts/${rec.id}`)
       ]);
       const settings = await settingsRes.json();
       const fullRec = await recRes.json();
@@ -174,9 +174,8 @@ export function Receipts() {
       if (phone) phone = phone.replace(/[^0-9]/g, '');
       
       // Enregistrer le PDF sur le serveur pour obtenir un lien public
-      const shareRes = await fetch('/api/share', {
+      const shareRes = await apiFetch('/api/share', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'whatsapp',
           pdfBase64: pdfBase64,
@@ -220,8 +219,8 @@ export function Receipts() {
     const toastId = toast.loading("Génération du PDF en cours...");
     try {
       const [settingsRes, recRes] = await Promise.all([
-        fetch('/api/settings'),
-        fetch(`/api/receipts/${rec.id}`)
+        apiFetch('/api/settings'),
+        apiFetch(`/api/receipts/${rec.id}`)
       ]);
       const settings = await settingsRes.json();
       const fullRec = await recRes.json();
