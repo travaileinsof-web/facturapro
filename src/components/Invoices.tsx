@@ -185,9 +185,6 @@ export function Invoices() {
   };
 
   const shareViaWhatsApp = async (inv: any) => {
-    let phone = inv.client?.phone || "";
-    if (phone) phone = phone.replace(/[^0-9]/g, '');
-    
     const toastId = toast.loading("Génération du lien WhatsApp...");
     try {
       const [settingsRes, invRes] = await Promise.all([
@@ -196,6 +193,10 @@ export function Invoices() {
       ]);
       const settings = await settingsRes.json();
       const fullInv = await invRes.json();
+      
+      let phone = fullInv.client?.phone || inv.client?.phone || "";
+      if (phone) phone = phone.replace(/[^0-9]/g, '');
+      
       const html = buildInvoiceHTML(fullInv, settings);
       const pdfBase64 = await generatePDFBase64(html);
       
@@ -214,7 +215,7 @@ export function Invoices() {
       // Templating
       let baseMsg = settings.whatsappMessage ? settings.whatsappMessage : `Bonjour {client_name},\n\nVoici votre facture {document_number} d'un montant de {amount}.\n\nCordialement, {company_name}`;
       
-      baseMsg = baseMsg.replace(/\{client_name\}/g, inv.client?.name || '');
+      baseMsg = baseMsg.replace(/\{client_name\}/g, fullInv.client?.name || inv.client?.name || '');
       baseMsg = baseMsg.replace(/\{document_number\}/g, inv.number || '');
       baseMsg = baseMsg.replace(/\{amount\}/g, formatCurrency(inv.totalTTC) || '');
       baseMsg = baseMsg.replace(/\{company_name\}/g, fullInv.company?.name || settings.companyName || '');
