@@ -183,9 +183,8 @@ export function Receipts() {
         })
       });
       const shareData = await shareRes.json();
-      if (!shareRes.ok || !shareData.success) {
-        throw new Error(shareData.error || "Erreur de génération du lien PDF");
-      }
+      
+      let finalMsg = "";
       
       const pdfUrl = shareData.url;
       
@@ -197,13 +196,27 @@ export function Receipts() {
       baseMsg = baseMsg.replace(/\{amount\}/g, formatCurrency(rec.amount) || '');
       baseMsg = baseMsg.replace(/\{company_name\}/g, fullRec.company?.name || settings.companyName || '');
       
-      const finalMsg = `${baseMsg}\n\n📄 Voici votre document : ${pdfUrl}`;
-      const encodedMsg = encodeURIComponent(finalMsg);
+      if (!shareRes.ok && shareData.error?.includes("Vercel Blob")) {
+        // Fallback: download locally
+        const link = document.createElement('a');
+        link.href = pdfBase64;
+        link.download = `Recu_${rec.number}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        finalMsg = `${baseMsg}\n\n(Veuillez joindre manuellement le reçu qui vient d'être téléchargé sur votre appareil)`;
+        toast.success("PDF téléchargé. Ajoutez-le dans WhatsApp !", { id: toastId });
+      } else if (!shareRes.ok || !shareData.success) {
+        throw new Error(shareData.error || "Erreur de lien PDF");
+      } else {
+        finalMsg = `${baseMsg}\n\n📄 Voici votre document : ${shareData.url}`;
+        toast.success("Redirection vers WhatsApp...", { id: toastId });
+      }
       
+      const encodedMsg = encodeURIComponent(finalMsg);
       const waUrl = phone ? `https://wa.me/${phone}?text=${encodedMsg}` : `https://wa.me/?text=${encodedMsg}`;
       window.open(waUrl, '_blank');
-      
-      toast.success("Redirection vers WhatsApp...", { id: toastId });
     } catch (err: any) {
       toast.error(err.message || "Erreur", { id: toastId });
     }

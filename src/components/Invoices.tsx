@@ -210,7 +210,8 @@ export function Invoices() {
         })
       });
       const shareData = await shareRes.json();
-      if (!shareRes.ok || !shareData.success) throw new Error(shareData.error || "Erreur de lien PDF");
+      
+      let finalMsg = "";
       
       // Templating
       let baseMsg = settings.whatsappMessage ? settings.whatsappMessage : `Bonjour {client_name},\n\nVoici votre facture {document_number} d'un montant de {amount}.\n\nCordialement, {company_name}`;
@@ -220,12 +221,27 @@ export function Invoices() {
       baseMsg = baseMsg.replace(/\{amount\}/g, formatCurrency(inv.totalTTC) || '');
       baseMsg = baseMsg.replace(/\{company_name\}/g, fullInv.company?.name || settings.companyName || '');
       
-      const finalMsg = `${baseMsg}\n\n📄 Votre document : ${shareData.url}`;
+      if (!shareRes.ok && shareData.error?.includes("Vercel Blob")) {
+        // Fallback: download locally
+        const link = document.createElement('a');
+        link.href = pdfBase64;
+        link.download = `Facture_${inv.number}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        finalMsg = `${baseMsg}\n\n(Veuillez joindre manuellement le PDF qui vient d'être téléchargé sur votre appareil)`;
+        toast.success("PDF téléchargé. Ajoutez-le dans WhatsApp !", { id: toastId });
+      } else if (!shareRes.ok || !shareData.success) {
+        throw new Error(shareData.error || "Erreur de lien PDF");
+      } else {
+        finalMsg = `${baseMsg}\n\n📄 Votre document : ${shareData.url}`;
+        toast.success("Redirection vers WhatsApp...", { id: toastId });
+      }
+      
       const encodedMsg = encodeURIComponent(finalMsg);
       const waUrl = phone ? `https://wa.me/${phone}?text=${encodedMsg}` : `https://wa.me/?text=${encodedMsg}`;
       window.open(waUrl, '_blank');
-      
-      toast.success("Redirection vers WhatsApp...", { id: toastId });
     } catch (err: any) {
       toast.error(err.message || "Erreur", { id: toastId });
     }

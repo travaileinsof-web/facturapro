@@ -61,7 +61,8 @@ export function Reminders() {
           })
         });
         const shareData = await shareRes.json();
-        if (!shareRes.ok || !shareData.success) throw new Error(shareData.error || "Erreur de lien PDF");
+        
+        let finalMsg = "";
         
         // Templating
         let baseMsg = settings.whatsappMessage ? settings.whatsappMessage : `Bonjour {client_name},\n\nSauf erreur de notre part, la facture {document_number} d'un reste à payer de {amount} est toujours en attente de règlement.\n\nMerci de faire le nécessaire dès que possible.\n\nCordialement, {company_name}`;
@@ -71,9 +72,26 @@ export function Reminders() {
         baseMsg = baseMsg.replace(/\{amount\}/g, formatCurrency(inv.amountRemaining) || '');
         baseMsg = baseMsg.replace(/\{company_name\}/g, fullInv.company?.name || settings.companyName || '');
         
-        const finalMsg = `${baseMsg}\n\n📄 Votre facture : ${shareData.url}`;
+        if (!shareRes.ok && shareData.error?.includes("Vercel Blob")) {
+          // Fallback: download locally
+          const link = document.createElement('a');
+          link.href = pdfBase64;
+          link.download = `Relance_${inv.number}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          finalMsg = `${baseMsg}\n\n(Veuillez joindre manuellement le PDF qui vient d'être téléchargé sur votre appareil)`;
+          toast.success("PDF téléchargé. Ajoutez-le dans WhatsApp !", { id: toastId });
+        } else if (!shareRes.ok || !shareData.success) {
+          throw new Error(shareData.error || "Erreur de lien PDF");
+        } else {
+          finalMsg = `${baseMsg}\n\n📄 Votre facture : ${shareData.url}`;
+          toast.success("Redirection vers WhatsApp...", { id: toastId });
+        }
+        
         const encodedMsg = encodeURIComponent(finalMsg);
-        const waUrl = `https://wa.me/${phone}?text=${encodedMsg}`;
+        const waUrl = phone ? `https://wa.me/${phone}?text=${encodedMsg}` : `https://wa.me/?text=${encodedMsg}`;
         window.open(waUrl, '_blank');
         
       } else {
