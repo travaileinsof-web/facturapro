@@ -5,10 +5,7 @@
       "src": "backend/api.php",
       "use": "vercel-php@0.9.0"
     },
-    {
-      "src": "backend/admin_api.php",
-      "use": "vercel-php@0.9.0"
-    },
+
     {
       "src": "backend/check_db.php",
       "use": "vercel-php@0.9.0"
@@ -26,10 +23,6 @@
     }
   ],
   "routes": [
-    {
-      "src": "/api/admin(.*)",
-      "dest": "/backend/admin_api.php"
-    },
     {
       "src": "/api/cron/reminders",
       "dest": "/backend/cron_reminders.php"

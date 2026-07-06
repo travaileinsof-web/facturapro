@@ -71,8 +71,8 @@ export function SuperAdminPage() {
             .then(res => res.json())
             .then(data => {
               if (data.token) {
-                if (data.user.role === 'admin') {
-                  useAppStore.setState({ user: { ...data.user, token: data.token }, isAuthenticated: true });
+                if (data.role === 'admin') {
+                  useAppStore.setState({ user: data, isAuthenticated: true });
                   setIsAdmin(true);
                 } else {
                   alert('Accès refusé. Ce compte n\'a pas les privilèges Super-Admin.');
