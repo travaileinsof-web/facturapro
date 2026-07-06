@@ -64,7 +64,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/login" element={<PublicRoute><Auth mode="login" /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Auth mode="register" /></PublicRoute>} />
         <Route path="/app" element={<ProtectedRoute><App /></ProtectedRoute>} />
-        <Route path="/admin" element={<ProtectedRoute><SuperAdminPage /></ProtectedRoute>} />
+        <Route path="/admin" element={<SuperAdminPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

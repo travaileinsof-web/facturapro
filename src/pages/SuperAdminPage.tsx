@@ -49,22 +49,58 @@ export function SuperAdminPage() {
   if (!isAdmin) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--background)' }}>
-        <div className="fp-card" style={{ padding: '40px', maxWidth: '400px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <div style={{ width: '64px', height: '64px', background: 'var(--destructive)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
-            <ShieldAlert size={32} style={{ color: 'white' }} />
+        <div className="fp-card" style={{ padding: '40px', maxWidth: '400px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div style={{ width: '48px', height: '48px', background: 'var(--gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
+            <ShieldAlert size={24} style={{ color: '#0A0A0F' }} />
           </div>
-          <h1 style={{ margin: '0 0 12px', fontSize: '20px', fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--foreground)' }}>Accès Interdit</h1>
-          <p style={{ color: 'var(--foreground-muted)', margin: '0 0 32px', fontSize: '13px', lineHeight: 1.5 }}>
-            Vous n'avez pas les privilèges super-administrateur requis.
+          <h1 style={{ margin: '0 0 8px', fontSize: '20px', fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--foreground)' }}>Accès Super-Admin</h1>
+          <p style={{ color: 'var(--foreground-muted)', margin: '0 0 32px', fontSize: '13px', textAlign: 'center' }}>
+            Authentification requise pour accéder à l'interface de gestion de FacturaPro.
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
-            <button onClick={() => navigate('/app')} className="fp-btn-primary" style={{ width: '100%', justifyContent: 'center', background: 'var(--foreground)', borderColor: 'var(--foreground)', color: 'white' }}>
-              Retour à l'application
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            const form = e.target as HTMLFormElement;
+            const email = (form.elements.namedItem('email') as HTMLInputElement).value;
+            const password = (form.elements.namedItem('password') as HTMLInputElement).value;
+            
+            fetch('/api/auth/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, password })
+            })
+            .then(res => res.json())
+            .then(data => {
+              if (data.token) {
+                if (data.user.role === 'admin') {
+                  useAppStore.setState({ user: { ...data.user, token: data.token }, isAuthenticated: true });
+                  setIsAdmin(true);
+                } else {
+                  alert('Accès refusé. Ce compte n\'a pas les privilèges Super-Admin.');
+                  form.reset();
+                }
+              } else {
+                alert('Identifiants incorrects.');
+              }
+            }).catch(() => alert('Erreur de connexion.'));
+          }} style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', fontWeight: 600, color: 'var(--foreground-subtle)' }}>Email Administratif</label>
+              <input name="email" type="email" required style={{ width: '100%', padding: '10px 12px', background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--foreground)', fontSize: '13px', outline: 'none' }} 
+                     onFocus={e => e.target.style.borderColor = 'var(--gold)'} onBlur={e => e.target.style.borderColor = 'var(--border)'} />
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', fontWeight: 600, color: 'var(--foreground-subtle)' }}>Mot de passe</label>
+              <input name="password" type="password" required style={{ width: '100%', padding: '10px 12px', background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--foreground)', fontSize: '13px', outline: 'none' }}
+                     onFocus={e => e.target.style.borderColor = 'var(--gold)'} onBlur={e => e.target.style.borderColor = 'var(--border)'} />
+            </div>
+            <button type="submit" style={{ marginTop: '8px', padding: '12px', background: 'var(--gold)', color: '#0A0A0F', border: 'none', fontSize: '13px', fontWeight: 700, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Se connecter
             </button>
-            <button onClick={() => { logout(); navigate('/login'); }} className="fp-btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-              Se déconnecter
+            <button type="button" onClick={() => navigate('/login')} style={{ padding: '8px', background: 'transparent', border: '1px solid transparent', color: 'var(--foreground-muted)', fontSize: '12px', cursor: 'pointer' }}
+                    onMouseEnter={e => e.currentTarget.style.color = 'var(--foreground)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--foreground-muted)'}>
+              Retour à l'application cliente
             </button>
-          </div>
+          </form>
         </div>
       </div>
     );
