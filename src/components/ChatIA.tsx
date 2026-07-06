@@ -141,30 +141,25 @@ export function ChatIA() {
           </div>
         )}
       </div>
-      <div className="p-4 bg-white border-t border-slate-200 flex gap-4 items-end">
-        <Button 
-           onClick={toggleRecording} 
-           variant="outline" 
-           size="icon" 
-           className={`h-14 w-14 shrink-0 rounded-xl transition-colors ${isRecording ? 'bg-red-100 text-red-600 border-red-200 hover:bg-red-200' : 'text-slate-500'}`}
-        >
-          {isRecording ? <MicOff className="w-6 h-6 animate-pulse" /> : <Mic className="w-6 h-6" />}
-        </Button>
-        <Textarea 
-          placeholder="Je vous écoute, ou tapez votre demande..." 
-          className="resize-none h-14 min-h-[56px] py-4"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if(e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              sendMessage();
-            }
-          }}
-        />
-        <Button onClick={sendMessage} disabled={isLoading || !input.trim()} size="icon" className="h-14 w-14 shrink-0 rounded-xl bg-slate-900 hover:bg-slate-800">
-          <Send className="w-6 h-6" />
-        </Button>
+      <div className="p-4 bg-white border-t border-slate-200 flex flex-col gap-4 items-center">
+        <div className="w-full flex gap-4 items-end opacity-50 pointer-events-none">
+          <Button 
+             variant="outline" 
+             size="icon" 
+             className="h-14 w-14 shrink-0 rounded-xl transition-colors text-slate-500"
+          >
+            <Mic className="w-6 h-6" />
+          </Button>
+          <Textarea 
+            placeholder="Je vous écoute, ou tapez votre demande..." 
+            className="resize-none h-14 min-h-[56px] py-4 cursor-not-allowed"
+            disabled
+          />
+          <Button disabled size="icon" className="h-14 w-14 shrink-0 rounded-xl bg-slate-900 hover:bg-slate-800">
+            <Send className="w-6 h-6" />
+          </Button>
+        </div>
+        <span style={{ fontSize: '12px', background: 'var(--gold-dim)', color: 'var(--gold)', padding: '4px 12px', borderRadius: '4px', fontWeight: 600 }}>L'Assistant IA sera Bientôt disponible !</span>
       </div>
     </div>
   );

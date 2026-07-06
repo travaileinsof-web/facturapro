@@ -225,13 +225,16 @@ export function Companies() {
             Gérez plusieurs entités. Chaque entreprise a ses propres informations et config email SMTP.
           </p>
         </div>
-        <button
-          onClick={() => setCreating(true)}
-          className="fp-btn-primary"
-          style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-        >
-          <Plus size={14} /> Nouvelle entreprise
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+          <button
+            disabled
+            className="fp-btn-primary"
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.5, cursor: 'not-allowed' }}
+          >
+            <Plus size={14} /> Nouvelle entreprise
+          </button>
+          <span style={{ fontSize: '10px', background: 'var(--gold-dim)', color: 'var(--gold)', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>Bientôt disponible</span>
+        </div>
       </div>
 
       {/* Create form */}

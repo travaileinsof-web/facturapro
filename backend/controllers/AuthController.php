@@ -49,14 +49,14 @@ class AuthController {
                     $pdo->prepare("UPDATE Account SET token = ? WHERE id = ?")->execute([$token, $acc['id']]);
                 }
                 echo json_encode([
-                    "id" => $acc['id'], "name" => trim($acc['firstName'] . " " . $acc['lastName']),
-                    "email" => $acc['email'], "company" => $acc['companyName'], "token" => $token,
-                    "subscriptionPlan" => $acc['subscriptionPlan'] ?? 'free',
-                    "subscriptionStatus" => $acc['subscriptionStatus'] ?? 'trial',
-                    "createdAt" => $acc['createdAt'],
-                    "primaryColor" => $acc['primaryColor'] ?? '#B38E36',
-                    "secondaryColor" => $acc['secondaryColor'],
-                    "accentColor" => $acc['accentColor'],
+                    "id" => $acc['id'], "name" => trim($acc['firstname'] . " " . $acc['lastname']),
+                    "email" => $acc['email'], "company" => $acc['companyname'], "token" => $token,
+                    "subscriptionPlan" => $acc['subscriptionplan'] ?? 'free',
+                    "subscriptionStatus" => $acc['subscriptionstatus'] ?? 'trial',
+                    "createdAt" => $acc['createdat'],
+                    "primaryColor" => $acc['primarycolor'] ?? $acc['primaryColor'] ?? '#B38E36',
+                    "secondaryColor" => $acc['secondarycolor'] ?? $acc['secondaryColor'] ?? null,
+                    "accentColor" => $acc['accentcolor'] ?? $acc['accentColor'] ?? null,
                     "role" => $acc['role'] ?? 'user'
                 ]);
             } else {

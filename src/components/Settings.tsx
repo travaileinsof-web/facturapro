@@ -316,14 +316,16 @@ export function Settings() {
             <Field label="Devise Principale">
               <select {...register('currency')} style={selectStyle}>
                 <option value="XOF">FCFA (XOF)</option>
+                <option value="GNF">Franc Guinéen (GNF)</option>
                 <option value="EUR">Euro (€)</option>
                 <option value="USD">Dollar ($)</option>
               </select>
             </Field>
             
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
-              <input type="checkbox" id="autoRemindersEnabled" {...register('autoRemindersEnabled')} style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: 'var(--gold)' }} />
-              <label htmlFor="autoRemindersEnabled" style={{ fontSize: '13px', fontWeight: 500, cursor: 'pointer', color: 'var(--foreground)' }}>Activer les relances automatiques par Email/WhatsApp</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', opacity: 0.6, pointerEvents: 'none' }}>
+              <input type="checkbox" id="autoRemindersEnabled" checked={false} readOnly style={{ width: '16px', height: '16px', cursor: 'not-allowed', accentColor: 'var(--gold)' }} />
+              <label htmlFor="autoRemindersEnabled" style={{ fontSize: '13px', fontWeight: 500, cursor: 'not-allowed', color: 'var(--foreground)' }}>Activer les relances automatiques par Email/WhatsApp</label>
+              <span style={{ fontSize: '10px', background: 'var(--gold-dim)', color: 'var(--gold)', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>Bientôt disponible</span>
             </div>
             
             {watch('autoRemindersEnabled') && (

@@ -3,8 +3,38 @@ class SettingsController {
     public static function handle($pdo, $method, $accountId, $body, $currentAccount) {
         if ($method === 'GET') {
             $safeAccount = $currentAccount;
-            unset($safeAccount['passwordHash'], $safeAccount['token'], $safeAccount['geminiKey']);
-            echo json_encode($safeAccount);
+            unset($safeAccount['passwordhash'], $safeAccount['passwordHash'], $safeAccount['token'], $safeAccount['geminikey'], $safeAccount['geminiKey']);
+            
+            // Map lowercased postgres columns to camelCase
+            $camelMap = [
+                'companyname' => 'companyName',
+                'firstname' => 'firstName',
+                'lastname' => 'lastName',
+                'taxid' => 'taxId',
+                'bankname' => 'bankName',
+                'bankaccount' => 'bankAccount',
+                'primarycolor' => 'primaryColor',
+                'secondarycolor' => 'secondaryColor',
+                'accentcolor' => 'accentColor',
+                'whatsappmessage' => 'whatsappMessage',
+                'smtphost' => 'smtpHost',
+                'smtpport' => 'smtpPort',
+                'smtpencryption' => 'smtpEncryption',
+                'smtpuser' => 'smtpUser',
+                'smtppass' => 'smtpPass',
+                'autoremindersenabled' => 'autoRemindersEnabled',
+                'autoreminderdays' => 'autoReminderDays'
+            ];
+            $mappedAccount = [];
+            foreach ($safeAccount as $key => $value) {
+                if (isset($camelMap[$key])) {
+                    $mappedAccount[$camelMap[$key]] = $value;
+                } else {
+                    $mappedAccount[$key] = $value;
+                }
+            }
+            
+            echo json_encode($mappedAccount);
         } elseif ($method === 'PUT') {
             $updates = [];
             $params = [];
@@ -39,12 +69,21 @@ class SettingsController {
             $stmt->execute([$accountId]);
             $updatedAccount = $stmt->fetch();
             
-            unset($updatedAccount['passwordHash'], $updatedAccount['geminiKey']);
+            unset($updatedAccount['passwordhash'], $updatedAccount['passwordHash'], $updatedAccount['geminikey'], $updatedAccount['geminiKey']);
             if (!isset($newToken)) {
                 unset($updatedAccount['token']);
             }
             
-            echo json_encode($updatedAccount);
+            $mappedUpdatedAccount = [];
+            foreach ($updatedAccount as $key => $value) {
+                if (isset($camelMap[$key])) {
+                    $mappedUpdatedAccount[$camelMap[$key]] = $value;
+                } else {
+                    $mappedUpdatedAccount[$key] = $value;
+                }
+            }
+            
+            echo json_encode($mappedUpdatedAccount);
         }
     }
 }
