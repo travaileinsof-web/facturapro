@@ -6,6 +6,8 @@ import { Input } from './ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { useForm } from 'react-hook-form';
+import { PageHeader } from './ui/PageHeader';
+import { Plus } from 'lucide-react';
 import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
 
@@ -78,12 +80,15 @@ export function Expenses() {
 
   return (
     <div className="space-y-6">
-      <div className="fp-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px' }}>
-        <h1 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--foreground)' }}>Dépenses & Charges</h1>
-        <button onClick={openNew} className="fp-btn-primary">
-          + Enregistrer une Dépense
-        </button>
-      </div>
+      <PageHeader 
+        title="Dépenses & Charges" 
+        description="Suivez et gérez les dépenses de votre entreprise."
+        actions={
+          <button onClick={openNew} className="fp-btn-primary">
+            <Plus size={16} className="mr-2" /> Enregistrer une Dépense
+          </button>
+        }
+      />
 
       <div className="fp-card" style={{ overflow: 'hidden', overflowX: 'auto' }}>
         <table className="fp-table">

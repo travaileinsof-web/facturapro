@@ -9,6 +9,7 @@ import { useForm } from 'react-hook-form';
 import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
 import { PlusIcon, PackageIcon } from 'lucide-react';
+import { PageHeader } from './ui/PageHeader';
 
 export function Catalog() {
   const refreshCatalog = useAppStore(state => state.refreshCatalog);
@@ -88,15 +89,15 @@ export function Catalog() {
 
   return (
     <div className="space-y-6">
-      <div className="fp-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px' }}>
-        <div>
-          <h1 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--foreground)' }}>Catalogue</h1>
-          <p style={{ color: 'var(--foreground-muted)', fontSize: '13px', marginTop: '4px' }}>Gérez vos services et produits pré-enregistrés pour une facturation plus rapide.</p>
-        </div>
-        <button onClick={openNew} className="fp-btn-primary">
-          <PlusIcon size={14} /> Ajouter au Catalogue
-        </button>
-      </div>
+      <PageHeader 
+        title="Catalogue" 
+        description="Gérez vos services et produits pré-enregistrés pour une facturation plus rapide."
+        actions={
+          <button onClick={openNew} className="fp-btn-primary">
+            <PlusIcon size={14} className="mr-2" /> Ajouter au Catalogue
+          </button>
+        }
+      />
 
       <div className="fp-card" style={{ overflow: 'hidden', overflowX: 'auto' }}>
         <table className="fp-table">

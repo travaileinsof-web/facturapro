@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { useForm } from 'react-hook-form';
 import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
+import { PageHeader } from './ui/PageHeader';
+import { Plus } from 'lucide-react';
 import { ClientDocuments } from './ClientDocuments';
 
 export function Clients() {
@@ -85,19 +87,25 @@ export function Clients() {
 
   return (
     <div className="space-y-6">
-      <div className="fp-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px' }}>
-        <input 
-          type="text"
-          placeholder="Rechercher un client..." 
-          className="fp-input"
-          style={{ width: '300px' }}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <button onClick={openNew} className="fp-btn-primary">
-          Nouveau Client
-        </button>
-      </div>
+      <PageHeader 
+        title="Clients" 
+        description="Gérez votre base de données clients et prospects."
+        actions={
+          <>
+            <input 
+              type="text"
+              placeholder="Rechercher un client..." 
+              className="fp-input"
+              style={{ width: '250px' }}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <button onClick={openNew} className="fp-btn-primary">
+              <Plus size={16} className="mr-2" /> Nouveau Client
+            </button>
+          </>
+        }
+      />
 
       {error && (
         <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 0, padding: '16px', color: '#ef4444', fontSize: '13px', fontWeight: 600 }}>

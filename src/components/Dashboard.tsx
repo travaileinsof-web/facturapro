@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { Users, FileText, Banknote, Clock, TrendingUp, TrendingDown, ArrowRight, Minus } from 'lucide-react';
 import { formatCurrency, formatDate, useAppStore, apiFetch } from '../lib/store';
+import { PageHeader } from './ui/PageHeader';
 
 /* ── Count-up animation hook ─────────────────────────────────────── */
 function useCountUp(target: number, duration = 900) {
@@ -131,10 +132,13 @@ export function Dashboard() {
     },
   });
 
+  const header = <PageHeader title="Tableau de Bord" description="Vue d'ensemble de vos finances et performances" />;
+
   /* Skeleton loader */
   if (isLoading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {header}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
           {[1,2,3,4,5].map(i => (
             <div key={i} className="fp-skeleton" style={{ height: '110px' }}/>
@@ -155,8 +159,8 @@ export function Dashboard() {
   const encaisseRatio = Math.round((encaisse / total) * 100);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {header}
       {/* ── KPI Grid ── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '30px' }}>
           <KpiCard 

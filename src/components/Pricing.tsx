@@ -5,7 +5,7 @@ import { useAppStore, apiFetch } from '../lib/store';
 export function Pricing() {
   const { user } = useAppStore();
   const [showModal, setShowModal] = useState(false);
-  const [phone, setPhone] = useState(user?.phone || '');
+  const [phone, setPhone] = useState((user as any)?.phone || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 

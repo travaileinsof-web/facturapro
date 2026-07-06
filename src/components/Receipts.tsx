@@ -10,6 +10,8 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Check, ChevronsUpDown, Mail, MessageCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useForm } from 'react-hook-form';
+import { PageHeader } from './ui/PageHeader';
+import { Trash2 } from 'lucide-react';
 import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
 import { buildReceiptHTML } from '../lib/pdfTemplate';
@@ -268,11 +270,15 @@ ${html}
 
   return (
     <div className="space-y-6">
-      <div className="fp-card" style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px 20px' }}>
-        <button onClick={openNew} className="fp-btn-primary">
-          Nouveau Reçu
-        </button>
-      </div>
+      <PageHeader 
+        title="Reçus" 
+        description="Gérez les paiements encaissés et éditez les reçus de vos clients."
+        actions={
+          <button onClick={openNew} className="fp-btn-primary">
+            Nouveau Reçu
+          </button>
+        }
+      />
 
       <div className="fp-card" style={{ overflow: 'hidden', overflowX: 'auto' }}>
         <table className="fp-table">

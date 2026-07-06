@@ -6,6 +6,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 import { useForm, useFieldArray } from 'react-hook-form';
 import { toast } from 'sonner';
 import { CurrencyConverter } from './CurrencyConverter';
+import { PageHeader } from './ui/PageHeader';
 import { Plus, Trash2 } from 'lucide-react';
 import { buildInvoiceHTML } from '../lib/pdfTemplate';
 import { exportHTMLToPDF, generatePDFBase64 } from '../lib/pdfExport';
@@ -48,7 +49,8 @@ export function Invoices() {
       discount: 0,
       notes: '',
       status: 'brouillon',
-      type: 'facture'
+      type: 'facture',
+      dueDate: ''
     }
   });
 
@@ -114,7 +116,8 @@ export function Invoices() {
       discount: invoice.discount,
       notes: invoice.notes || '',
       status: invoice.status || 'brouillon',
-      type: invoice.type || 'facture'
+      type: invoice.type || 'facture',
+      dueDate: invoice.dueDate || ''
     });
     setIsModalOpen(true);
   };
@@ -135,7 +138,8 @@ export function Invoices() {
       total,
       notes: data.notes,
       status: data.status || 'brouillon',
-      type: data.type || 'facture'
+      type: data.type || 'facture',
+      dueDate: data.dueDate || null
     };
 
     const url = editingInvoice ? `/api/invoices/${editingInvoice.id}` : '/api/invoices';
@@ -330,37 +334,43 @@ ${html}
 
   return (
     <div className="space-y-6">
-      <div className="fp-card" style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <select 
-            className="fp-input"
-            style={{ width: 'auto', minWidth: '220px' }}
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-          >
-            <option value="tous">Tous les documents</option>
-            <option value="facture">Factures uniquement</option>
-            <option value="proforma">Pro Formas uniquement</option>
-            <option value="devis">Devis uniquement</option>
-          </select>
-          <select 
-            className="fp-input"
-            style={{ width: 'auto', minWidth: '180px' }}
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-          >
-            <option value="toutes">Tous les statuts</option>
-            <option value="brouillon">Brouillon</option>
-            <option value="envoyee">Envoyée</option>
-            <option value="partiellement_payee">Partiellement Payée</option>
-            <option value="payee">Payée</option>
-            <option value="annulee">Annulée</option>
-          </select>
-        </div>
-        <button onClick={openNew} className="fp-btn-primary">
-          Nouvelle Facture
-        </button>
-      </div>
+      <PageHeader 
+        title="Factures & Devis" 
+        description="Créez, envoyez et suivez vos documents de facturation."
+        actions={
+          <>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <select 
+                className="fp-input"
+                style={{ width: 'auto', minWidth: '220px' }}
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+              >
+                <option value="tous">Tous les documents</option>
+                <option value="facture">Factures uniquement</option>
+                <option value="proforma">Pro Formas uniquement</option>
+                <option value="devis">Devis uniquement</option>
+              </select>
+              <select 
+                className="fp-input"
+                style={{ width: 'auto', minWidth: '180px' }}
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+              >
+                <option value="toutes">Tous les statuts</option>
+                <option value="brouillon">Brouillon</option>
+                <option value="envoyee">Envoyée</option>
+                <option value="partiellement_payee">Partiellement Payée</option>
+                <option value="payee">Payée</option>
+                <option value="annulee">Annulée</option>
+              </select>
+            </div>
+            <button onClick={openNew} className="fp-btn-primary">
+              Nouvelle Facture
+            </button>
+          </>
+        }
+      />
 
       <div className="fp-card overflow-hidden">
         <table className="fp-table">

@@ -388,19 +388,6 @@ function AppLayout() {
 
         {/* Main content */}
         <main style={{ flex: 1, overflow: 'auto', padding: 'clamp(16px, 2.5vw, 28px)' }}>
-          {/* Page title */}
-          <div style={{ marginBottom: '20px', opacity: 0, animation: 'fp-fade-up 0.4s ease 0.05s forwards' }}>
-            <h1 style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 'clamp(20px, 3vw, 26px)',
-              fontWeight: 700,
-              color: 'var(--foreground)',
-              letterSpacing: '-0.5px',
-              display: 'flex', alignItems: 'center', gap: '10px',
-            }}>
-              {active?.label}
-            </h1>
-          </div>
 
           {/* Module container */}
           <div key={animKey} style={{ opacity: 0, animation: 'fp-fade-up 0.35s ease forwards' }}>

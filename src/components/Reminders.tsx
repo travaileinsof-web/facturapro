@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { formatCurrency, formatDate, useAppStore, apiFetch } from '../lib/store';
-import { Button } from './ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { useAppStore, formatCurrency, formatDate, apiFetch } from '../lib/store';
+import { PageHeader } from './ui/PageHeader';
 import { toast } from 'sonner';
 import { MessageCircle, Mail, AlertTriangle, Calendar } from 'lucide-react';
 import { buildInvoiceHTML } from '../lib/pdfTemplate';
@@ -129,12 +128,10 @@ export function Reminders() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Relances & Impayés</h1>
-          <p className="text-slate-500 text-sm mt-1">Gérez vos factures en attente de paiement et relancez vos clients en un clic.</p>
-        </div>
-      </div>
+      <PageHeader 
+        title="Relances & Impayés" 
+        description="Gérez vos factures en attente de paiement et relancez vos clients en un clic."
+      />
 
       <div className="fp-card" style={{ overflow: 'hidden', overflowX: 'auto' }}>
         <table className="fp-table">
