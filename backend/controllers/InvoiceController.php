@@ -36,7 +36,12 @@ class InvoiceController {
                     } elseif ($amountPaid > 0) {
                         $inv['status'] = 'partielle';
                     } else {
-                        $inv['status'] = 'brouillon'; // Ou 'envoyée' selon l'état d'origine, on simplifie à 'brouillon'
+                        // Si le statut d'origine n'est pas brouillon, on le conserve (ex: envoyée, impayée)
+                        if (!in_array($inv['status'], ['brouillon', 'annulée'])) {
+                            // On garde le statut existant
+                        } else {
+                            $inv['status'] = $inv['status'] ?? 'brouillon';
+                        }
                     }
                 }
                 echo json_encode($inv);
@@ -68,7 +73,12 @@ class InvoiceController {
                     } elseif ($amountPaid > 0) {
                         $inv['status'] = 'partielle';
                     } else {
-                        $inv['status'] = 'brouillon';
+                        // Si le statut d'origine n'est pas brouillon, on le conserve
+                        if (!in_array($inv['status'], ['brouillon', 'annulée'])) {
+                            // On garde le statut existant
+                        } else {
+                            $inv['status'] = $inv['status'] ?? 'brouillon';
+                        }
                     }
                 }
                 echo json_encode($invs);

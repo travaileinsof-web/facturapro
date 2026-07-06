@@ -101,6 +101,7 @@ export function Receipts() {
       setIsModalOpen(false);
       triggerRefresh('receipts');
       triggerRefresh('invoices');
+      triggerRefresh('reminders');
       triggerRefresh('clients');
       triggerRefresh('stats');
       refetch();
@@ -117,6 +118,7 @@ export function Receipts() {
        toast.success("Reçu supprimé");
        triggerRefresh('receipts');
        triggerRefresh('invoices');
+       triggerRefresh('reminders');
        triggerRefresh('stats');
        refetch();
     } else {

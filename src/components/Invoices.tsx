@@ -155,6 +155,7 @@ export function Invoices() {
         throw new Error(err.error || "Erreur lors de l'enregistrement de la facture.");
       }
       triggerRefresh('invoices');
+      triggerRefresh('reminders');
       triggerRefresh('stats');
       refetch();
       return true;
@@ -173,6 +174,7 @@ export function Invoices() {
     const promise = apiFetch(`/api/invoices/${id}`, { method: 'DELETE' }).then(async (res) => {
       if(!res.ok) throw new Error("Erreur de suppression");
       triggerRefresh('invoices');
+      triggerRefresh('reminders');
       triggerRefresh('stats');
       refetch();
       return true;
@@ -196,6 +198,7 @@ export function Invoices() {
     const promise = apiFetch(`/api/invoices/${inv.id}`, { method: 'PUT', body: JSON.stringify(payload) }).then(async (res) => {
       if(!res.ok) throw new Error("Erreur de conversion");
       triggerRefresh('invoices');
+      triggerRefresh('reminders');
       triggerRefresh('stats');
       refetch();
       return true;

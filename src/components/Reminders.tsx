@@ -24,10 +24,10 @@ export function Reminders() {
 
   // Filtre: Seulement les factures (pas devis) qui ne sont pas "payée" ni "annulée"
   const pendingInvoices = invoices?.filter((inv: any) => 
-     inv.type === 'facture' && 
-     inv.status !== 'payée' && 
-     inv.status !== 'annulée' &&
-     inv.amountRemaining > 0
+     String(inv.type).toLowerCase() === 'facture' && 
+     String(inv.status).toLowerCase() !== 'payée' && 
+     String(inv.status).toLowerCase() !== 'annulée' &&
+     Number(inv.amountRemaining) > 0
   ) || [];
 
   const sendReminder = async (inv: any, method: 'whatsapp' | 'email') => {
