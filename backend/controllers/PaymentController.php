@@ -25,7 +25,8 @@ class PaymentController {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json',
-            'X-API-KEY: ' . $apiKey
+            'X-API-KEY: ' . $apiKey,
+            'X-PARTNER-DOMAIN: 4fe3ac0a5886164174f9b8a1b9bd3ab4e9d753cbc9638b4434264e2535993ffa'
         ]);
         
         $response = curl_exec($ch);
@@ -102,7 +103,8 @@ class PaymentController {
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json',
             'Authorization: Bearer ' . $token,
-            'X-API-KEY: ' . $apiKey
+            'X-API-KEY: ' . $apiKey,
+            'X-PARTNER-DOMAIN: 4fe3ac0a5886164174f9b8a1b9bd3ab4e9d753cbc9638b4434264e2535993ffa'
         ]);
 
         $response = curl_exec($ch);
