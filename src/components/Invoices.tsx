@@ -199,7 +199,7 @@ export function Invoices() {
       const html = buildInvoiceHTML(fullInv, settings);
       const pdfBase64 = await generatePDFBase64(html);
       
-      const shareRes = await fetch('/api/share', {
+      const shareRes = await apiFetch('/api/share', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -277,8 +277,8 @@ export function Invoices() {
     const toastId = toast.loading("Génération du PDF en cours...");
     try {
       const [settingsRes, invRes] = await Promise.all([
-        fetch('/api/settings'),
-        fetch(`/api/invoices/${inv.id}`)
+        apiFetch('/api/settings'),
+        apiFetch(`/api/invoices/${inv.id}`)
       ]);
       const settings = await settingsRes.json();
       const fullInv = await invRes.json();

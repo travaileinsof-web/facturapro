@@ -51,7 +51,7 @@ export function Reminders() {
         if(!phone) throw new Error("Aucun numéro de téléphone pour ce client");
         
         // Obtenir un lien public vers le PDF
-        const shareRes = await fetch('/api/share', {
+        const shareRes = await apiFetch('/api/share', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
