@@ -460,14 +460,14 @@ ${html}
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-5xl max-w-5xl p-0 overflow-hidden border-0 shadow-2xl h-[90vh] flex flex-col bg-[var(--background)]">
-          <DialogHeader className="px-8 py-6 bg-[var(--surface-2)] border-b border-[var(--border)] shrink-0">
+        <DialogContent className="sm:max-w-5xl max-w-5xl p-6 sm:p-8 overflow-hidden rounded-2xl bg-[var(--background)] shadow-2xl border border-[var(--border)] h-[90vh] flex flex-col">
+          <DialogHeader className="mb-6 shrink-0">
             <DialogTitle className="text-xl font-display font-semibold text-[var(--foreground)] tracking-tight">
               {editingInvoice ? 'Modifier Document' : 'Nouveau Document'}
             </DialogTitle>
           </DialogHeader>
-          <div className="flex-1 overflow-y-auto px-8 py-8 bg-[var(--background)]">
-            <form id="invoice-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-10">
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            <form id="invoice-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-10 pr-2">
 
               {/* — Type de document — */}
               <div>
@@ -487,7 +487,7 @@ ${html}
               </div>
 
               {/* — Client + Date — */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
                 <div>
                   <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2">Client <span className="text-[var(--primary)]">*</span></label>
                   <select {...register('clientId')} className="fp-input w-full bg-white shadow-sm">
@@ -507,39 +507,39 @@ ${html}
               </div>
 
               {/* — Articles — */}
-              <div className="bg-white rounded-xl border border-[var(--border)] shadow-[0_4px_12px_rgba(0,0,0,0.02)] overflow-hidden">
-                <div className="grid grid-cols-[250px_1fr_100px_130px_130px_50px] gap-0 border-b border-[var(--border)] bg-[var(--surface-1)]">
-                  <div className="px-5 py-4 text-[12px] font-bold uppercase tracking-wider text-[var(--foreground-subtle)]">Catalogue</div>
-                  <div className="px-5 py-4 text-[12px] font-bold uppercase tracking-wider text-[var(--foreground-subtle)]">Description</div>
-                  <div className="px-5 py-4 text-[12px] font-bold uppercase tracking-wider text-[var(--foreground-subtle)] text-right">Qté</div>
-                  <div className="px-5 py-4 text-[12px] font-bold uppercase tracking-wider text-[var(--foreground-subtle)] text-right">Prix U.</div>
-                  <div className="px-5 py-4 text-[12px] font-bold uppercase tracking-wider text-[var(--foreground-subtle)] text-right">Total</div>
-                  <div className="px-5 py-4"></div>
+              <div className="flex flex-col border border-[var(--border)] rounded-xl overflow-hidden bg-white shadow-sm mt-2">
+                <div className="grid grid-cols-[250px_1fr_100px_130px_130px_50px] gap-4 bg-[var(--surface-2)] border-b border-[var(--border)] px-4 py-3">
+                  <div className="text-[12px] font-bold text-[var(--foreground-muted)] uppercase tracking-wider">Article / Service</div>
+                  <div className="text-[12px] font-bold text-[var(--foreground-muted)] uppercase tracking-wider">Description</div>
+                  <div className="text-[12px] font-bold text-[var(--foreground-muted)] uppercase tracking-wider text-right">Qté</div>
+                  <div className="text-[12px] font-bold text-[var(--foreground-muted)] uppercase tracking-wider text-right">Prix Unitaire</div>
+                  <div className="text-[12px] font-bold text-[var(--foreground-muted)] uppercase tracking-wider text-right">Total</div>
+                  <div></div>
                 </div>
-                <div className="flex flex-col">
+                <div className="flex flex-col p-4 gap-4 bg-[var(--surface-1)]">
                   {fields.map((field, index) => (
-                    <div key={field.id} className="grid grid-cols-[250px_1fr_100px_130px_130px_50px] gap-0 border-b border-[var(--border)] last:border-0 group hover:bg-[var(--surface-hover)] transition-colors">
-                      <div className="border-r border-[var(--border)]">
-                        <select onChange={(e) => handleCatalogSelect(index, e.target.value)} defaultValue="" className="w-full h-full px-5 py-4 bg-transparent border-none text-[13px] text-[var(--foreground)] outline-none cursor-pointer">
+                    <div key={field.id} className="grid grid-cols-[250px_1fr_100px_130px_130px_50px] gap-4 items-center bg-white p-3 rounded-lg border border-[var(--border)] shadow-sm group hover:border-[var(--border-hover)] transition-colors">
+                      <div>
+                        <select onChange={(e) => handleCatalogSelect(index, e.target.value)} defaultValue="" className="fp-input w-full bg-[var(--surface)] text-[13px] text-[var(--foreground)] cursor-pointer">
                           <option value="">Sélectionner...</option>
                           {catalogItems?.map((cat: any) => (
                             <option key={cat.id} value={cat.id}>{cat.name}</option>
                           ))}
                         </select>
                       </div>
-                      <div className="border-r border-[var(--border)]">
-                        <input className="w-full h-full px-5 py-4 bg-transparent border-none text-[13px] text-[var(--foreground)] outline-none placeholder-[var(--foreground-muted)]" placeholder="Description de l'article" {...register(`items.${index}.description` as const, { required: true })} />
+                      <div>
+                        <input className="fp-input w-full text-[13px] text-[var(--foreground)] placeholder-[var(--foreground-muted)]" placeholder="Description de l'article" {...register(`items.${index}.description` as const, { required: true })} />
                       </div>
-                      <div className="border-r border-[var(--border)]">
-                        <input className="w-full h-full px-5 py-4 bg-transparent border-none text-[13px] text-right font-mono text-[var(--foreground)] outline-none" type="number" placeholder="1" {...register(`items.${index}.quantity` as const, { valueAsNumber: true })} />
+                      <div>
+                        <input className="fp-input w-full text-[13px] text-right font-mono text-[var(--foreground)]" type="number" placeholder="1" {...register(`items.${index}.quantity` as const, { valueAsNumber: true })} />
                       </div>
-                      <div className="border-r border-[var(--border)]">
-                        <input className="w-full h-full px-5 py-4 bg-transparent border-none text-[13px] text-right font-mono text-[var(--foreground)] outline-none" type="number" placeholder="0" {...register(`items.${index}.unitPrice` as const, { valueAsNumber: true })} />
+                      <div>
+                        <input className="fp-input w-full text-[13px] text-right font-mono text-[var(--foreground)]" type="number" placeholder="0" {...register(`items.${index}.unitPrice` as const, { valueAsNumber: true })} />
                       </div>
-                      <div className="px-5 py-4 text-right font-semibold text-[14px] text-[var(--foreground)] font-mono flex items-center justify-end border-r border-[var(--border)]">
+                      <div className="text-right font-semibold text-[14px] text-[var(--foreground)] font-mono flex items-center justify-end">
                         {formatCurrency((isNaN(watchItems[index]?.quantity) ? 0 : watchItems[index]?.quantity || 0) * (isNaN(watchItems[index]?.unitPrice) ? 0 : watchItems[index]?.unitPrice || 0))}
                       </div>
-                      <button type="button" className="flex items-center justify-center text-[var(--foreground-subtle)] hover:text-[var(--destructive)] hover:bg-red-50 transition-colors" onClick={() => remove(index)}>
+                      <button type="button" className="flex items-center justify-center w-8 h-8 rounded-md text-[var(--foreground-subtle)] hover:text-[var(--destructive)] hover:bg-red-50 transition-colors mx-auto" onClick={() => remove(index)}>
                         <Trash2 size={15} />
                       </button>
                     </div>
@@ -598,9 +598,9 @@ ${html}
 
             </form>
           </div>
-          <DialogFooter className="px-8 py-5 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end gap-3 shrink-0">
+          <DialogFooter className="mt-6 pt-6 border-t border-[var(--border)] flex justify-end gap-4 shrink-0">
              <button type="button" className="fp-btn-outline" onClick={() => setIsModalOpen(false)}>Annuler</button>
-             <button form="invoice-form" type="submit" className="fp-btn-primary px-8">{editingInvoice ? 'Mettre à jour' : 'Enregistrer le document'}</button>
+             <button type="submit" form="invoice-form" className="fp-btn-primary">Sauvegarder le document</button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

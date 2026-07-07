@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAppStore } from '../lib/store';
+import { useAppStore, formatCurrency } from '../lib/store';
 import { toast } from 'sonner';
 import {
   Users, DollarSign, Search, LogIn,
@@ -230,15 +230,15 @@ function AdminSettings({ token }: { token: string }) {
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 function AdminDashboard({ stats }: { stats: any; accounts: any[] }) {
-  const kpisData = stats.kpis || {};
+  const kpisData = stats?.kpis || {};
   const kpis = [
-    { label: 'Utilisateurs', value: kpisData.totalAccounts, icon: Users, color: 'var(--blue-accent)', desc: 'Nombre total de comptes créés sur la plateforme' },
-    { label: 'Abonnés Premium', value: kpisData.premiumAccounts, icon: Crown, color: 'var(--gold)', desc: 'Comptes ayant un abonnement payant actif' },
-    { label: 'Comptes Gratuits', value: kpisData.freeAccounts, icon: Building2, color: 'var(--success)', desc: 'Comptes en période d\'essai ou sur un plan gratuit' },
-    { label: 'Revenus SaaS', value: `${Number(kpisData.totalRevenue || 0).toLocaleString('fr-FR')} F`, icon: DollarSign, color: 'var(--gold)', desc: 'Montant total encaissé via les abonnements' },
-    { label: 'Factures Émises', value: kpisData.totalInvoices, icon: FileText, color: 'var(--foreground-muted)', desc: 'Nombre total de factures générées par toutes les entreprises' },
+    { label: 'Utilisateurs', value: kpisData.totalAccounts || 0, icon: Users, color: 'var(--blue-accent)', desc: 'Nombre total de comptes créés sur la plateforme' },
+    { label: 'Abonnés Premium', value: kpisData.premiumAccounts || 0, icon: Crown, color: 'var(--gold)', desc: 'Comptes ayant un abonnement payant actif' },
+    { label: 'Comptes Gratuits', value: kpisData.freeAccounts || 0, icon: Building2, color: 'var(--success)', desc: 'Comptes en période d\'essai ou sur un plan gratuit' },
+    { label: 'Revenus SaaS', value: formatCurrency(Number(kpisData.totalRevenue || 0)), icon: DollarSign, color: 'var(--gold)', desc: 'Montant total encaissé via les abonnements' },
+    { label: 'Factures Émises', value: kpisData.totalInvoices || 0, icon: FileText, color: 'var(--foreground-muted)', desc: 'Nombre total de factures générées par toutes les entreprises' },
     { label: 'Conversion', value: `${kpisData.conversionRate || 0}%`, icon: Users, color: 'var(--foreground-muted)', desc: 'Taux de conversion global' },
-    { label: 'Suspendus', value: kpisData.suspendedAccounts, icon: Ban, color: 'var(--destructive)', desc: 'Comptes bloqués par un administrateur' },
+    { label: 'Suspendus', value: kpisData.suspendedAccounts || 0, icon: Ban, color: 'var(--destructive)', desc: 'Comptes bloqués par un administrateur' },
     { label: 'Expirations (<30j)', value: kpisData.expiringSoon || 0, icon: AlertTriangle, color: 'var(--warning)', desc: 'Comptes dont l\'abonnement expire dans moins de 30 jours' },
   ];
 
@@ -246,8 +246,8 @@ function AdminDashboard({ stats }: { stats: any; accounts: any[] }) {
   const freePct = 100 - premiumPct;
 
   // Utilisation des vraies courbes
-  const chartData = stats.mrrCurve || [];
-  const acqData = stats.acquisitionCurve || [];
+  const chartData = stats?.mrrCurve || [];
+  const acqData = stats?.acquisitionCurve || [];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
@@ -283,7 +283,7 @@ function AdminDashboard({ stats }: { stats: any; accounts: any[] }) {
                 contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', fontSize: '12px' }}
                 itemStyle={{ color: 'var(--gold)', fontWeight: 600 }}
                 labelStyle={{ color: 'var(--foreground-subtle)', marginBottom: '4px' }}
-                formatter={(value: number) => [`${value.toLocaleString('fr-FR')} F`, 'Revenus']}
+                formatter={(value: number) => [formatCurrency(value), 'Revenus']}
               />
               <Area type="monotone" dataKey="mrr" stroke="var(--gold)" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
             </AreaChart>
@@ -701,7 +701,7 @@ function AdminAccountDetails({ accountId, token, onBack }: { accountId: string; 
         {[
           { label: 'Base Clients', value: data.totalClients, color: 'var(--blue-accent)' },
           { label: 'Factures Générées', value: data.totalInvoices, color: 'var(--foreground-subtle)' },
-          { label: 'Volume Facturé', value: `${Number(data.totalInvoicedAmount || 0).toLocaleString('fr-FR')} F`, color: 'var(--gold)' },
+          { label: 'Volume Facturé', value: formatCurrency(Number(data.totalInvoicedAmount || 0)), color: 'var(--gold)' },
         ].map((s, i) => (
           <div key={i} className="fp-card" style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '20px' }}>
              <div style={{ width: '48px', height: '48px', background: `${s.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${s.color}30` }}>

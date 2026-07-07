@@ -105,6 +105,9 @@ export function Settings() {
   const { register, handleSubmit, watch, setValue } = useForm({ values: settings || {} });
 
   const onSubmit = async (data: any) => {
+    const currentCurrency = settings.currency || 'XOF';
+    const newCurrency = data.currency;
+
     const payload = { 
       ...data,
       logo: watch('logo'),
@@ -124,6 +127,37 @@ export function Settings() {
       setValue('currentPassword', '');
       setValue('password', '');
       refetch();
+
+      if (currentCurrency !== newCurrency) {
+        const confirmConvert = window.confirm(`Vous avez changé votre devise de ${currentCurrency} vers ${newCurrency}.\n\nVoulez-vous convertir les montants existants (factures, reçus, catalogue) au taux de change actuel ?`);
+        if (confirmConvert) {
+          try {
+            const r = await fetch(`https://api.exchangerate-api.com/v4/latest/${currentCurrency}`);
+            const d = await r.json();
+            const rate = d.rates[newCurrency];
+            if (rate) {
+              const convertRes = await apiFetch('/api/settings/convert-currency', {
+                method: 'POST',
+                body: JSON.stringify({ rate, oldCurrency: currentCurrency, newCurrency })
+              });
+              if (convertRes.ok) {
+                toast.success('Conversion rétroactive réussie !');
+                useAppStore.getState().triggerRefresh('invoices');
+                useAppStore.getState().triggerRefresh('receipts');
+                useAppStore.getState().triggerRefresh('catalog');
+                useAppStore.getState().triggerRefresh('expenses');
+              } else {
+                toast.error('Erreur lors de la conversion rétroactive.');
+              }
+            } else {
+              toast.error('Taux de change introuvable pour cette paire.');
+            }
+          } catch (e) {
+            console.error(e);
+            toast.error('Erreur réseau lors de la récupération du taux.');
+          }
+        }
+      }
     } else {
       toast.error("Erreur lors de l'enregistrement.");
     }

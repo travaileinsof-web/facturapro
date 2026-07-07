@@ -340,110 +340,112 @@ ${html}
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-2xl max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Nouveau Reçu</DialogTitle>
+        <DialogContent className="sm:max-w-2xl max-w-2xl p-6 sm:p-8 overflow-hidden rounded-2xl bg-[var(--background)] shadow-2xl border border-[var(--border)] flex flex-col">
+          <DialogHeader className="mb-6 shrink-0">
+            <DialogTitle className="text-xl font-display font-semibold text-[var(--foreground)] tracking-tight">Nouveau Reçu</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
-            <div className="p-6 grid gap-5">
-              <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Client *</label>
-                <select className="fp-input w-full" {...register('clientId', { required: true })}>
-                  <option value="">Sélectionner un client</option>
-                  {clients?.map((c: any) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            <form id="receipt-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-10 pr-2">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-6">
+                <div>
+                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Client *</label>
+                  <select className="fp-input w-full" {...register('clientId', { required: true })}>
+                    <option value="">Sélectionner un client</option>
+                    {clients?.map((c: any) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Facture associée (Optionnel)</label>
+                  <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                    <PopoverTrigger
+                      render={
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openCombobox}
+                          className="w-full justify-between font-normal fp-input"
+                          style={{ height: '42px', borderRadius: 0, border: '1px solid var(--border)' }}
+                          disabled={!watchClientId}
+                        >
+                          {watchInvoiceId
+                            ? (() => {
+                                const inv = availableInvoices?.find((i: any) => i.id === watchInvoiceId);
+                                if (!inv) return "-- Aucune / Accueil Libre --";
+                                const items = safeJSONParse(inv.items, []);
+                                const summary = items.length ? (items.length > 1 ? `${items[0].description} (+${items.length - 1})` : items[0].description) : '';
+                                return `${inv.number} ${summary ? `- ${summary}` : ''} (Reste: ${formatCurrency(inv.amountRemaining || 0)})`;
+                              })()
+                            : "-- Aucune / Accueil Libre --"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      }
+                    />
+                    <PopoverContent className="w-[500px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Rechercher par numéro ou objet..." />
+                        <CommandList>
+                          <CommandEmpty>Aucune facture trouvée.</CommandEmpty>
+                          <CommandGroup>
+                            <CommandItem
+                              onSelect={() => {
+                                handleInvoiceChange({ target: { value: "" } });
+                                setOpenCombobox(false);
+                              }}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", watchInvoiceId === "" ? "opacity-100" : "opacity-0")} />
+                              -- Aucune / Accueil Libre --
+                            </CommandItem>
+                            {availableInvoices?.map((inv: any) => {
+                               const items = safeJSONParse(inv.items, []);
+                               const summary = items.length ? (items.length > 1 ? `${items[0].description} et ${items.length - 1} autre(s)` : items[0].description) : '';
+                               
+                               return (
+                                 <CommandItem
+                                   key={inv.id}
+                                   value={`${inv.number} ${summary}`}
+                                   onSelect={() => {
+                                     handleInvoiceChange({ target: { value: inv.id } });
+                                     setOpenCombobox(false);
+                                   }}
+                                 >
+                                   <Check className={cn("mr-2 h-4 w-4", watchInvoiceId === inv.id ? "opacity-100" : "opacity-0")} />
+                                   <div className="flex flex-col">
+                                     <span className="font-medium">{inv.number} {summary ? `- ${summary}` : ''}</span>
+                                     <span className="text-xs text-slate-500">
+                                       Montant: {formatCurrency(inv.total)} | Reste à payer : {formatCurrency(inv.amountRemaining || 0)}
+                                     </span>
+                                   </div>
+                                 </CommandItem>
+                               );
+                            })}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+
+                  {selectedInvoice && (
+                     <div className="mt-3 p-4 bg-emerald-50 text-sm max-h-40 overflow-y-auto" style={{ border: '1px solid var(--emerald)', background: 'rgba(16,185,129,0.05)' }}>
+                        <div className="flex justify-between items-center mb-2">
+                           <p className="font-semibold text-emerald-800" style={{ color: 'var(--emerald)' }}>Aperçu Facture {selectedInvoice.number}</p>
+                           <p className="font-medium text-emerald-900" style={{ color: 'var(--emerald)' }}>Reste: {formatCurrency(selectedInvoice.amountRemaining || 0)}</p>
+                        </div>
+                        <ul className="text-slate-600 mt-1 list-disc list-inside space-y-1">
+                          {safeJSONParse(selectedInvoice.items).map((it:any, idx: number) => (
+                             <li key={idx}>
+                                <span className="font-medium text-slate-700">{it.description}</span> (x{it.quantity}) - {formatCurrency(it.unitPrice)}
+                             </li>
+                          ))}
+                        </ul>
+                     </div>
+                  )}
+                </div>
               </div>
 
-              <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Facture associée (Optionnel)</label>
-                <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
-                  <PopoverTrigger
-                    render={
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={openCombobox}
-                        className="w-full justify-between font-normal fp-input"
-                        style={{ height: '42px', borderRadius: 0, border: '1px solid var(--border)' }}
-                        disabled={!watchClientId}
-                      >
-                        {watchInvoiceId
-                          ? (() => {
-                              const inv = availableInvoices?.find((i: any) => i.id === watchInvoiceId);
-                              if (!inv) return "-- Aucune / Accueil Libre --";
-                              const items = safeJSONParse(inv.items, []);
-                              const summary = items.length ? (items.length > 1 ? `${items[0].description} (+${items.length - 1})` : items[0].description) : '';
-                              return `${inv.number} ${summary ? `- ${summary}` : ''} (Reste: ${formatCurrency(inv.amountRemaining || 0)})`;
-                            })()
-                          : "-- Aucune / Accueil Libre --"}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    }
-                  />
-                  <PopoverContent className="w-[500px] p-0" align="start">
-                    <Command>
-                      <CommandInput placeholder="Rechercher par numéro ou objet..." />
-                      <CommandList>
-                        <CommandEmpty>Aucune facture trouvée.</CommandEmpty>
-                        <CommandGroup>
-                          <CommandItem
-                            onSelect={() => {
-                              handleInvoiceChange({ target: { value: "" } });
-                              setOpenCombobox(false);
-                            }}
-                          >
-                            <Check className={cn("mr-2 h-4 w-4", watchInvoiceId === "" ? "opacity-100" : "opacity-0")} />
-                            -- Aucune / Accueil Libre --
-                          </CommandItem>
-                          {availableInvoices?.map((inv: any) => {
-                             const items = safeJSONParse(inv.items, []);
-                             const summary = items.length ? (items.length > 1 ? `${items[0].description} et ${items.length - 1} autre(s)` : items[0].description) : '';
-                             
-                             return (
-                               <CommandItem
-                                 key={inv.id}
-                                 value={`${inv.number} ${summary}`} // searchable by number and summary
-                                 onSelect={() => {
-                                   handleInvoiceChange({ target: { value: inv.id } });
-                                   setOpenCombobox(false);
-                                 }}
-                               >
-                                 <Check className={cn("mr-2 h-4 w-4", watchInvoiceId === inv.id ? "opacity-100" : "opacity-0")} />
-                                 <div className="flex flex-col">
-                                   <span className="font-medium">{inv.number} {summary ? `- ${summary}` : ''}</span>
-                                   <span className="text-xs text-slate-500">
-                                     Montant: {formatCurrency(inv.total)} | Reste à payer : {formatCurrency(inv.amountRemaining || 0)}
-                                   </span>
-                                 </div>
-                               </CommandItem>
-                             );
-                          })}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-
-                {selectedInvoice && (
-                   <div className="mt-3 p-4 bg-emerald-50 text-sm max-h-40 overflow-y-auto" style={{ border: '1px solid var(--emerald)', background: 'rgba(16,185,129,0.05)' }}>
-                      <div className="flex justify-between items-center mb-2">
-                         <p className="font-semibold text-emerald-800" style={{ color: 'var(--emerald)' }}>Aperçu Facture {selectedInvoice.number}</p>
-                         <p className="font-medium text-emerald-900" style={{ color: 'var(--emerald)' }}>Reste: {formatCurrency(selectedInvoice.amountRemaining || 0)}</p>
-                      </div>
-                      <ul className="text-slate-600 mt-1 list-disc list-inside space-y-1">
-                        {safeJSONParse(selectedInvoice.items).map((it:any, idx: number) => (
-                           <li key={idx}>
-                              <span className="font-medium text-slate-700">{it.description}</span> (x{it.quantity}) - {formatCurrency(it.unitPrice)}
-                           </li>
-                        ))}
-                      </ul>
-                   </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
                  <div>
                     <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Montant *</label>
                     <input className="fp-input w-full" type="number" step="0.01" {...register('amount', { required: true, valueAsNumber: true })} />
@@ -467,13 +469,12 @@ ${html}
                 <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Notes Complémentaires</label>
                 <textarea className="fp-input w-full min-h-[80px] resize-y" {...register('notes')} />
               </div>
-            </div>
-
-            <DialogFooter>
-              <button type="button" className="fp-btn-outline" onClick={() => setIsModalOpen(false)}>Annuler</button>
-              <button type="submit" className="fp-btn-primary">Enregistrer le Reçu</button>
-            </DialogFooter>
-          </form>
+            </form>
+          </div>
+          <DialogFooter className="mt-6 pt-6 border-t border-[var(--border)] flex justify-end gap-4 shrink-0">
+             <button type="button" className="fp-btn-outline" onClick={() => setIsModalOpen(false)}>Annuler</button>
+             <button type="submit" form="receipt-form" className="fp-btn-primary">Enregistrer le Reçu</button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

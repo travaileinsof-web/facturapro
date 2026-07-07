@@ -103,7 +103,7 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
         {/* Form Login */}
         {tab === 'login' && (
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {field('Adresse email', 'email', 'vous@entreprise.com', loginData.email, v => setLoginData(p => ({ ...p, email: v })))}
+            {field('Adresse email ou Identifiant', 'text', 'vous@entreprise.com', loginData.email, v => setLoginData(p => ({ ...p, email: v })))}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                 <label style={{ fontSize: '13px', color: '#334155', fontWeight: 600 }}>Mot de passe</label>

@@ -17,7 +17,7 @@ interface Stats {
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const ADMIN_API = '/admin/api';
+const ADMIN_API = '/api/v1/admin';
 const PLANS = { free: 'Essai Gratuit', mensuel: 'Mensuel', annuel: 'Annuel' };
 const STATUS_LABELS: Record<string, [string, string]> = {
   trial:     ['Essai', '#f59e0b'],
@@ -60,7 +60,15 @@ export function Admin() {
       adminFetch('stats'),
       adminFetch(`accounts?q=${search}&status=${filterStatus}`)
     ]);
-    if (s && !s.error) setStats(s);
+    if (s && !s.error) {
+      setStats({
+        ...s.kpis,
+        recentAccounts: s.recentAccounts || [],
+        recentLogs: s.recentLogs || [],
+        mrrCurve: s.mrrCurve || [],
+        acquisitionCurve: s.acquisitionCurve || []
+      });
+    }
     if (Array.isArray(a)) setAccounts(a);
   }, [token, adminFetch, search, filterStatus]);
 
@@ -79,10 +87,10 @@ export function Admin() {
     e.preventDefault();
     setLoginError(''); setLoginLoading(true);
     try {
-      const res = await fetch(`${ADMIN_API}/auth/login`, {
+      const res = await fetch(`/api/v1/admin_auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(loginData)
+        body: JSON.stringify({ username: loginData.email, password: loginData.password })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Accès refusé');
@@ -231,14 +239,14 @@ export function Admin() {
             {/* Stats cards */}
             <div style={{ display:'flex', flexWrap:'wrap', gap:'16px' }}>
               {statCard('Total Comptes', stats.totalAccounts, '#6366f1', '👥')}
-              {statCard('En Essai', stats.trialAccounts, '#f59e0b', '⏳')}
-              {statCard('Actifs', stats.activeAccounts, '#10b981', '✅')}
-              {statCard('Expirés', stats.expiredAccounts, '#ef4444', '❌')}
-              {statCard('Suspendus', stats.suspendedAccounts, '#6b7280', '🚫')}
-              {statCard('Mensuel', stats.mensuelAccounts, '#06b6d4', '📅')}
-              {statCard('Annuel', stats.annuelAccounts, '#f59e0b', '🏆')}
-              {statCard('Revenus Plateforme', fmt(stats.totalRevenuePlatform), '#10b981', '💰')}
-              {statCard('Nouveaux (30j)', stats.newAccountsThisMonth, '#a78bfa', '🆕')}
+              {statCard('Premium', stats.premiumAccounts, '#10b981', '⭐')}
+              {statCard('Gratuit / Essai', stats.freeAccounts, '#f59e0b', '⏳')}
+              {statCard('Suspendus', stats.suspendedAccounts, '#ef4444', '🚫')}
+              {statCard('Total Revenus', fmt(stats.totalRevenue), '#10b981', '💰')}
+              {statCard('Factures Pro', stats.totalInvoices, '#06b6d4', '📄')}
+              {statCard('Clients Gérés', stats.totalClients, '#a78bfa', '👥')}
+              {statCard('Nouveaux (30j)', stats.newThisMonth, '#f472b6', '🆕')}
+              {statCard('Taux Conversion', stats.conversionRate + '%', '#8b5cf6', '📈')}
             </div>
 
             {/* Recent accounts */}

@@ -85,4 +85,60 @@ class SettingsController {
             echo json_encode($mappedUpdatedAccount);
         }
     }
+
+    public static function convertCurrency($pdo, $accountId, $body) {
+        $rate = $body['rate'] ?? 1;
+        if (!is_numeric($rate) || $rate <= 0) {
+            http_response_code(400);
+            echo json_encode(["error" => "Taux invalide"]);
+            exit;
+        }
+
+        try {
+            $pdo->beginTransaction();
+
+            // CatalogItem
+            $pdo->prepare("UPDATE CatalogItem SET price = price * ? WHERE accountId = ?")->execute([$rate, $accountId]);
+            
+            // ProformaInvoice (subtotal, taxAmount, discount, total)
+            $pdo->prepare("UPDATE ProformaInvoice SET subtotal = subtotal * ?, taxAmount = taxAmount * ?, discount = discount * ?, total = total * ? WHERE accountId = ?")
+                ->execute([$rate, $rate, $rate, $rate, $accountId]);
+
+            // ProformaInvoice Items (JSON parsing in PHP for safety across dialects)
+            $stmt = $pdo->prepare("SELECT id, items FROM ProformaInvoice WHERE accountId = ?");
+            $stmt->execute([$accountId]);
+            $invoices = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            $updateItemsStmt = $pdo->prepare("UPDATE ProformaInvoice SET items = ? WHERE id = ? AND accountId = ?");
+            foreach ($invoices as $inv) {
+                if (!empty($inv['items'])) {
+                    $itemsArr = json_decode($inv['items'], true);
+                    if (is_array($itemsArr)) {
+                        foreach ($itemsArr as &$item) {
+                            if (isset($item['unitPrice'])) $item['unitPrice'] = (float)$item['unitPrice'] * $rate;
+                            if (isset($item['total'])) $item['total'] = (float)$item['total'] * $rate;
+                        }
+                        $updateItemsStmt->execute([json_encode($itemsArr), $inv['id'], $accountId]);
+                    }
+                }
+            }
+
+            // Payment
+            $pdo->prepare("UPDATE Payment SET amount = amount * ? WHERE accountId = ?")->execute([$rate, $accountId]);
+                
+            // Receipt
+            $pdo->prepare("UPDATE Receipt SET amount = amount * ? WHERE accountId = ?")->execute([$rate, $accountId]);
+            
+            // Expense
+            $pdo->prepare("UPDATE Expense SET amount = amount * ? WHERE accountId = ?")->execute([$rate, $accountId]);
+
+            $pdo->commit();
+            echo json_encode(["success" => true, "message" => "Devises mises à jour"]);
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            http_response_code(500);
+            echo json_encode(["error" => "Erreur lors de la conversion : " . $e->getMessage()]);
+        }
+        exit;
+    }
 }

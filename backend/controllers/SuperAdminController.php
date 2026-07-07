@@ -1,7 +1,8 @@
 <?php
 class SuperAdminController {
     public static function handle($pdo, $method, $action, $accountId, $body) {
-        if ($method === 'GET' && $action === 'stats') {
+        try {
+            if ($method === 'GET' && $action === 'stats') {
             $timeframe = $_GET['timeframe'] ?? '1y'; // 24h, 7d, 1m, 3m, 6m, 1y
 
             $totalAccounts = $pdo->query("SELECT COUNT(*) as c FROM Account")->fetch()['c'];
@@ -47,6 +48,16 @@ class SuperAdminController {
             ";
             $acqCurve = $pdo->query($acqQuery)->fetchAll(PDO::FETCH_ASSOC);
 
+            $recentAccounts = $pdo->query("SELECT id, email, companyName, subscriptionPlan, subscriptionStatus, createdAt FROM Account ORDER BY createdAt DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
+
+            // Fetch recent logs (assuming a LogAdmin table exists, or we return empty if not)
+            // If it doesn't exist, just return empty array
+            try {
+                $recentLogs = $pdo->query("SELECT * FROM LogAdmin ORDER BY createdAt DESC LIMIT 15")->fetchAll(PDO::FETCH_ASSOC);
+            } catch (Exception $e) {
+                $recentLogs = [];
+            }
+
             echo json_encode([
                 "kpis" => [
                     "totalAccounts"    => (int)$totalAccounts,
@@ -62,7 +73,9 @@ class SuperAdminController {
                     "arpu"             => $arpu
                 ],
                 "mrrCurve" => $mrrCurve,
-                "acquisitionCurve" => $acqCurve
+                "acquisitionCurve" => $acqCurve,
+                "recentAccounts" => $recentAccounts,
+                "recentLogs" => $recentLogs
             ]);
             exit;
         }
@@ -223,7 +236,13 @@ class SuperAdminController {
             exit;
         }
 
-        http_response_code(404);
-        echo json_encode(["error" => "Endpoint introuvable"]);
+            http_response_code(404);
+            echo json_encode(["error" => "Endpoint introuvable"]);
+            exit;
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(["error" => $e->getMessage(), "trace" => $e->getTraceAsString()]);
+            exit;
+        }
     }
 }

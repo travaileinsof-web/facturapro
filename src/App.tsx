@@ -20,6 +20,8 @@ import { ChatIA }     from './components/ChatIA';
 import { Settings }   from './components/Settings';
 import { Companies }  from './components/Companies';
 import { Pricing }    from './components/Pricing';
+import { Popover, PopoverTrigger, PopoverContent } from './components/ui/popover';
+import { toast } from 'sonner';
 
 const queryClient = new QueryClient();
 
@@ -103,7 +105,7 @@ function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boole
               </div>
             </Link>
             {!isCollapsed && (
-              <button onClick={onClose} className="sidebar-hide" style={{
+              <button onClick={onClose} className="sidebar-hide mobile-only" style={{
                 background: 'none', border: 'none', cursor: 'pointer', padding: '5px',
                 color: 'var(--foreground-subtle)',
                 display: 'flex', transition: 'color 0.15s',
@@ -311,12 +313,34 @@ function AppLayout() {
   // Desktop: sidebar always visible (240px margin)
   const isDesktop = typeof window !== 'undefined' && window.innerWidth > 768;
 
+  if (isTrial && trialHours <= 0) {
+    return (
+      <div style={{ display: 'flex', height: '100vh', background: 'var(--background)', color: 'var(--foreground)', overflowY: 'auto' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+          <div style={{ maxWidth: '600px', width: '100%', textAlign: 'center' }}>
+            <Zap size={48} style={{ color: 'var(--gold)', margin: '0 auto 24px' }}/>
+            <h1 style={{ fontSize: '28px', fontWeight: 800, marginBottom: '16px', color: 'var(--foreground)' }}>Période d'essai terminée</h1>
+            <p style={{ fontSize: '16px', color: 'var(--foreground-subtle)', marginBottom: '40px', lineHeight: 1.6 }}>
+              Votre essai gratuit de 24 heures est arrivé à expiration. Pour continuer à utiliser FacturaPro sans interruption, veuillez activer votre abonnement ci-dessous.
+            </p>
+            <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: '24px', padding: '24px', textAlign: 'left', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+              <Pricing />
+            </div>
+            <button onClick={() => { sessionStorage.removeItem('token'); window.location.href = '/login'; }} style={{ marginTop: '32px', background: 'none', border: 'none', color: 'var(--foreground-muted)', fontSize: '14px', cursor: 'pointer', textDecoration: 'underline' }}>
+              Se déconnecter
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ display: 'flex', height: '100vh', background: 'var(--background)', color: 'var(--foreground)', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--background)', color: 'var(--foreground)', overflow: 'hidden' }}>
 
       {/* Trial banner */}
       {isTrial && trialHours <= 24 && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, background: 'linear-gradient(90deg, rgba(201,168,76,0.15), rgba(226,200,120,0.1))', borderBottom: '1px solid var(--border-gold)', padding: '8px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', backdropFilter: 'blur(10px)' }}>
+        <div style={{ position: 'relative', zIndex: 200, background: 'linear-gradient(90deg, rgba(201,168,76,0.15), rgba(226,200,120,0.1))', borderBottom: '1px solid var(--border-gold)', padding: '8px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', backdropFilter: 'blur(10px)' }}>
           <Zap size={13} style={{ color: 'var(--gold)', flexShrink: 0 }}/>
           <span style={{ fontSize: '12px', color: 'var(--foreground-muted)' }}>
             Il reste <strong style={{ color: 'var(--gold)' }}>{trialHours} heure{trialHours !== 1 ? 's' : ''}</strong> à votre essai gratuit.
@@ -326,6 +350,8 @@ function AppLayout() {
           </button>
         </div>
       )}
+      
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
       {/* Sidebar */}
       <div style={{ width: isCollapsed ? '68px' : '228px', flexShrink: 0, position: 'relative', transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
@@ -341,9 +367,9 @@ function AppLayout() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0, marginLeft: 0 }}>
 
         {/* Header */}
-        <header className="fp-header" style={{ marginTop: isTrial && trialHours <= 24 ? '40px' : 0 }}>
+        <header className="fp-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
-            <button onClick={() => setSidebarOpen(true)} style={{
+            <button onClick={() => setSidebarOpen(true)} className="mobile-only" style={{
               width: '30px', height: '30px',
               background: 'var(--surface-2)', border: '1px solid var(--border)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -365,29 +391,94 @@ function AppLayout() {
           {/* Header right */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {/* Notification bell */}
-            <button style={{
-              width: '30px', height: '30px',
-              background: 'var(--surface-2)', border: '1px solid var(--border)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', position: 'relative', transition: 'border-color 0.15s',
-            }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-hover)'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; }}
-            >
-              <Bell style={{ width: '13px', height: '13px', color: 'var(--foreground-muted)' }}/>
-              <div style={{ position: 'absolute', top: '6px', right: '6px', width: '5px', height: '5px', borderRadius: '50%', background: 'var(--gold)', border: '1.5px solid var(--background)' }}/>
-            </button>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button 
+                  style={{
+                  width: '32px', height: '32px',
+                  background: 'var(--surface-2)', border: '1px solid var(--border)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', position: 'relative', transition: 'all 0.2s', borderRadius: '8px'
+                }}
+                  className="hover:border-[var(--border-hover)] hover:bg-[var(--surface-hover)]"
+                >
+                  <Bell style={{ width: '14px', height: '14px', color: 'var(--foreground-muted)' }}/>
+                  <div style={{ position: 'absolute', top: '7px', right: '7px', width: '6px', height: '6px', borderRadius: '50%', background: 'var(--gold)', border: '1.5px solid var(--surface-2)' }}/>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0 mr-4 mt-2" align="end">
+                <div className="p-4 border-b border-[var(--border)] bg-[var(--surface-1)] flex justify-between items-center">
+                  <h4 className="font-semibold text-[13px] text-[var(--foreground)]">Notifications</h4>
+                  <span className="text-[11px] text-[var(--gold)] font-medium bg-[var(--gold-dim)] px-2 py-0.5 rounded-full border border-[var(--border-gold)]">3 Nouvelles</span>
+                </div>
+                <div className="flex flex-col max-h-[300px] overflow-y-auto">
+                  <div className="p-4 border-b border-[var(--border)] bg-[var(--surface-hover)] cursor-pointer hover:bg-[var(--surface-2)] transition-colors">
+                    <p className="text-[12px] font-medium text-[var(--foreground)] mb-1">Paiement reçu</p>
+                    <p className="text-[11px] text-[var(--foreground-muted)] line-clamp-2">Le client <strong>Acme Corp</strong> a réglé la facture #FAC-2026-001 de 1 200,00 $.</p>
+                    <p className="text-[10px] text-[var(--foreground-subtle)] mt-2">Il y a 10 minutes</p>
+                  </div>
+                  <div className="p-4 border-b border-[var(--border)] bg-[var(--surface-hover)] cursor-pointer hover:bg-[var(--surface-2)] transition-colors">
+                    <p className="text-[12px] font-medium text-[var(--foreground)] mb-1">Rappel automatique</p>
+                    <p className="text-[11px] text-[var(--foreground-muted)] line-clamp-2">Le devis #DEV-2026-014 est en attente d'approbation depuis 7 jours.</p>
+                    <p className="text-[10px] text-[var(--foreground-subtle)] mt-2">Il y a 2 heures</p>
+                  </div>
+                  <div className="p-4 bg-white cursor-pointer hover:bg-[var(--surface-2)] transition-colors">
+                    <p className="text-[12px] font-medium text-[var(--foreground)] mb-1">Bienvenue sur FacturaPro</p>
+                    <p className="text-[11px] text-[var(--foreground-muted)] line-clamp-2">Votre compte a été configuré avec succès. Explorez votre tableau de bord.</p>
+                    <p className="text-[10px] text-[var(--foreground-subtle)] mt-2">Il y a 1 jour</p>
+                  </div>
+                </div>
+                <div className="p-3 bg-[var(--surface-2)] border-t border-[var(--border)] text-center">
+                  <button className="text-[12px] font-semibold text-[var(--primary)] hover:underline" onClick={() => toast.success("Toutes les notifications marquées comme lues.")}>Marquer tout comme lu</button>
+                </div>
+              </PopoverContent>
+            </Popover>
 
-            {/* Avatar */}
-            <div style={{
-              width: '30px', height: '30px',
-              background: 'var(--gold-dim)', border: '1px solid var(--border-gold)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '11px', fontWeight: 800, color: 'var(--gold)',
-              cursor: 'pointer',
-            }}>
-              {initials}
-            </div>
+            {/* User Dropdown */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button 
+                  style={{
+                  width: '32px', height: '32px',
+                  background: 'var(--gold-dim)', border: '1px solid var(--border-gold)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', transition: 'all 0.2s', borderRadius: '8px',
+                  fontSize: '11px', fontWeight: 800, color: 'var(--gold)',
+                }}
+                  className="hover:bg-[var(--gold)] hover:text-white"
+                >
+                  {initials}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-0 mr-4 mt-2" align="end">
+                <div className="p-4 border-b border-[var(--border)] bg-[var(--surface-2)]">
+                  <p className="text-[13px] font-bold text-[var(--foreground)]">{user?.name || 'Utilisateur'}</p>
+                  <p className="text-[11px] text-[var(--foreground-muted)] truncate">{user?.email || 'email@example.com'}</p>
+                </div>
+                <div className="p-2 flex flex-col gap-1">
+                  <button 
+                    onClick={() => { useAppStore.getState().setCurrentModule('settings' as any); document.dispatchEvent(new MouseEvent('click')); }}
+                    className="flex items-center gap-3 px-3 py-2 text-[12px] font-medium text-[var(--foreground)] rounded-md hover:bg-[var(--surface-2)] transition-colors w-full text-left"
+                  >
+                    <SettingsIcon size={14} className="text-[var(--foreground-muted)]" /> Paramètres du compte
+                  </button>
+                  <button 
+                    onClick={() => { useAppStore.getState().setCurrentModule('catalog' as any); document.dispatchEvent(new MouseEvent('click')); }}
+                    className="flex items-center gap-3 px-3 py-2 text-[12px] font-medium text-[var(--foreground)] rounded-md hover:bg-[var(--surface-2)] transition-colors w-full text-left"
+                  >
+                    <LayoutList size={14} className="text-[var(--foreground-muted)]" /> Mon Catalogue
+                  </button>
+                </div>
+                <div className="p-2 border-t border-[var(--border)]">
+                  <button 
+                    onClick={handleLogout}
+                    className="flex items-center gap-3 px-3 py-2 text-[12px] font-medium text-red-600 rounded-md hover:bg-red-50 hover:text-red-700 transition-colors w-full text-left"
+                  >
+                    <LogOut size={14} /> Déconnexion
+                  </button>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
         </header>
 
@@ -409,6 +500,7 @@ function AppLayout() {
             {currentModule === 'pricing'   && <Pricing />}
           </div>
         </main>
+      </div>
       </div>
     </div>
   );

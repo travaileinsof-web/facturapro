@@ -82,7 +82,6 @@ define('WHATSAPP_API_SECRET', 'fp_wa_secret_2026_xyz');
 // =============================================================
 // PAIEMENT DJOMY API
 // =============================================================
-define('DJOMY_CLIENT_ID', 'VOTRE_CLIENT_ID_DJOMY');
-define('DJOMY_CLIENT_SECRET', 'VOTRE_CLIENT_SECRET_DJOMY');
+define('DJOMY_CLIENT_ID', 'djomy-client-1783402253216-a94e');
+define('DJOMY_CLIENT_SECRET', 's3cr3t-hnmS30UNAtnjfhkx2FeJbd1S7fOJpZWl');
 define('DJOMY_API_URL', 'https://api.djomy.com'); // A ajuster selon l'environnement
-

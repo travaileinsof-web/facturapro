@@ -600,6 +600,11 @@ select option { background: var(--surface); color: var(--foreground); }
   .app-module-padding { padding: 12px !important; }
 }
 
+@media (min-width: 769px) {
+  .mobile-only { display: none !important; }
+}
+
+
 @media (max-width: 480px) {
   .pub-cursor, .pub-cursor-ring { display: none; }
 }

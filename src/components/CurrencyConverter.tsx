@@ -1,35 +1,44 @@
 import React, { useState } from 'react';
 import { Calculator, Loader2, Copy, Check, ArrowRight, X } from 'lucide-react';
 import { useAppStore, formatCurrency } from '../lib/store';
+import { toast } from 'sonner';
 
 export function CurrencyConverter() {
   const storeCurrency = useAppStore(s => s.user?.currency) || 'XOF';
   
   const [open, setOpen] = useState(false);
-  const [amount, setAmount] = useState<number | ''>('');
+  const [amountInput, setAmountInput] = useState<string>('');
   const [fromCurrency, setFromCurrency] = useState('EUR');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<number | null>(null);
   const [rateUsed, setRateUsed] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const currencies = ['EUR', 'USD', 'XOF', 'CAD', 'GBP', 'CHF'];
+  const currencies = ['EUR', 'USD', 'XOF', 'XAF', 'GNF', 'CAD', 'GBP', 'CHF', 'MAD', 'ZAR'];
 
   const convert = async (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!amount) return;
+    const amountVal = Number(amountInput.replace(',', '.'));
+    if (!amountInput || isNaN(amountVal)) {
+      toast.error("Veuillez entrer un montant valide");
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch(`https://api.exchangerate-api.com/v4/latest/${fromCurrency}`);
+      if (!res.ok) throw new Error("Erreur réseau");
       const data = await res.json();
       const rate = data.rates[storeCurrency];
       if (rate) {
-        setResult(Number(amount) * rate);
+        setResult(amountVal * rate);
         setRateUsed(rate);
         setCopied(false);
+      } else {
+        toast.error(`Impossible de trouver le taux pour ${storeCurrency}`);
       }
     } catch (e) {
       console.error(e);
+      toast.error("Erreur réseau. Impossible de contacter le service de conversion.");
     }
     setLoading(false);
   };
@@ -47,9 +56,11 @@ export function CurrencyConverter() {
       <button 
         type="button" 
         onClick={() => setOpen(true)} 
-        style={{ padding: '7px 14px', background: 'var(--surface-2)', border: '1px dashed var(--border-hover)', color: 'var(--foreground-muted)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', letterSpacing: '0.2px' }}
+        style={{ padding: '8px 16px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--foreground)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+        onMouseOver={(e) => e.currentTarget.style.background = 'var(--surface-hover)'}
+        onMouseOut={(e) => e.currentTarget.style.background = 'var(--surface-2)'}
       >
-        <Calculator size={12} /> Convertisseur de devises
+        <Calculator size={14} className="text-[var(--primary)]" /> Convertisseur de devises
       </button>
     );
   }
@@ -58,16 +69,16 @@ export function CurrencyConverter() {
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', background: 'var(--surface-2)', border: '1px solid var(--border)', padding: '12px', width: 'fit-content' }}>
       <form onSubmit={convert} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <input 
-          type="number" 
+          type="text" 
           placeholder="Montant..." 
-          value={amount} 
-          onChange={(e) => setAmount(e.target.value ? Number(e.target.value) : '')}
+          value={amountInput} 
+          onChange={(e) => setAmountInput(e.target.value)}
           style={{ width: '100px', padding: '6px 10px', background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--foreground)', fontSize: '12px', outline: 'none' }}
         />
         <select 
           value={fromCurrency} 
           onChange={(e) => setFromCurrency(e.target.value)}
-          style={{ padding: '6px 10px', background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--foreground)', fontSize: '12px', outline: 'none', cursor: 'pointer' }}
+          style={{ padding: '6px 10px', background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--foreground)', fontSize: '12px', outline: 'none', cursor: 'pointer', borderRadius: '6px' }}
         >
           {currencies.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
@@ -80,8 +91,8 @@ export function CurrencyConverter() {
 
         <button 
           type="submit" 
-          disabled={loading || !amount}
-          style={{ padding: '6px 14px', background: 'var(--foreground)', color: 'var(--surface)', border: 'none', fontSize: '12px', fontWeight: 600, cursor: (loading || !amount) ? 'not-allowed' : 'pointer', opacity: (loading || !amount) ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '6px' }}
+          disabled={loading || !amountInput}
+          style={{ padding: '6px 14px', background: 'var(--foreground)', color: 'var(--surface)', border: 'none', fontSize: '12px', fontWeight: 600, cursor: (loading || !amountInput) ? 'not-allowed' : 'pointer', opacity: (loading || !amountInput) ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '6px' }}
         >
           {loading ? <Loader2 size={12} className="fp-spin" /> : <Calculator size={12} />} Calculer
         </button>

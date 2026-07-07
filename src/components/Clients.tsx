@@ -171,12 +171,12 @@ export function Clients() {
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-2xl max-w-2xl p-0 overflow-hidden border-0 shadow-2xl">
-          <DialogHeader className="px-8 py-6 bg-[var(--surface-2)] border-b border-[var(--border)]">
+        <DialogContent className="sm:max-w-3xl max-w-3xl p-6 sm:p-8 overflow-hidden rounded-2xl bg-[var(--background)] shadow-2xl border border-[var(--border)]">
+          <DialogHeader className="mb-6">
             <DialogTitle className="text-xl font-display font-semibold text-[var(--foreground)] tracking-tight">Nouveau Client</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
-            <div className="px-8 py-8 grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-6 bg-[var(--background)]">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-6">
               <div>
                 <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2">Nom <span className="text-[var(--primary)]">*</span></label>
                 <input className="fp-input w-full bg-[var(--surface-1)] focus:bg-[var(--background)]" {...register('name', { required: true })} />
@@ -213,7 +213,7 @@ export function Clients() {
                 />
               </div>
             </div>
-            <DialogFooter className="px-8 py-4 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end gap-3">
+            <DialogFooter className="mt-8 pt-6 border-t border-[var(--border)] flex justify-end gap-4">
               <button type="button" className="fp-btn-outline" onClick={() => setIsModalOpen(false)}>Annuler</button>
               <button type="submit" className="fp-btn-primary">Sauvegarder</button>
             </DialogFooter>
@@ -222,8 +222,8 @@ export function Clients() {
       </Dialog>
 
       <Dialog open={!!viewingClient} onOpenChange={(open) => !open && setViewingClient(null)}>
-        <DialogContent className="sm:max-w-5xl max-w-5xl h-[90vh] flex flex-col p-0 border-0 shadow-2xl overflow-hidden bg-[var(--background)]">
-          <div className="bg-[var(--surface-2)] px-8 py-8 border-b border-[var(--border)] shrink-0 flex flex-col gap-6">
+        <DialogContent className="sm:max-w-4xl max-w-4xl h-[90vh] flex flex-col p-6 sm:p-8 rounded-2xl shadow-2xl border border-[var(--border)] overflow-hidden bg-[var(--background)]">
+          <div className="bg-[var(--surface-2)] p-8 rounded-xl border border-[var(--border)] shrink-0 flex flex-col gap-6 mb-6">
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-[var(--primary)] flex items-center justify-center text-white text-2xl font-bold font-display shadow-sm">

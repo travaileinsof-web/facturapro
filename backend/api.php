@@ -174,7 +174,11 @@ try {
             UploadController::handle($method, $accountId);
             break;
         case 'settings':
-            SettingsController::handle($pdo, $method, $accountId, $body, $currentAccount);
+            if ($id === 'convert-currency' && $method === 'POST') {
+                SettingsController::convertCurrency($pdo, $accountId, $body);
+            } else {
+                SettingsController::handle($pdo, $method, $accountId, $body, $currentAccount);
+            }
             break;
         case 'companies':
             CompanyController::handle($pdo, $method, $accountId, $body, $segments);
