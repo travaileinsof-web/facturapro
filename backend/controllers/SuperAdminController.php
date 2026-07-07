@@ -21,29 +21,29 @@ class SuperAdminController {
             $arpu = $premiumAccounts > 0 ? round($totalRevenue / $premiumAccounts, 2) : 0;
 
             // Build MRR and Acquisition curves based on timeframe
-            $dateGroupFormat = '%Y-%m';
-            $limitStr = '-12 months';
-            if ($timeframe === '24h') { $dateGroupFormat = '%Y-%m-%d %H:00'; $limitStr = '-24 hours'; }
-            elseif ($timeframe === '7d') { $dateGroupFormat = '%Y-%m-%d'; $limitStr = '-7 days'; }
-            elseif ($timeframe === '1m') { $dateGroupFormat = '%Y-%m-%d'; $limitStr = '-1 month'; }
-            elseif ($timeframe === '3m') { $dateGroupFormat = '%Y-%W'; $limitStr = '-3 months'; } // par semaine
-            elseif ($timeframe === '6m') { $dateGroupFormat = '%Y-%m'; $limitStr = '-6 months'; }
-            else { $dateGroupFormat = '%Y-%m'; $limitStr = '-1 year'; }
+            $dateGroupFormat = 'YYYY-MM';
+            $limitStr = '1 year';
+            if ($timeframe === '24h') { $dateGroupFormat = 'YYYY-MM-DD HH24:00'; $limitStr = '24 hours'; }
+            elseif ($timeframe === '7d') { $dateGroupFormat = 'YYYY-MM-DD'; $limitStr = '7 days'; }
+            elseif ($timeframe === '1m') { $dateGroupFormat = 'YYYY-MM-DD'; $limitStr = '1 month'; }
+            elseif ($timeframe === '3m') { $dateGroupFormat = 'IYYY-IW'; $limitStr = '3 months'; } // par semaine
+            elseif ($timeframe === '6m') { $dateGroupFormat = 'YYYY-MM'; $limitStr = '6 months'; }
+            else { $dateGroupFormat = 'YYYY-MM'; $limitStr = '1 year'; }
 
             // MRR Curve
-            // Since we are using SQLite in local mode usually, we use strftime
-            $mrrQuery = "SELECT strftime('$dateGroupFormat', createdAt) as date, SUM(amount) as mrr FROM SubscriptionPayment WHERE status = 'COMPLETED' AND createdAt >= datetime('now', '$limitStr') GROUP BY date ORDER BY date ASC";
+            // PostgreSQL syntax using TO_CHAR
+            $mrrQuery = "SELECT TO_CHAR(createdAt, '$dateGroupFormat') as date, SUM(amount) as mrr FROM SubscriptionPayment WHERE status = 'COMPLETED' AND createdAt >= NOW() - INTERVAL '$limitStr' GROUP BY TO_CHAR(createdAt, '$dateGroupFormat') ORDER BY date ASC";
             $mrrCurve = $pdo->query($mrrQuery)->fetchAll(PDO::FETCH_ASSOC);
 
             // Free vs Paid Curve
             $acqQuery = "
                 SELECT 
-                    strftime('$dateGroupFormat', createdAt) as date, 
+                    TO_CHAR(createdAt, '$dateGroupFormat') as date, 
                     SUM(CASE WHEN subscriptionPlan = 'free' THEN 1 ELSE 0 END) as freeAccounts,
                     SUM(CASE WHEN subscriptionPlan = 'premium' THEN 1 ELSE 0 END) as paidAccounts
                 FROM Account 
-                WHERE createdAt >= datetime('now', '$limitStr')
-                GROUP BY date ORDER BY date ASC
+                WHERE createdAt >= NOW() - INTERVAL '$limitStr'
+                GROUP BY TO_CHAR(createdAt, '$dateGroupFormat') ORDER BY date ASC
             ";
             $acqCurve = $pdo->query($acqQuery)->fetchAll(PDO::FETCH_ASSOC);
 
@@ -79,7 +79,7 @@ class SuperAdminController {
             // Détails d'un compte
             $targetId = explode('/', $action)[1];
             
-            $stmt = $pdo->prepare("SELECT id, email, companyName, firstName, lastName, phone, address, city, country, subscriptionPlan, subscriptionStatus, subscriptionExpiresAt, createdAt, isSuspended FROM Account WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT id, email, companyName, firstName, lastName, phone, address, subscriptionPlan, subscriptionStatus, subscriptionExpiresAt, createdAt, isSuspended FROM Account WHERE id = ?");
             $stmt->execute([$targetId]);
             $account = $stmt->fetch(PDO::FETCH_ASSOC);
             
