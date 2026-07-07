@@ -8,16 +8,9 @@ if (php_sapi_name() === 'cli-server') {
     }
 }
 
-$allowed_origins = ['http://localhost:3003', 'http://localhost:5173', 'http://localhost:5174', 'https://facturapro.local'];
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-if (in_array($origin, $allowed_origins)) {
-    header("Access-Control-Allow-Origin: $origin");
-} else {
-    // Autoriser toutes les origines localhost en développement
-    if (preg_match('/^http:\/\/localhost(:\d+)?$/', $origin)) {
-        header("Access-Control-Allow-Origin: $origin");
-    }
-}
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
+header("Access-Control-Allow-Origin: $origin");
+header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, x-api-key");
 header("Content-Type: application/json; charset=UTF-8");
@@ -218,6 +211,11 @@ try {
             if ($id === 'payment' && $subAction === 'init') {
                 $controller = new PaymentController($pdo);
                 $response = $controller->initPayment(['body' => $body]);
+                if (isset($response['status']) && is_numeric($response['status'])) {
+                    http_response_code((int)$response['status']);
+                } elseif (isset($response['error'])) {
+                    http_response_code(500);
+                }
                 echo json_encode($response);
                 exit;
             }
