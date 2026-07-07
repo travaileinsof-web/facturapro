@@ -133,6 +133,9 @@ export function Dashboard() {
     },
   });
 
+  const setCurrentModule = useAppStore(state => state.setCurrentModule);
+
+
   const [searchParams, setSearchParams] = useSearchParams();
   const paymentStatus = searchParams.get('payment');
 
@@ -161,6 +164,7 @@ export function Dashboard() {
   const potentiel = stats?.potentiel || 0;
   const total     = encaisse + creances + potentiel || 1;
   const encaisseRatio = Math.round((encaisse / total) * 100);
+  const creancesRatio = Math.round((creances / total) * 100);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -200,7 +204,7 @@ export function Dashboard() {
             isCurrency 
             icon={Banknote} 
             color="var(--gold)"
-            trend={12}
+            trend={stats?.encaisseTrend}
             delay={0}
           />
           <KpiCard 
@@ -209,7 +213,7 @@ export function Dashboard() {
             isCurrency 
             icon={TrendingUp} 
             color="#22c55e"
-            trend={5}
+            trend={stats?.profitTrend}
             delay={0.1}
           />
           <KpiCard 
@@ -243,7 +247,7 @@ export function Dashboard() {
         </div>
         <div style={{ height: '6px', background: 'var(--surface-3)', overflow: 'hidden', display: 'flex', border: '1px solid var(--border)' }}>
           <div style={{ width: `${encaisseRatio}%`, background: 'var(--success)', transition: 'width 1s cubic-bezier(0.4,0,0.2,1)' }}/>
-          <div style={{ width: `${Math.round((creances/total)*100)}%`, background: 'var(--warning)', opacity: 0.8 }}/>
+          <div style={{ width: `${creancesRatio}%`, background: 'var(--warning)', opacity: 0.8 }}/>
           <div style={{ flex: 1, background: '#8B5CF6', opacity: 0.6 }}/>
         </div>
         <div style={{ display: 'flex', gap: '16px', marginTop: '10px', fontSize: '11px', color: 'var(--foreground-subtle)' }}>
@@ -259,7 +263,7 @@ export function Dashboard() {
         <div className="fp-card" style={{ opacity: 0, animation: 'fp-fade-up 0.5s ease 0.35s forwards' }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <p style={{ fontFamily: 'var(--font-display)', fontSize: '14px', fontWeight: 600, color: 'var(--foreground)' }}>Factures Récentes</p>
-            <span style={{ fontSize: '11px', color: 'var(--gold)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+            <span onClick={() => setCurrentModule('invoices')} style={{ fontSize: '11px', color: 'var(--gold)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
               Voir tout <ArrowRight size={11}/>
             </span>
           </div>
@@ -294,7 +298,7 @@ export function Dashboard() {
         <div className="fp-card" style={{ opacity: 0, animation: 'fp-fade-up 0.5s ease 0.4s forwards' }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <p style={{ fontFamily: 'var(--font-display)', fontSize: '14px', fontWeight: 600, color: 'var(--foreground)' }}>Reçus Récents</p>
-            <span style={{ fontSize: '11px', color: 'var(--gold)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+            <span onClick={() => setCurrentModule('receipts')} style={{ fontSize: '11px', color: 'var(--gold)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
               Voir tout <ArrowRight size={11}/>
             </span>
           </div>
