@@ -15,6 +15,7 @@ import { DialogFooter } from './ui/dialog';
 export function Catalog() {
   const refreshCatalog = useAppStore(state => state.refreshCatalog);
   const triggerRefresh = useAppStore(state => state.triggerRefresh);
+  const currency = useAppStore(state => state.user?.currency) || 'FCFA';
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
 
@@ -190,7 +191,7 @@ export function Catalog() {
                 <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2">Prix Unitaire par défaut (HT) <span className="text-[var(--primary)]">*</span></label>
                 <div className="relative">
                   <input className="fp-input w-full bg-[var(--surface-1)] focus:bg-[var(--background)] pl-8" type="number" step="0.01" {...register('unitPrice')} required />
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] font-bold text-[var(--foreground-muted)]">€</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] font-bold text-[var(--foreground-muted)]">{currency}</span>
                 </div>
               </div>
             </div>

@@ -19,6 +19,7 @@ export function Invoices() {
   const refreshInvoices = useAppStore(state => state.refreshInvoices);
   const refreshClients = useAppStore(state => state.refreshClients);
   const triggerRefresh = useAppStore(state => state.triggerRefresh);
+  const currency = useAppStore(state => state.user?.currency) || 'FCFA';
   const [filterType, setFilterType] = useState('tous');
   const [filterStatus, setFilterStatus] = useState('toutes');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -584,7 +585,7 @@ ${html}
                       <span className="text-[13px] font-medium text-[var(--foreground-subtle)]">Remise globale</span>
                       <div className="relative">
                         <input type="number" className="fp-input w-[120px] text-right font-mono pr-8 bg-white" {...register('discount', { valueAsNumber: true })} />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-bold text-[var(--foreground-muted)]">€</span>
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-bold text-[var(--foreground-muted)]">{currency}</span>
                       </div>
                     </div>
                     <div className="pt-5 mt-2 border-t-2 border-[var(--border)] flex justify-between items-end">

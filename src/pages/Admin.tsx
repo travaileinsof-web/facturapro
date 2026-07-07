@@ -136,7 +136,7 @@ export function Admin() {
           <form onSubmit={handleLoginStep1} style={{ display:'flex', flexDirection:'column', gap:'16px' }}>
             <div>
               <label style={{ color:'#94a3b8', fontSize:'12px', fontWeight:600, textTransform:'uppercase', letterSpacing:'1px', display:'block', marginBottom:'8px' }}>Email Admin</label>
-              <input type="email" value={loginData.email} onChange={e => setLoginData(d => ({...d, email:e.target.value}))} placeholder="admin@facturapro.com" required
+              <input type="text" value={loginData.email} onChange={e => setLoginData(d => ({...d, email:e.target.value}))} placeholder="Identifiant admin" required
                 style={{ width:'100%', padding:'12px 14px', background:'#0a0f1e', border:'1px solid #1e2d4a', borderRadius:'10px', color:'#f0f6ff', fontSize:'14px', outline:'none', boxSizing:'border-box' }} />
             </div>
             <div>

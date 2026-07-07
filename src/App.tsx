@@ -37,11 +37,11 @@ const NAV = [
   { id: 'settings',  label: 'Paramètres',        icon: SettingsIcon,     group: 'tools' },
 ];
 
-function getTrialDaysRemaining(createdAt?: string) {
-  if (!createdAt) return 7;
+function getTrialHoursRemaining(createdAt?: string) {
+  if (!createdAt) return 24;
   const createStr = createdAt.includes('Z') ? createdAt : createdAt.replace(' ', 'T') + 'Z';
-  const expireDate = new Date(new Date(createStr).getTime() + 7 * 24 * 60 * 60 * 1000);
-  return Math.max(0, Math.ceil((expireDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+  const expireDate = new Date(new Date(createStr).getTime() + 24 * 60 * 60 * 1000);
+  return Math.max(0, Math.ceil((expireDate.getTime() - Date.now()) / (1000 * 60 * 60)));
 }
 
 /* ─── Logo SVG ─────────────────────────────────────────────────────── */
@@ -70,7 +70,7 @@ function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boole
   const navigate = useNavigate();
 
   const isTrial = user?.subscriptionStatus === 'trial' || !user?.subscriptionStatus;
-  const trialDays = getTrialDaysRemaining(user?.createdAt);
+  const trialHours = getTrialHoursRemaining(user?.createdAt);
   const initials = (user?.name || user?.company || 'U').charAt(0).toUpperCase();
 
   const handleNav = (id: string) => { setCurrentModule(id as any); onClose(); };
@@ -191,10 +191,10 @@ function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boole
               <div style={{ fontSize: '9px', color: 'var(--gold)', fontWeight: 800, letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <Zap size={9}/> Essai gratuit
               </div>
-              <div style={{ fontSize: '10px', color: 'var(--foreground-muted)', marginBottom: '8px' }}>{trialDays} jour{trialDays !== 1 ? 's' : ''} restant{trialDays !== 1 ? 's' : ''}</div>
+              <div style={{ fontSize: '10px', color: 'var(--foreground-muted)', marginBottom: '8px' }}>{trialHours} heure{trialHours !== 1 ? 's' : ''} restante{trialHours !== 1 ? 's' : ''}</div>
               {/* Progress bar */}
               <div style={{ height: '2px', background: 'var(--surface-3)', overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${Math.round((trialDays / 7) * 100)}%`, background: 'linear-gradient(90deg, var(--gold), var(--gold-light))', transition: 'width 0.6s ease' }}/>
+                <div style={{ height: '100%', width: `${Math.round((trialHours / 24) * 100)}%`, background: 'linear-gradient(90deg, var(--gold), var(--gold-light))', transition: 'width 0.6s ease' }}/>
               </div>
               <button onClick={() => setCurrentModule('pricing' as any)} style={{
                 width: '100%', marginTop: '8px', padding: '6px',
@@ -244,7 +244,7 @@ function AppLayout() {
   const active = NAV.find(n => n.id === currentModule);
 
   const isTrial    = user?.subscriptionStatus === 'trial' || !user?.subscriptionStatus;
-  const trialDays  = getTrialDaysRemaining(user?.createdAt);
+  const trialHours  = getTrialHoursRemaining(user?.createdAt);
   const initials   = (user?.name || user?.company || 'U').charAt(0).toUpperCase();
 
   useEffect(() => {
@@ -315,11 +315,11 @@ function AppLayout() {
     <div style={{ display: 'flex', height: '100vh', background: 'var(--background)', color: 'var(--foreground)', overflow: 'hidden' }}>
 
       {/* Trial banner */}
-      {isTrial && trialDays <= 3 && (
+      {isTrial && trialHours <= 24 && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200, background: 'linear-gradient(90deg, rgba(201,168,76,0.15), rgba(226,200,120,0.1))', borderBottom: '1px solid var(--border-gold)', padding: '8px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', backdropFilter: 'blur(10px)' }}>
           <Zap size={13} style={{ color: 'var(--gold)', flexShrink: 0 }}/>
           <span style={{ fontSize: '12px', color: 'var(--foreground-muted)' }}>
-            Il reste <strong style={{ color: 'var(--gold)' }}>{trialDays} jour{trialDays !== 1 ? 's' : ''}</strong> à votre essai gratuit.
+            Il reste <strong style={{ color: 'var(--gold)' }}>{trialHours} heure{trialHours !== 1 ? 's' : ''}</strong> à votre essai gratuit.
           </span>
           <button onClick={() => useAppStore.getState().setCurrentModule('pricing' as any)} style={{ background: 'var(--gold)', color: '#0A0A0F', border: 'none', borderRadius: 0, padding: '4px 12px', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}>
             S'abonner
@@ -341,7 +341,7 @@ function AppLayout() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0, marginLeft: 0 }}>
 
         {/* Header */}
-        <header className="fp-header" style={{ marginTop: isTrial && trialDays <= 3 ? '40px' : 0 }}>
+        <header className="fp-header" style={{ marginTop: isTrial && trialHours <= 24 ? '40px' : 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
             <button onClick={() => setSidebarOpen(true)} style={{
               width: '30px', height: '30px',
