@@ -238,7 +238,13 @@ function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boole
 
 /* ─── App Layout ────────────────────────────────────────────────────── */
 function AppLayout() {
-  const { currentModule, user } = useAppStore();
+  const { currentModule, user, logout } = useAppStore();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [prevModule, setPrevModule] = useState(currentModule);
