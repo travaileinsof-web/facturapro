@@ -21,7 +21,7 @@ class PaymentController {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, DJOMY_API_URL . '/v1/auth');
         curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([]));
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(new stdClass()));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json',
