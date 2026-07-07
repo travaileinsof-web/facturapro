@@ -240,180 +240,186 @@ export function buildInvoiceHTML(invoice: any, settings: any): string {
 export function buildReceiptHTML(receipt: any, settings: any): string {
   const companyInfo = receipt.company || settings;
   const color = companyInfo?.primaryColor || '#B38E36';
-  const secondary = companyInfo?.secondaryColor || color;
-  const accent = companyInfo?.accentColor || color;
   const light = lighten(color, 0.96);
-  const mid = lighten(color, 0.88);
 
   const logoHTML = companyInfo?.logo
-    ? `<img src="${escapeHTML(companyInfo.logo)}" alt="logo" style="max-height:80px;max-width:240px;object-fit:contain;display:block;" />`
-    : `<div style="font-size:30px;font-weight:900;color:#fff;letter-spacing:-1px;line-height:1;">${escapeHTML(companyInfo?.companyName || 'ENTREPRISE').toUpperCase()}</div>`;
+    ? `<img src="${escapeHTML(companyInfo.logo)}" alt="logo" style="max-height:80px;max-width:200px;object-fit:contain;display:block;" />`
+    : `<div style="font-size:24px;font-weight:900;color:#111;letter-spacing:-0.5px;line-height:1;">${escapeHTML(companyInfo?.companyName || 'ENTREPRISE')}</div>`;
 
   const paymentMethod = receipt.paymentMethod?.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()) || '—';
 
   const stampImg = companyInfo?.stamp
-    ? `<img src="${companyInfo.stamp}" alt="tampon" style="width:120px;height:120px;object-fit:contain;" />`
+    ? `<img src="${companyInfo.stamp}" alt="tampon" style="width:100px;height:100px;object-fit:contain;" />`
     : '';
   const sigImg = companyInfo?.signature
-    ? `<img src="${companyInfo.signature}" alt="signature" style="width:200px;height:90px;object-fit:contain;" />`
+    ? `<img src="${companyInfo.signature}" alt="signature" style="width:160px;height:70px;object-fit:contain;" />`
     : '';
 
   const sigSection = (companyInfo?.stamp || companyInfo?.signature) ? `
-    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;">
-      <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px;">Signature & Cachet</div>
-      <div style="display:flex;align-items:center;gap:16px;">
+    <div style="text-align:right; display:inline-block;">
+      <div style="font-size:10px; font-weight:800; color:${color}; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">Signature & Cachet</div>
+      <div style="display:flex; justify-content:flex-end; align-items:center; gap:16px;">
         ${stampImg}
         ${sigImg}
       </div>
-      <div style="width:200px;border-top:2px solid ${color};padding-top:10px;font-size:12px;font-weight:700;color:${color};">La Direction</div>
     </div>` : `
-    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;">
-      <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px;">Signature & Cachet</div>
-      <div style="height:90px;width:220px;border:2px dashed #e2e8f0;border-radius:10px;"></div>
-      <div style="width:200px;border-top:2px solid ${color};padding-top:10px;font-size:12px;font-weight:700;color:${color};">La Direction</div>
+    <div style="text-align:right; display:inline-block;">
+      <div style="font-size:10px; font-weight:800; color:${color}; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;">Signature & Cachet</div>
+      <div style="height:70px;width:160px;border:1px dashed #cbd5e1;border-radius:4px;margin-left:auto;"></div>
     </div>`;
 
-  const contactInfo = [companyInfo?.phone, companyInfo?.email].filter(Boolean).join('  ·  ');
-  const invoiceRef = receipt.invoice ? `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f1f5f9;">
-      <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;">Réf. Facture</span>
-      <span style="font-size:13px;font-weight:700;color:${color};font-family:monospace;">${escapeHTML(receipt.invoice.number)}</span>
-    </div>` : '';
-  const notesRef = receipt.notes ? `
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:12px 0;gap:20px;">
-      <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;white-space:nowrap;">Notes</span>
-      <span style="font-size:13px;color:#475569;text-align:right;line-height:1.5;white-space:pre-wrap;">${escapeHTML(receipt.notes)}</span>
-    </div>` : '';
-
+  const contactInfo = [companyInfo?.phone, companyInfo?.email, companyInfo?.website].filter(Boolean).join('<br/>');
+  
   const parsedInvoiceItems = safeJSONParse(receipt.invoice?.items);
   const itemRows = Array.isArray(parsedInvoiceItems) ? parsedInvoiceItems.map((item: any) => `
     <tr>
-      <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:${color};font-size:13px;">${escapeHTML(item.description || item.service || '—')}</td>
-      <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;font-size:13px;">${item.quantity || 1}</td>
-      <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;text-align:right;color:#64748b;font-size:13px;">${formatCurrency(item.price || item.unitPrice || 0)}</td>
-      <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;text-align:right;color:#475569;font-size:13px;font-weight:500;">${formatCurrency(item.total || item.amount || (item.quantity * item.unitPrice) || 0)}</td>
+      <td style="padding:16px 20px; border-bottom:1px solid #f1f5f9; vertical-align:top;">
+        <div style="font-size:12px; font-weight:800; color:#111;">${escapeHTML(item.description || item.service || '—')}</div>
+      </td>
+      <td style="padding:16px 20px; border-bottom:1px solid #f1f5f9; text-align:right; font-size:12px; font-weight:700; color:#111; vertical-align:top;">
+        ${formatCurrency(item.total || item.amount || (item.quantity * item.unitPrice) || 0)}
+      </td>
     </tr>
   `).join('') : '';
 
-  const serviceBlock = receipt.invoice ? `
-    <div style="background:#f8fafc;border-radius:14px;padding:28px 32px;margin-bottom:40px;">
-      <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px;">Service / Prestation concerné</div>
-      <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+  return `
+<div style="font-family:'Inter','Helvetica Neue',Helvetica,Arial,sans-serif;background:#fefdfb;width:794px;min-height:1123px;margin:0 auto;color:#1e293b;position:relative;box-sizing:border-box;">
+  
+  <!-- Thick Colored Border on the Left -->
+  <div style="position:absolute;top:60px;bottom:60px;left:0;width:8px;background:${color};"></div>
+
+  <div style="padding:60px 50px 60px 70px;">
+    
+    <!-- Top Section: Title & Company Info -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:60px;">
+      <div style="flex:1;">
+        <div style="font-family:'Times New Roman', Times, serif;font-size:42px;font-weight:700;color:#111;line-height:1.05;letter-spacing:-0.5px;text-transform:uppercase;width:70%;">
+          REÇU DE<br/>PAIEMENT
+        </div>
+        <div style="font-size:11px;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:1px;margin-top:12px;width:80%;">
+          ${escapeHTML(companyInfo?.slogan || 'QUITTANCE OFFICIELLE')}
+        </div>
+      </div>
+      <div style="text-align:right; flex:1;">
+        <div style="margin-bottom:12px;display:flex;justify-content:flex-end;">
+          ${logoHTML}
+        </div>
+        <div style="font-size:11px;color:#64748b;line-height:1.7;">
+          ${companyInfo?.address ? `<div style="color:#475569;">${escapeHTML(companyInfo.address)}</div>` : ''}
+          ${contactInfo ? `<div>${contactInfo}</div>` : ''}
+          ${companyInfo?.taxId ? `<div style="margin-top:4px;">NIF/RCCM : ${escapeHTML(companyInfo.taxId)}</div>` : ''}
+        </div>
+      </div>
+    </div>
+
+    <!-- Middle Section: Client & Receipt Info -->
+    <div style="display:flex;justify-content:space-between;margin-bottom:50px;">
+      
+      <!-- Reçu de -->
+      <div style="flex:1;">
+        <div style="font-size:10px;font-weight:800;color:${color};text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid ${color};padding-bottom:4px;margin-bottom:16px;display:inline-block;">
+          REÇU DE LA PART DE
+        </div>
+        <div style="font-size:16px;font-weight:800;color:#111;margin-bottom:6px;">
+          ${escapeHTML(receipt.client?.name || '—')}
+        </div>
+        <div style="font-size:12px;color:#475569;line-height:1.6;">
+          ${receipt.client?.address ? `${escapeHTML(receipt.client.address)}<br/>` : ''}
+          ${receipt.client?.city ? `${escapeHTML(receipt.client.city)}${receipt.client?.country ? ', ' + escapeHTML(receipt.client.country) : ''}<br/>` : ''}
+          ${receipt.client?.phone ? `${escapeHTML(receipt.client.phone)}<br/>` : ''}
+          ${receipt.client?.email ? `${escapeHTML(receipt.client.email)}` : ''}
+        </div>
+      </div>
+
+      <!-- Informations Reçu -->
+      <div style="flex:1; margin-left:60px;">
+        <div style="font-size:10px;font-weight:800;color:${color};text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid ${color};padding-bottom:4px;margin-bottom:16px;display:inline-block;">
+          INFORMATIONS DU REÇU
+        </div>
+        <table style="width:100%;font-size:12px;color:#475569;">
+          <tr>
+            <td style="padding-bottom:10px;">Référence :</td>
+            <td style="padding-bottom:10px;font-weight:800;color:#111;text-align:right;">${escapeHTML(receipt.number)}</td>
+          </tr>
+          <tr>
+            <td style="padding-bottom:10px;">Date du paiement :</td>
+            <td style="padding-bottom:10px;font-weight:800;color:#111;text-align:right;">${formatDate(receipt.paymentDate)}</td>
+          </tr>
+          <tr>
+            <td style="padding-bottom:10px;">Moyen de paiement :</td>
+            <td style="padding-bottom:10px;font-weight:800;color:${color};text-align:right;">${paymentMethod}</td>
+          </tr>
+        </table>
+      </div>
+
+    </div>
+
+    <!-- Amount Section (Premium Block) -->
+    <div style="margin-bottom:50px;">
+       <div style="background:${light};border:1px solid ${alpha(color, 0.15)};padding:36px 48px;display:flex;align-items:center;justify-content:space-between;position:relative;box-shadow:0 4px 20px rgba(0,0,0,0.02);">
+          <div style="position:absolute;top:0;left:0;width:6px;height:100%;background:${color};"></div>
+          
+          <div>
+            <div style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;">MONTANT REÇU</div>
+            <div style="font-size:46px;font-weight:900;color:#111;letter-spacing:-1.5px;line-height:1;font-family:monospace;">${formatCurrency(receipt.amount)}</div>
+          </div>
+          <div style="text-align:right;">
+             <div style="width:70px;height:70px;border-radius:50%;background:${alpha(color, 0.1)};display:flex;align-items:center;justify-content:center;color:${color};font-size:32px;font-weight:900;margin-left:auto;">✓</div>
+             <div style="font-size:10px;font-weight:800;color:${color};text-transform:uppercase;letter-spacing:1px;margin-top:12px;">PAIEMENT VALIDÉ</div>
+          </div>
+       </div>
+    </div>
+
+    <!-- Services Details (If linked to invoice) -->
+    ${receipt.invoice ? `
+    <div style="margin-bottom:50px;">
+      <div style="font-size:10px;font-weight:800;color:${color};text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid ${color};padding-bottom:4px;margin-bottom:16px;display:inline-block;">
+        SERVICES CONCERNÉS (FACTURE ${escapeHTML(receipt.invoice.number)})
+      </div>
+      <table style="width:100%;border-collapse:collapse;">
         <thead>
-          <tr style="background:${secondary};">
-            <th style="padding:10px;text-align:left;font-size:10px;color:#ffffff;text-transform:uppercase;">Description</th>
-            <th style="padding:10px;text-align:center;font-size:10px;color:#ffffff;text-transform:uppercase;">Qté</th>
-            <th style="padding:10px;text-align:right;font-size:10px;color:#ffffff;text-transform:uppercase;">Prix U.</th>
-            <th style="padding:10px;text-align:right;font-size:10px;color:#ffffff;text-transform:uppercase;">Total</th>
+          <tr style="background:${light};">
+            <th style="padding:16px 20px;font-size:10px;font-weight:800;color:${color};text-transform:uppercase;letter-spacing:1px;text-align:left;border-bottom:2px solid ${color};">DESCRIPTION</th>
+            <th style="padding:16px 20px;font-size:10px;font-weight:800;color:${color};text-transform:uppercase;letter-spacing:1px;text-align:right;border-bottom:2px solid ${color};">MONTANT FACTURÉ</th>
           </tr>
         </thead>
         <tbody>
           ${itemRows}
         </tbody>
       </table>
-      <div style="display:flex;flex-direction:column;gap:10px;border-top:2px solid #e2e8f0;padding-top:16px;margin-left:auto;width:300px;">
-         <div style="display:flex;justify-content:space-between;font-size:13px;">
-            <span style="color:#64748b;">Montant Total du Service</span>
-            <span style="font-weight:600;color:${color};">${formatCurrency(receipt.invoice.total)}</span>
-         </div>
-         <div style="display:flex;justify-content:space-between;font-size:13px;">
-            <span style="color:#64748b;">Reste à payer (après ce reçu)</span>
-            <span style="font-weight:700;color:${receipt.invoice.amountRemaining > 0 ? '#ef4444' : '#10b981'};">${formatCurrency(receipt.invoice.amountRemaining)}</span>
-         </div>
-      </div>
-    </div>
-  ` : '';
-
-  return `
-<div style="font-family:'Inter','Helvetica Neue',Helvetica,Arial,sans-serif;background:#fff;width:794px;margin:0 auto;color:#1e293b;">
-
-  <!-- Header Banner -->
-  <div style="background:${color};padding:40px 52px 44px;position:relative;overflow:hidden;">
-    <div style="position:absolute;top:-80px;right:-40px;width:280px;height:280px;border-radius:50%;border:70px solid rgba(255,255,255,0.05);"></div>
-    <div style="position:absolute;bottom:-60px;right:120px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,0.04);"></div>
-
-    <div style="position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:40px;">
-      <!-- Logo / Company -->
-      <div>
-        ${companyInfo?.logo ? `<img src="${escapeHTML(companyInfo.logo)}" alt="logo" style="max-height:70px;max-width:200px;object-fit:contain;display:block;" />` : `<div style="font-size:28px;font-weight:900;color:#fff;letter-spacing:-1px;line-height:1;">${escapeHTML(companyInfo?.companyName || 'ENTREPRISE').toUpperCase()}</div>`}
-        ${companyInfo?.slogan ? `<div style="font-size:12px;color:rgba(255,255,255,0.6);font-style:italic;margin-top:8px;">${escapeHTML(companyInfo.slogan)}</div>` : ''}
-        <div style="font-size:11.5px;color:rgba(255,255,255,0.65);line-height:1.9;margin-top:12px;">
-          ${companyInfo?.address ? `<div>${escapeHTML(companyInfo.address)}</div>` : ''}
-          ${contactInfo ? `<div>${escapeHTML(contactInfo)}</div>` : ''}
-          ${companyInfo?.taxId ? `<div>NIF / RCCM : ${escapeHTML(companyInfo.taxId)}</div>` : ''}
-        </div>
-      </div>
-
-      <!-- Doc identity -->
-      <div style="text-align:right;">
-        <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;">Quittance</div>
-        <div style="font-size:48px;font-weight:900;color:#ffffff;letter-spacing:-2px;line-height:1;">REÇU</div>
-        <div style="margin-top:16px;display:flex;flex-direction:column;gap:4px;">
-          <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;">
-            <span style="font-size:11px;color:rgba(255,255,255,0.55);">N°</span>
-            <span style="font-size:15px;font-weight:800;color:#fff;font-family:monospace;">${escapeHTML(receipt.number)}</span>
-          </div>
-          <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;">
-            <span style="font-size:11px;color:rgba(255,255,255,0.55);">Date</span>
-            <span style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.9);">${formatDate(receipt.paymentDate)}</span>
-          </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:24px;">
+        <div style="width:360px;">
+           <div style="display:flex;justify-content:space-between;font-size:12px;color:#475569;margin-bottom:10px;">
+              <span>Total de la facture</span>
+              <span style="font-weight:700;color:#111;">${formatCurrency(receipt.invoice.total)}</span>
+           </div>
+           <div style="display:flex;justify-content:space-between;font-size:12px;color:#475569;margin-bottom:12px;">
+              <span>Ce paiement</span>
+              <span style="font-weight:700;color:#15803d;">- ${formatCurrency(receipt.amount)}</span>
+           </div>
+           <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #111;padding-top:16px;margin-top:8px;">
+              <span style="font-size:12px;font-weight:800;color:#111;text-transform:uppercase;letter-spacing:0.5px;">RESTE À PAYER</span>
+              <span style="font-size:16px;font-weight:900;color:${receipt.invoice.amountRemaining > 0 ? '#ef4444' : '#10b981'};">${formatCurrency(receipt.invoice.amountRemaining)}</span>
+           </div>
         </div>
       </div>
     </div>
-  </div>
+    ` : ''}
 
-  <!-- Client + Amount Section -->
-  <div style="padding:0 52px;">
-    <!-- Client strip -->
-    <div style="background:${light};border:1px solid ${alpha(color, 0.12)};border-radius:0 0 16px 16px;padding:22px 32px 26px;margin-bottom:36px;">
-      <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;">Reçu de la part de</div>
-      <div style="font-size:24px;font-weight:900;color:${color};">${escapeHTML(receipt.client?.name || '—')}</div>
-      ${receipt.client?.address ? `<div style="font-size:13px;color:#64748b;margin-top:4px;">${escapeHTML(receipt.client.address)}${receipt.client?.city ? ', ' + escapeHTML(receipt.client.city) : ''}</div>` : ''}
-    </div>
-
-    <!-- Big Amount Box -->
-    <div style="background:${color};border-radius:20px;padding:40px 52px;margin-bottom:36px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden;">
-      <div style="position:absolute;top:0;right:0;bottom:0;width:8px;background:${accent};"></div>
+    <!-- Notes & Signature -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+      <div style="flex:1; padding-right:40px;">
+        ${receipt.notes ? `
+        <div style="margin-bottom:24px;">
+          <div style="font-size:10px; font-weight:800; color:${color}; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid ${color}; padding-bottom:4px; margin-bottom:8px; display:inline-block;">Notes</div>
+          <div style="font-size:11px; color:#475569; line-height:1.6; white-space:pre-wrap;">${escapeHTML(receipt.notes)}</div>
+        </div>` : ''}
+      </div>
       <div>
-        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;">Montant Reçu</div>
-        <div style="font-size:52px;font-weight:900;color:#fff;letter-spacing:-2px;line-height:1;">${formatCurrency(receipt.amount)}</div>
-      </div>
-      <div style="text-align:right;">
-        <div style="width:80px;height:80px;border-radius:50%;background:${alpha(accent, 0.2)};display:flex;align-items:center;justify-content:center;font-size:36px;margin-left:auto;color:${accent};">✓</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.55);margin-top:10px;text-transform:uppercase;letter-spacing:1px;">Paiement Confirmé</div>
-      </div>
-    </div>
-
-    <!-- Details Box -->
-    <div style="background:#f8fafc;border-radius:14px;padding:28px 32px;margin-bottom:20px;">
-      <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:16px;">Détails du Paiement</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f1f5f9;">
-        <span style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;">Mode de paiement</span>
-        <span style="font-size:14px;font-weight:700;color:${color};">${paymentMethod}</span>
-      </div>
-      ${invoiceRef}
-      ${notesRef}
-    </div>
-
-    ${serviceBlock}
-
-    <!-- Signature Section -->
-    <div style="display:flex;justify-content:flex-end;padding:0 0 52px;">
-      <div style="background:#f8fafc;border-radius:16px;padding:32px 40px;">
         ${sigSection}
       </div>
     </div>
-  </div>
 
-  <!-- Footer -->
-  <div style="background:${color};padding:20px 52px;display:flex;justify-content:space-between;align-items:center;">
-    <div style="font-size:11px;color:rgba(255,255,255,0.55);line-height:1.7;">
-      ${[companyInfo?.companyName, companyInfo?.address].filter(Boolean).map(escapeHTML).join('  ·  ')}
-    </div>
-    <div style="font-size:11px;color:rgba(255,255,255,0.55);text-align:right;line-height:1.7;">
-      ${[companyInfo?.phone, companyInfo?.email].filter(Boolean).map(escapeHTML).join('  ·  ')}
-      ${companyInfo?.taxId ? `<div style="margin-top:2px;">NIF/RCCM: ${escapeHTML(companyInfo.taxId)}</div>` : ''}
-    </div>
   </div>
 </div>`;
 }
