@@ -23,11 +23,19 @@ export function Reminders() {
   });
 
   // On filtre pour n'avoir que ce qui a un reste à payer et qui n'est pas un devis ou annulé
-  const pendingInvoices = invoices?.filter((inv: any) => 
-     String(inv.type).toLowerCase() !== 'devis' && 
-     String(inv.status).toLowerCase() !== 'annulée' &&
-     Number(inv.amountRemaining) > 0
-  ) || [];
+  const pendingInvoices = invoices?.filter((inv: any) => {
+     // Recalcul sécurisé du reste à payer côté frontend
+     const paid = (inv.receipts || []).reduce((sum: number, r: any) => sum + Number(r.amount || 0), 0);
+     const remaining = Math.max(0, Number(inv.total || 0) - paid);
+     
+     const isDevis = String(inv.type).toLowerCase() === 'devis';
+     const isCanceled = String(inv.status).toLowerCase() === 'annulée';
+     
+     // On s'assure d'écraser la valeur pour l'affichage au cas où
+     inv.amountRemaining = remaining;
+     
+     return !isDevis && !isCanceled && remaining > 0;
+  }) || [];
 
   const sendReminder = async (inv: any, method: 'whatsapp' | 'email') => {
     const toastId = toast.loading(`Envoi de la relance via ${method}...`);
