@@ -1,4 +1,4 @@
-import { formatCurrency, formatDate, escapeHTML } from './store';
+import { formatCurrency, formatDate, escapeHTML, safeJSONParse } from './store';
 
 // ─── Color Helpers ────────────────────────────────────────────────────────────
 
