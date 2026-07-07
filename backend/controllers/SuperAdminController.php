@@ -176,6 +176,54 @@ class SuperAdminController {
             }
         }
         
+        if ($method === 'POST' && str_starts_with($action, 'accounts/') && str_ends_with($action, '/renew-trial')) {
+            $targetId = explode('/', $action)[1];
+            // On remet le createdAt à NOW() pour redonner 24h
+            $stmt = $pdo->prepare("UPDATE Account SET createdAt = CURRENT_TIMESTAMP WHERE id = ?");
+            $stmt->execute([$targetId]);
+            
+            try {
+                $pdo->prepare("INSERT INTO AdminLog (action, targetAccountId, details) VALUES (?, ?, ?)")->execute(['RENEW_TRIAL', $targetId, "Admin $accountId renewed trial for $targetId"]);
+            } catch (Exception $e) {}
+            
+            echo json_encode(["success" => true, "message" => "L'essai gratuit de 24h a été renouvelé avec succès."]);
+            exit;
+        }
+
+        if ($method === 'POST' && str_starts_with($action, 'accounts/') && str_ends_with($action, '/manual-upgrade')) {
+            $targetId = explode('/', $action)[1];
+            
+            $stmtAcc = $pdo->prepare("SELECT email, firstName FROM Account WHERE id = ?");
+            $stmtAcc->execute([$targetId]);
+            $acc = $stmtAcc->fetch();
+            
+            if (!$acc) {
+                http_response_code(404); echo json_encode(["error" => "Compte introuvable"]); exit;
+            }
+            
+            // Mettre à jour l'abonnement
+            $expiresAt = date('Y-m-d H:i:s', strtotime('+1 year'));
+            $stmt = $pdo->prepare("UPDATE Account SET subscriptionPlan = 'annuel', subscriptionStatus = 'active', subscriptionExpiresAt = ?, lastPaymentDate = CURRENT_TIMESTAMP WHERE id = ?");
+            $stmt->execute([$expiresAt, $targetId]);
+            
+            // Générer un reçu fictif
+            $amount = 1000;
+            $receiptId = uniqid('sub_rec_');
+            $receiptNumber = 'REC-SUB-MANUAL-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4));
+            $stmtRec = $pdo->prepare("INSERT INTO SubscriptionReceipt (id, accountId, receiptNumber, subscriptionInvoiceId, amount) VALUES (?, ?, ?, NULL, ?)");
+            $stmtRec->execute([$receiptId, $targetId, $receiptNumber, $amount]);
+            
+            require_once __DIR__ . '/../core/SystemMailer.php';
+            SystemMailer::sendPaymentConfirmation($pdo, $acc['email'], $acc['firstName'] ?? 'Client', $amount, $receiptNumber);
+            
+            try {
+                $pdo->prepare("INSERT INTO AdminLog (action, targetAccountId, details) VALUES (?, ?, ?)")->execute(['MANUAL_UPGRADE', $targetId, "Admin $accountId upgraded $targetId to premium"]);
+            } catch (Exception $e) {}
+            
+            echo json_encode(["success" => true, "message" => "Le compte a été passé en Premium avec succès."]);
+            exit;
+        }
+        
         if ($method === 'POST' && str_starts_with($action, 'impersonate/')) {
             $targetId = explode('/', $action)[1];
             

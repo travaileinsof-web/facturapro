@@ -118,6 +118,22 @@ export function Admin() {
     loadData();
   };
 
+  const handleRenewTrial = async (id: string) => {
+    if (!confirm('Prolonger l\'essai de 24h supplémentaires ?')) return;
+    const res = await adminFetch(`accounts/${id}/renew-trial`, { method: 'POST' });
+    if (res.success) alert(res.message);
+    setEditModal(false);
+    loadData();
+  };
+
+  const handleManualUpgrade = async (id: string) => {
+    if (!confirm('Activer Premium 1 an et envoyer l\'email de confirmation au client ?')) return;
+    const res = await adminFetch(`accounts/${id}/manual-upgrade`, { method: 'POST' });
+    if (res.success) alert(res.message);
+    setEditModal(false);
+    loadData();
+  };
+
   // ─── LOGIN SCREEN ────────────────────────────────────────────────────────────
   if (!token) return (
     <div style={{ minHeight:'100vh', background:'#030712', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Inter,sans-serif' }}>
@@ -417,6 +433,15 @@ export function Admin() {
             <div style={{ marginBottom:'24px', display:'flex', alignItems:'center', gap:'10px', background:'rgba(239,68,68,0.08)', border:'1px solid rgba(239,68,68,0.2)', borderRadius:'10px', padding:'14px' }}>
               <input type="checkbox" id="suspended" checked={editData.isSuspended === 1} onChange={e => setEditData(d => ({...d, isSuspended: e.target.checked ? 1 : 0}))} style={{ width:'16px', height:'16px', accentColor:'#ef4444' }} />
               <label htmlFor="suspended" style={{ color:'#f87171', fontSize:'13px', fontWeight:600, cursor:'pointer' }}>🚫 Suspendre ce compte (bloque l'accès utilisateur)</label>
+            </div>
+
+            <div style={{ marginBottom:'24px', display:'flex', gap:'10px', flexWrap:'wrap' }}>
+              {selectedAccount.subscriptionPlan === 'free' && (
+                <button onClick={() => handleRenewTrial(selectedAccount.id)} style={{ padding:'10px 16px', background:'#f59e0b22', color:'#f59e0b', borderRadius:'8px', border:'1px solid #f59e0b44', cursor:'pointer', fontSize:'13px', fontWeight:600 }}>⏳ Prolonger Essai (24h)</button>
+              )}
+              {selectedAccount.subscriptionPlan !== 'annuel' && (
+                <button onClick={() => handleManualUpgrade(selectedAccount.id)} style={{ padding:'10px 16px', background:'#10b98122', color:'#10b981', borderRadius:'8px', border:'1px solid #10b98144', cursor:'pointer', fontSize:'13px', fontWeight:600 }}>⭐ Activer Premium 1 An</button>
+              )}
             </div>
 
             <div style={{ display:'flex', gap:'10px', justifyContent:'flex-end' }}>
