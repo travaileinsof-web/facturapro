@@ -11,7 +11,10 @@ class ShareController {
                 exit;
             }
             
-            $pdfData = base64_decode(preg_replace('#^data:application/pdf;base64,#i', '', $pdfBase64));
+            // Correction de l'extraction de la chaîne Base64 générée par jsPDF
+            $base64Parts = explode(',', $pdfBase64);
+            $base64String = count($base64Parts) > 1 ? $base64Parts[1] : $base64Parts[0];
+            $pdfData = base64_decode($base64String);
             
             if ($type === 'whatsapp') {
                 $uniqueName = uniqid() . '_' . preg_replace('/[^a-zA-Z0-9_\.-]/', '', $filename);
@@ -71,6 +74,7 @@ class ShareController {
                 $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
                 try {
                     $mail->isSMTP();
+                    $mail->CharSet    = 'UTF-8'; // Correction des caractères spéciaux (ex: Reçu)
                     $mail->Host       = $currentAccount['smtpHost'] ?? $currentAccount['smtphost'] ?? 'smtp.gmail.com';
                     $mail->SMTPAuth   = true;
                     
