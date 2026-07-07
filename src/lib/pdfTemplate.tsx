@@ -31,6 +31,7 @@ export function buildInvoiceHTML(invoice: any, settings: any): string {
   const light = lighten(color, 0.96);
   const mid = lighten(color, 0.88);
   const items: any[] = (() => { try { const p = JSON.parse(invoice.items || '[]'); return Array.isArray(p) ? p : (p && typeof p === 'object' ? [p] : []); } catch { return []; } })();
+  const items: any[] = safeJSONParse(invoice.items);
 
   let documentTitle = 'FACTURE';
   if (invoice.type === 'devis') documentTitle = 'DEVIS';
@@ -62,13 +63,16 @@ export function buildInvoiceHTML(invoice: any, settings: any): string {
 
   const statusBadge = (() => {
     const statusMap: any = {
-      brouillon: ['#f1f5f9', '#475569', 'Brouillon'],
-      envoyee: ['#eff6ff', '#1d4ed8', 'Envoyée'],
-      partiellement_payee: ['#fffbeb', '#d97706', 'Partiel.'],
-      payee: ['#f0fdf4', '#15803d', 'Payée'],
-      annulee: ['#fef2f2', '#dc2626', 'Annulée'],
+      'brouillon': ['#f1f5f9', '#475569', 'Brouillon'],
+      'envoyée': ['#eff6ff', '#1d4ed8', 'Envoyée'],
+      'partielle': ['#fffbeb', '#d97706', 'Partielle'],
+      'payée': ['#f0fdf4', '#15803d', 'Payée'],
+      'annulée': ['#fef2f2', '#dc2626', 'Annulée'],
+      'impayée': ['#fef2f2', '#dc2626', 'Impayée'],
+      'retard': ['#fef2f2', '#dc2626', 'En retard'],
     };
-    const s = statusMap[invoice.status] || statusMap.brouillon;
+    const s = statusMap[String(invoice.status || '').toLowerCase()] || ['', '', ''];
+    if (!s[2]) return '';
     return `<span style="background:${s[0]};color:${s[1]};font-size:10px;font-weight:700;padding:4px 12px;border-radius:20px;letter-spacing:0.5px;text-transform:uppercase;">${s[2]}</span>`;
   })();
 
@@ -199,12 +203,35 @@ export function buildInvoiceHTML(invoice: any, settings: any): string {
         </div>
         ${taxRow}
         ${discountRow}
-        <div style="margin-top:16px;background:${color};border-radius:10px;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;">
+        <div style="display:flex;justify-content:space-between;padding:12px 0;border-top:2px solid ${color};margin-top:10px;">
+          <span style="font-size:14px;font-weight:700;color:#64748b;text-transform:uppercase;">Total de la Facture</span>
+          <span style="font-size:16px;font-weight:800;color:#1e293b;font-family:monospace;">${formatCurrency(invoice.total)}</span>
+        </div>
+        
+        ${(invoice.receipts && invoice.receipts.length > 0) ? `
+        <div style="margin-top:16px;background:#f8fafc;border-radius:8px;padding:16px;">
+          <div style="font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Acomptes & Paiements reçus</div>
+          ${invoice.receipts.map((r: any) => `
+            <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #e2e8f0;font-size:13px;color:#475569;">
+              <span>Reçu ${escapeHTML(r.number)}</span>
+              <span style="color:#15803d;font-weight:700;font-family:monospace;">- ${formatCurrency(r.amount)}</span>
+            </div>
+          `).join('')}
+        </div>
+        ` : ''}
+
+        <div style="margin-top:16px;background:${color};border-radius:10px;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;box-shadow: 0 10px 25px -5px ${color}40;">
           <div>
-            <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Net à payer TTC</div>
-            <div style="font-size:24px;font-weight:900;color:#fff;letter-spacing:-0.5px;">${formatCurrency(invoice.total)}</div>
+            <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">
+              ${(invoice.receipts && invoice.receipts.length > 0) ? 'Reste à payer TTC' : 'Net à payer TTC'}
+            </div>
+            <div style="font-size:26px;font-weight:900;color:#fff;letter-spacing:-0.5px;font-family:monospace;">
+              ${formatCurrency(invoice.amountRemaining !== undefined ? invoice.amountRemaining : invoice.total)}
+            </div>
           </div>
-          <div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;font-size:22px;">✓</div>
+          <div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;">
+            ${(invoice.amountRemaining !== undefined && invoice.amountRemaining <= 0) ? '✓' : '💳'}
+          </div>
         </div>
       </div>
     </div>
@@ -281,14 +308,15 @@ export function buildReceiptHTML(receipt: any, settings: any): string {
       <span style="font-size:13px;color:#475569;text-align:right;line-height:1.5;white-space:pre-wrap;">${escapeHTML(receipt.notes)}</span>
     </div>` : '';
 
-  const itemRows = receipt.invoice?.items?.map((item: any) => `
+  const parsedInvoiceItems = safeJSONParse(receipt.invoice?.items);
+  const itemRows = Array.isArray(parsedInvoiceItems) ? parsedInvoiceItems.map((item: any) => `
     <tr>
       <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;color:${color};font-size:13px;">${escapeHTML(item.description || item.service || '—')}</td>
       <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;text-align:center;color:#64748b;font-size:13px;">${item.quantity || 1}</td>
       <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;text-align:right;color:#64748b;font-size:13px;">${formatCurrency(item.price || item.unitPrice || 0)}</td>
-      <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;text-align:right;color:#475569;font-size:13px;font-weight:500;">${formatCurrency(item.total || item.amount || 0)}</td>
+      <td style="padding:10px 0;border-bottom:1px solid #f1f5f9;text-align:right;color:#475569;font-size:13px;font-weight:500;">${formatCurrency(item.total || item.amount || (item.quantity * item.unitPrice) || 0)}</td>
     </tr>
-  `).join('') || '';
+  `).join('') : '';
 
   const serviceBlock = receipt.invoice ? `
     <div style="background:#f8fafc;border-radius:14px;padding:28px 32px;margin-bottom:40px;">

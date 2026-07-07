@@ -245,7 +245,7 @@ export function Invoices() {
       
       baseMsg = baseMsg.replace(/\{client_name\}/g, fullInv.client?.name || inv.client?.name || '');
       baseMsg = baseMsg.replace(/\{document_number\}/g, inv.number || '');
-      baseMsg = baseMsg.replace(/\{amount\}/g, formatCurrency(inv.totalTTC) || '');
+      baseMsg = baseMsg.replace(/\{amount\}/g, formatCurrency(inv.total) || '');
       baseMsg = baseMsg.replace(/\{company_name\}/g, fullInv.company?.name || settings.companyName || '');
       
       if (!shareRes.ok && shareData.error?.includes("Vercel Blob")) {
