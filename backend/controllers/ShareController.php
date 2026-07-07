@@ -14,6 +14,9 @@ class ShareController {
             // Correction de l'extraction de la chaîne Base64 générée par jsPDF
             $base64Parts = explode(',', $pdfBase64);
             $base64String = count($base64Parts) > 1 ? $base64Parts[1] : $base64Parts[0];
+            
+            // FIX CRITIQUE: Remplacer les espaces par des '+' car le transfert HTTP/JSON altère parfois la Base64
+            $base64String = str_replace(' ', '+', $base64String);
             $pdfData = base64_decode($base64String);
             
             if ($type === 'whatsapp') {
@@ -74,7 +77,8 @@ class ShareController {
                 $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
                 try {
                     $mail->isSMTP();
-                    $mail->CharSet    = 'UTF-8'; // Correction des caractères spéciaux (ex: Reçu)
+                    $mail->CharSet    = 'UTF-8'; // Correction des caractères spéciaux
+                    $mail->Encoding   = 'base64'; // FIX: Empêche la corruption des accents par les serveurs SMTP (7bit/8bit)
                     $mail->Host       = $currentAccount['smtpHost'] ?? $currentAccount['smtphost'] ?? 'smtp.gmail.com';
                     $mail->SMTPAuth   = true;
                     
@@ -110,9 +114,13 @@ class ShareController {
                     
                     $mail->isHTML(true);
                     $mail->Subject = $subject;
-                    $mail->Body    = nl2br(htmlspecialchars($message));
+                    // FIX: Nettoyage strict compatible UTF-8
+                    $mail->Body    = nl2br(htmlspecialchars($message, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
                     
-                    $mail->addStringAttachment($pdfData, $filename, 'base64', 'application/pdf');
+                    // FIX: Nettoyer le nom du fichier pour la compatibilité des clients mail
+                    $safeFilename = preg_replace('/[^a-zA-Z0-9_\.-]/', '_', $filename);
+                    
+                    $mail->addStringAttachment($pdfData, $safeFilename, 'base64', 'application/pdf');
                     
                     $mail->send();
                     echo json_encode(["success" => true, "message" => "Email envoyé"]);

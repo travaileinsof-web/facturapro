@@ -31,7 +31,7 @@ export function Pricing() {
           
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '32px' }}>
             <span style={{ fontSize: '42px', fontWeight: 900, color: '#0f172a', letterSpacing: '-1.5px' }}>
-              500 000
+              1 000
             </span>
             <span style={{ fontSize: '15px', fontWeight: 600, color: '#64748b' }}>GNF / an</span>
           </div>

@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import {
   Users, DollarSign, Search, LogIn,
   Crown, AlertTriangle, FileText, Building2,
-  ArrowLeft, Calendar, Phone, MapPin, RefreshCw, Ban, CheckCircle
+  ArrowLeft, Calendar, Phone, MapPin, RefreshCw, Ban, CheckCircle, Settings, Mail
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 
@@ -13,9 +13,10 @@ export function Admin() {
   const [stats, setStats] = useState<any>(null);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<'dashboard' | 'accounts' | 'details'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'accounts' | 'details' | 'settings'>('dashboard');
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [timeframe, setTimeframe] = useState('1y');
 
   const token = user?.token;
 
@@ -30,7 +31,7 @@ export function Admin() {
     else setRefreshing(true);
     try {
       const [sRes, aRes] = await Promise.all([
-        apiFetch('stats'),
+        apiFetch(`stats?timeframe=${timeframe}`),
         apiFetch('accounts')
       ]);
       if (sRes.ok) setStats(await sRes.json());
@@ -43,9 +44,9 @@ export function Admin() {
     }
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, [timeframe]);
 
-  const navBtn = (id: 'dashboard' | 'accounts', label: string) => {
+  const navBtn = (id: 'dashboard' | 'accounts' | 'settings', label: string, Icon?: any) => {
     const active = view === id || (id === 'accounts' && view === 'details');
     return (
       <button
@@ -61,6 +62,7 @@ export function Admin() {
         onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.color = 'var(--foreground)'; }}
         onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.color = 'var(--foreground-muted)'; }}
       >
+        {Icon && <Icon size={14} style={{ marginRight: '6px' }} />}
         {label}
       </button>
     );
@@ -87,6 +89,20 @@ export function Admin() {
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {view === 'dashboard' && (
+            <select 
+              value={timeframe} 
+              onChange={e => setTimeframe(e.target.value)}
+              style={{ padding: '8px 12px', background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--foreground)', fontSize: '12px', outline: 'none', cursor: 'pointer' }}
+            >
+              <option value="24h">Dernières 24h</option>
+              <option value="7d">7 derniers jours</option>
+              <option value="1m">1 dernier mois</option>
+              <option value="3m">3 derniers mois</option>
+              <option value="6m">6 derniers mois</option>
+              <option value="1y">1 dernière année</option>
+            </select>
+          )}
           <button
             onClick={() => loadData(true)}
             style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--foreground-muted)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.5px' }}
@@ -99,6 +115,7 @@ export function Admin() {
           <div style={{ width: '1px', height: '24px', background: 'var(--border)', margin: '0 8px' }}></div>
           {navBtn('dashboard', 'Aperçu')}
           {navBtn('accounts', 'Comptes & Utilisateurs')}
+          {navBtn('settings', 'Paramètres', Settings)}
         </div>
       </div>
 
@@ -120,6 +137,92 @@ export function Admin() {
             onBack={() => { setView('accounts'); loadData(true); }}
           />
         )}
+        {view === 'settings' && (
+          <AdminSettings token={token || ''} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+function AdminSettings({ token }: { token: string }) {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [settings, setSettings] = useState<any>({
+    MAIL_HOST: '',
+    MAIL_PORT: '465',
+    MAIL_USER: '',
+    MAIL_PASS: '',
+    MAIL_FROM: '',
+    MAIL_FROM_NAME: 'FacturaPro'
+  });
+
+  useEffect(() => {
+    fetch('/api/admin/settings', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    }).then(r => r.json()).then(data => {
+      setSettings((prev: any) => ({ ...prev, ...data }));
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [token]);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+      });
+      if (res.ok) toast.success('Paramètres sauvegardés avec succès.');
+      else toast.error('Erreur lors de la sauvegarde.');
+    } catch {
+      toast.error('Erreur réseau.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const field = (label: string, key: string, type: string = 'text', placeholder: string = '') => (
+    <div style={{ marginBottom: '16px' }}>
+      <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--foreground)', marginBottom: '8px' }}>{label}</label>
+      <input
+        type={type} placeholder={placeholder} value={settings[key] || ''}
+        onChange={e => setSettings({ ...settings, [key]: e.target.value })}
+        style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--foreground)', outline: 'none' }}
+      />
+    </div>
+  );
+
+  if (loading) return <div>Chargement...</div>;
+
+  return (
+    <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+      <div className="fp-card" style={{ padding: '32px' }}>
+        <h3 style={{ margin: '0 0 24px', fontSize: '18px', fontFamily: 'var(--font-display)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--foreground)' }}>
+          <Mail size={18} style={{ color: 'var(--gold)' }} />
+          Configuration SMTP / Emails
+        </h3>
+        <form onSubmit={handleSave}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: '16px' }}>
+            {field('Serveur SMTP (Host)', 'MAIL_HOST', 'text', 'ex: mail.hostinger.com')}
+            {field('Port', 'MAIL_PORT', 'number')}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            {field('Utilisateur SMTP', 'MAIL_USER', 'text', 'contact@votredomaine.com')}
+            {field('Mot de passe SMTP', 'MAIL_PASS', 'password')}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            {field('Email Expéditeur (From)', 'MAIL_FROM', 'email')}
+            {field('Nom Expéditeur', 'MAIL_FROM_NAME', 'text', 'FacturaPro')}
+          </div>
+          
+          <button type="submit" className="fp-btn-primary" disabled={saving} style={{ width: '100%', marginTop: '16px' }}>
+            {saving ? 'Sauvegarde...' : 'Sauvegarder les paramètres'}
+          </button>
+        </form>
       </div>
     </div>
   );
@@ -127,26 +230,24 @@ export function Admin() {
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 function AdminDashboard({ stats }: { stats: any; accounts: any[] }) {
+  const kpisData = stats.kpis || {};
   const kpis = [
-    { label: 'Utilisateurs', value: stats.totalAccounts, icon: Users, color: 'var(--blue-accent)', desc: 'Nombre total de comptes créés sur la plateforme' },
-    { label: 'Abonnés Premium', value: stats.premiumAccounts, icon: Crown, color: 'var(--gold)', desc: 'Comptes ayant un abonnement payant actif' },
-    { label: 'Comptes Gratuits', value: stats.freeAccounts, icon: Building2, color: 'var(--success)', desc: 'Comptes en période d\'essai ou sur un plan gratuit' },
-    { label: 'Revenus SaaS', value: `${Number(stats.totalRevenue).toLocaleString('fr-FR')} F`, icon: DollarSign, color: 'var(--gold)', desc: 'Montant total encaissé via les abonnements' },
-    { label: 'Factures Émises', value: stats.totalInvoices, icon: FileText, color: 'var(--foreground-muted)', desc: 'Nombre total de factures générées par toutes les entreprises' },
-    { label: 'Clients Enregistrés', value: stats.totalClients, icon: Users, color: 'var(--foreground-muted)', desc: 'Nombre total de clients finaux enregistrés par vos utilisateurs' },
-    { label: 'Suspendus', value: stats.suspendedAccounts, icon: Ban, color: 'var(--destructive)', desc: 'Comptes bloqués par un administrateur' },
-    { label: 'Expirations (<30j)', value: stats.expiringSoon, icon: AlertTriangle, color: 'var(--warning)', desc: 'Comptes dont l\'abonnement expire dans moins de 30 jours' },
+    { label: 'Utilisateurs', value: kpisData.totalAccounts, icon: Users, color: 'var(--blue-accent)', desc: 'Nombre total de comptes créés sur la plateforme' },
+    { label: 'Abonnés Premium', value: kpisData.premiumAccounts, icon: Crown, color: 'var(--gold)', desc: 'Comptes ayant un abonnement payant actif' },
+    { label: 'Comptes Gratuits', value: kpisData.freeAccounts, icon: Building2, color: 'var(--success)', desc: 'Comptes en période d\'essai ou sur un plan gratuit' },
+    { label: 'Revenus SaaS', value: `${Number(kpisData.totalRevenue || 0).toLocaleString('fr-FR')} F`, icon: DollarSign, color: 'var(--gold)', desc: 'Montant total encaissé via les abonnements' },
+    { label: 'Factures Émises', value: kpisData.totalInvoices, icon: FileText, color: 'var(--foreground-muted)', desc: 'Nombre total de factures générées par toutes les entreprises' },
+    { label: 'Conversion', value: `${kpisData.conversionRate || 0}%`, icon: Users, color: 'var(--foreground-muted)', desc: 'Taux de conversion global' },
+    { label: 'Suspendus', value: kpisData.suspendedAccounts, icon: Ban, color: 'var(--destructive)', desc: 'Comptes bloqués par un administrateur' },
+    { label: 'Expirations (<30j)', value: kpisData.expiringSoon || 0, icon: AlertTriangle, color: 'var(--warning)', desc: 'Comptes dont l\'abonnement expire dans moins de 30 jours' },
   ];
 
-  const premiumPct = stats.totalAccounts > 0 ? (stats.premiumAccounts / stats.totalAccounts) * 100 : 0;
+  const premiumPct = kpisData.totalAccounts > 0 ? (kpisData.premiumAccounts / kpisData.totalAccounts) * 100 : 0;
   const freePct = 100 - premiumPct;
 
-  // Mock data for the chart to make it ultra premium
-  const chartData = [
-    { name: 'Jan', revenue: 400000 }, { name: 'Fév', revenue: 650000 },
-    { name: 'Mar', revenue: 1100000 }, { name: 'Avr', revenue: 1400000 },
-    { name: 'Mai', revenue: 2100000 }, { name: 'Juin', revenue: 3200000 },
-  ];
+  // Utilisation des vraies courbes
+  const chartData = stats.mrrCurve || [];
+  const acqData = stats.acquisitionCurve || [];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
@@ -162,7 +263,7 @@ function AdminDashboard({ stats }: { stats: any; accounts: any[] }) {
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--foreground-muted)', marginBottom: '4px' }}>MRR Actuel</div>
-            <div style={{ fontSize: '24px', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--gold)' }}>{Number(stats.totalRevenue).toLocaleString('fr-FR')} F</div>
+            <div style={{ fontSize: '24px', fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--gold)' }}>{Number(kpisData.totalRevenue || 0).toLocaleString('fr-FR')} F</div>
           </div>
         </div>
         
@@ -176,7 +277,7 @@ function AdminDashboard({ stats }: { stats: any; accounts: any[] }) {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--foreground-muted)' }} dy={10} />
+              <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--foreground-muted)' }} dy={10} />
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--foreground-muted)' }} tickFormatter={(val) => `${val / 1000}k`} dx={-10} />
               <RechartsTooltip 
                 contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', fontSize: '12px' }}
@@ -184,7 +285,46 @@ function AdminDashboard({ stats }: { stats: any; accounts: any[] }) {
                 labelStyle={{ color: 'var(--foreground-subtle)', marginBottom: '4px' }}
                 formatter={(value: number) => [`${value.toLocaleString('fr-FR')} F`, 'Revenus']}
               />
-              <Area type="monotone" dataKey="revenue" stroke="var(--gold)" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+              <Area type="monotone" dataKey="mrr" stroke="var(--gold)" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* ── Graphique d'Acquisition (Gratuit vs Premium) ── */}
+      <div className="fp-card" style={{ padding: '32px', animation: 'fp-fade-up 0.5s ease 0.1s forwards' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+          <div>
+            <h3 style={{ margin: '0 0 8px', fontSize: '16px', fontFamily: 'var(--font-display)', fontWeight: 600, color: 'var(--foreground)' }}>
+              Acquisition & Conversion
+            </h3>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--foreground-subtle)' }}>Comparaison des nouveaux comptes Gratuits vs Premium</p>
+          </div>
+        </div>
+        
+        <div style={{ height: '300px', width: '100%', marginTop: '20px' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={acqData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorFree" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--success)" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="var(--success)" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="colorPremium" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--gold)" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="var(--gold)" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
+              <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--foreground-muted)' }} dy={10} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: 'var(--foreground-muted)' }} dx={-10} />
+              <RechartsTooltip 
+                contentStyle={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', fontSize: '12px' }}
+                itemStyle={{ fontWeight: 600 }}
+                labelStyle={{ color: 'var(--foreground-subtle)', marginBottom: '4px' }}
+              />
+              <Area type="monotone" name="Gratuits" dataKey="free" stroke="var(--success)" strokeWidth={2} fillOpacity={1} fill="url(#colorFree)" />
+              <Area type="monotone" name="Premium" dataKey="premium" stroke="var(--gold)" strokeWidth={2} fillOpacity={1} fill="url(#colorPremium)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -222,7 +362,7 @@ function AdminDashboard({ stats }: { stats: any; accounts: any[] }) {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px', fontWeight: 600 }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--foreground)' }}><Crown size={14} style={{ color: 'var(--gold)' }}/> Premium</span>
-                <span style={{ color: 'var(--gold)' }}>{stats.premiumAccounts}</span>
+                <span style={{ color: 'var(--gold)' }}>{kpisData.premiumAccounts}</span>
               </div>
               <div style={{ height: '8px', background: 'var(--surface-3)', border: '1px solid var(--border)' }}>
                 <div style={{ height: '100%', background: 'var(--gold)', width: `${premiumPct}%` }}></div>
@@ -233,7 +373,7 @@ function AdminDashboard({ stats }: { stats: any; accounts: any[] }) {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px', fontWeight: 600 }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--foreground)' }}><Users size={14} style={{ color: 'var(--foreground-subtle)' }}/> Gratuit / Essai</span>
-                <span>{stats.freeAccounts}</span>
+                <span>{kpisData.freeAccounts}</span>
               </div>
               <div style={{ height: '8px', background: 'var(--surface-3)', border: '1px solid var(--border)' }}>
                 <div style={{ height: '100%', background: 'var(--foreground-subtle)', width: `${freePct}%` }}></div>
@@ -249,13 +389,13 @@ function AdminDashboard({ stats }: { stats: any; accounts: any[] }) {
             Dernières Inscriptions
           </h3>
 
-          {(stats.recentAccounts || []).length === 0 ? (
+          {(kpisData.recentAccounts || []).length === 0 ? (
             <div style={{ textAlign: 'center', padding: '32px', color: 'var(--foreground-subtle)', fontSize: '13px' }}>
               Aucune inscription à afficher
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-              {(stats.recentAccounts || []).map((acc: any, i: number) => (
+              {(kpisData.recentAccounts || []).map((acc: any, i: number) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: '1px solid var(--border)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <div style={{ width: '40px', height: '40px', background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', color: 'var(--gold)' }}>
@@ -468,6 +608,23 @@ function AdminAccountDetails({ accountId, token, onBack }: { accountId: string; 
     if (res.ok) { toast.success(newVal ? 'Institution suspendue' : 'Accès rétabli'); setData({ ...data, isSuspended: newVal }); }
   };
 
+  const handleRemind = async () => {
+    if (!window.confirm(`Voulez-vous envoyer un email de relance de paiement (Proforma) à ${data.email} ?`)) return;
+    try {
+      const res = await fetch(`/api/admin/accounts/${accountId}/remind`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) toast.success('Relance envoyée avec succès.');
+      else {
+        const d = await res.json();
+        toast.error(d.error || 'Erreur lors de la relance.');
+      }
+    } catch {
+      toast.error('Erreur réseau.');
+    }
+  };
+
   const handleDelete = async () => {
     if (!window.confirm(`Êtes-vous sûr de vouloir SUPPRIMER DÉFINITIVEMENT l'institution ${data.companyName} et toutes ses données ? Cette action est irréversible.`)) return;
     try {
@@ -612,6 +769,10 @@ function AdminAccountDetails({ accountId, token, onBack }: { accountId: string; 
             </button>
             <button onClick={handleDelete} className="fp-btn-primary" style={{ width: '100%', justifyContent: 'center', background: 'var(--surface)', color: 'var(--destructive)', borderColor: 'var(--destructive)' }}>
               Supprimer le Compte Définitivement
+            </button>
+            <div style={{ height: '1px', background: 'var(--border)', margin: '8px 0' }}></div>
+            <button onClick={handleRemind} className="fp-btn-primary" style={{ width: '100%', justifyContent: 'center', background: 'var(--surface)', color: 'var(--blue-accent)', borderColor: 'var(--border)' }}>
+              <Mail size={14}/> Relancer pour le Paiement (Email)
             </button>
           </div>
         </div>

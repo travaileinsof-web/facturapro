@@ -12,8 +12,20 @@ try {
         "CREATE TABLE IF NOT EXISTS SubscriptionPayment (
             id VARCHAR(50) PRIMARY KEY, accountId VARCHAR(50) NOT NULL, reference VARCHAR(100) UNIQUE NOT NULL, djomyTransactionId VARCHAR(100) NULL, amount DECIMAL(15, 2) NOT NULL, status VARCHAR(20) DEFAULT 'PENDING', createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (accountId) REFERENCES Account(id) ON DELETE CASCADE
         )",
+        "CREATE TABLE IF NOT EXISTS PlatformSettings (
+            id VARCHAR(50) PRIMARY KEY, smtpHost VARCHAR(255) NULL, smtpPort VARCHAR(10) NULL, smtpEncryption VARCHAR(50) DEFAULT 'tls', smtpUser VARCHAR(255) NULL, smtpPass VARCHAR(255) NULL, companyName VARCHAR(255) DEFAULT 'FacturaPro', primaryColor VARCHAR(20) DEFAULT '#0f172a', secondaryColor VARCHAR(20) DEFAULT '#3b82f6', updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )",
+        "CREATE TABLE IF NOT EXISTS SubscriptionInvoice (
+            id VARCHAR(50) PRIMARY KEY, accountId VARCHAR(50) NOT NULL, invoiceNumber VARCHAR(100) NOT NULL, amount DECIMAL(15, 2) NOT NULL, status VARCHAR(50) DEFAULT 'proforma', issueDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP, createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (accountId) REFERENCES Account(id) ON DELETE CASCADE
+        )",
+        "CREATE TABLE IF NOT EXISTS SubscriptionReceipt (
+            id VARCHAR(50) PRIMARY KEY, accountId VARCHAR(50) NOT NULL, receiptNumber VARCHAR(100) NOT NULL, subscriptionInvoiceId VARCHAR(50) NULL, amount DECIMAL(15, 2) NOT NULL, paymentDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP, createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (accountId) REFERENCES Account(id) ON DELETE CASCADE, FOREIGN KEY (subscriptionInvoiceId) REFERENCES SubscriptionInvoice(id) ON DELETE SET NULL
+        )",
         "CREATE TABLE IF NOT EXISTS AdminLog (
             id SERIAL PRIMARY KEY, action VARCHAR(255) NOT NULL, targetAccountId VARCHAR(50) NULL, details TEXT NULL, createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )",
+        "CREATE TABLE IF NOT EXISTS SuperAdmin (
+            id VARCHAR(50) PRIMARY KEY, username VARCHAR(255) UNIQUE NOT NULL, passwordHash VARCHAR(255) NOT NULL, token VARCHAR(255) NULL, createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )",
         "CREATE TABLE IF NOT EXISTS Client (
             id VARCHAR(50) PRIMARY KEY, accountId VARCHAR(50) NOT NULL, name VARCHAR(255) NOT NULL, email VARCHAR(255) NULL, phone VARCHAR(50) NULL, address TEXT NULL, city VARCHAR(100) NULL, country VARCHAR(100) NULL, notes TEXT NULL, createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (accountId) REFERENCES Account(id) ON DELETE CASCADE
@@ -37,6 +49,21 @@ try {
 
     foreach ($queries as $sql) {
         $pdo->exec($sql);
+    }
+    
+    // Create default platform settings if not exists
+    $stmt = $pdo->query("SELECT COUNT(*) FROM PlatformSettings");
+    if ($stmt->fetchColumn() == 0) {
+        $insert = $pdo->prepare("INSERT INTO PlatformSettings (id) VALUES ('global')");
+        $insert->execute();
+    }
+    
+    // Create default super admin if none exists
+    $stmt = $pdo->query("SELECT COUNT(*) FROM SuperAdmin");
+    if ($stmt->fetchColumn() == 0) {
+        $defaultPassword = password_hash('admin123', PASSWORD_DEFAULT);
+        $insert = $pdo->prepare("INSERT INTO SuperAdmin (id, username, passwordHash) VALUES (?, ?, ?)");
+        $insert->execute([uniqid('sa_'), 'admin', $defaultPassword]);
     }
     
     echo "Migration completed successfully.";

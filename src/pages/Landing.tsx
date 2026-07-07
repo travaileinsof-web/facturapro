@@ -497,7 +497,7 @@ export function Landing() {
                   <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '4px' }}>Forfait Unique (Annuel)</div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '6px' }}>
                     <span style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.35)' }}>GNF</span>
-                    <span style={{ fontSize: '60px', fontWeight: 900, letterSpacing: '-3px', background: 'linear-gradient(135deg, #00FFB0, #00D084)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>500 000</span>
+                    <span style={{ fontSize: '60px', fontWeight: 900, letterSpacing: '-3px', background: 'linear-gradient(135deg, #00FFB0, #00D084)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>1 000</span>
                   </div>
                   <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.28)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ textDecoration: 'line-through' }}>1 000 000 GNF</span>

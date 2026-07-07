@@ -43,6 +43,8 @@ require_once __DIR__ . '/controllers/UploadController.php';
 require_once __DIR__ . '/controllers/CompanyController.php';
 require_once __DIR__ . '/controllers/PaymentController.php';
 require_once __DIR__ . '/controllers/SuperAdminController.php';
+require_once __DIR__ . '/controllers/AdminSettingsController.php';
+require_once __DIR__ . '/controllers/AdminAuthController.php';
 
 // Database Connection
 try {
@@ -98,6 +100,11 @@ if ($resource === 'auth') {
     exit;
 }
 
+if ($resource === 'admin_auth') {
+    AdminAuthController::handle($pdo, $method, $id, $body);
+    exit;
+}
+
 if ($resource === 'v1' && $id === 'webhooks' && $subAction === 'djomy') {
     $controller = new PaymentController($pdo);
     $response = $controller->handleWebhook(['body' => $body]);
@@ -119,6 +126,26 @@ if (!$token) {
     http_response_code(401); echo json_encode(["error" => "Non autorisé. Token manquant."]); exit;
 }
 
+if ($resource === 'admin') {
+    // Check token against SuperAdmin table for admin routes
+    $stmt = $pdo->prepare("SELECT * FROM SuperAdmin WHERE token = ?");
+    $stmt->execute([$token]);
+    $currentAdmin = $stmt->fetch();
+    
+    if (!$currentAdmin) {
+        http_response_code(403); echo json_encode(["error" => "Accès refusé. Token SuperAdmin invalide ou expiré."]); exit;
+    }
+    
+    if ($id === 'settings') {
+        AdminSettingsController::handle($pdo, $method, $body);
+        exit;
+    }
+    
+    SuperAdminController::handle($pdo, $method, $id . ($subAction ? '/' . $subAction : ''), $currentAdmin['id'], $body);
+    exit;
+}
+
+// Check against normal Account for all other routes
 $stmt = $pdo->prepare("SELECT * FROM Account WHERE token = ?");
 $stmt->execute([$token]);
 $currentAccount = $stmt->fetch();
@@ -127,20 +154,12 @@ if (!$currentAccount) {
     http_response_code(401); echo json_encode(["error" => "Token invalide ou expiré."]); exit;
 }
 
-$accountId = $currentAccount['id'];
-$accountRole = $currentAccount['role'] ?? 'user';
-
-if ($resource === 'admin') {
-    if ($accountRole !== 'admin') {
-        http_response_code(403); echo json_encode(["error" => "Accès refusé. Privilèges Super Admin requis."]); exit;
-    }
-    SuperAdminController::handle($pdo, $method, $id . ($subAction ? '/' . $subAction : ''), $accountId, $body);
-    exit;
+if (!empty($currentAccount['isSuspended'])) {
+    http_response_code(403); echo json_encode(["error" => "Votre compte a été suspendu par l'administration. Veuillez nous contacter."]); exit;
 }
 
-// ==========================================
-// MIDDLEWARE: ENFORCE TRIAL EXPIRATION
-// ==========================================
+$accountId = $currentAccount['id'];
+$accountRole = $currentAccount['role'] ?? 'user';
 $isTrial = $currentAccount['subscriptionStatus'] === 'trial' || empty($currentAccount['subscriptionStatus']);
 if ($isTrial && $method === 'POST' && in_array($resource, ['invoices', 'receipts'])) {
     $createdAtStr = $currentAccount['createdAt'] ?? date('Y-m-d H:i:s');

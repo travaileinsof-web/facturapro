@@ -2,32 +2,67 @@
 class SuperAdminController {
     public static function handle($pdo, $method, $action, $accountId, $body) {
         if ($method === 'GET' && $action === 'stats') {
+            $timeframe = $_GET['timeframe'] ?? '1y'; // 24h, 7d, 1m, 3m, 6m, 1y
+
             $totalAccounts = $pdo->query("SELECT COUNT(*) as c FROM Account")->fetch()['c'];
             $premiumAccounts = $pdo->query("SELECT COUNT(*) as c FROM Account WHERE subscriptionPlan = 'premium' AND subscriptionStatus = 'active'")->fetch()['c'];
             $freeAccounts = $pdo->query("SELECT COUNT(*) as c FROM Account WHERE subscriptionPlan = 'free' OR subscriptionStatus = 'trial'")->fetch()['c'];
             $suspendedAccounts = $pdo->query("SELECT COUNT(*) as c FROM Account WHERE isSuspended = 1")->fetch()['c'];
             $totalRevenue = $pdo->query("SELECT COALESCE(SUM(amount), 0) as r FROM SubscriptionPayment WHERE status = 'COMPLETED'")->fetch()['r'];
             $totalInvoices = $pdo->query("SELECT COUNT(*) as c FROM ProformaInvoice")->fetch()['c'];
+            $totalReceipts = $pdo->query("SELECT COUNT(*) as c FROM Receipt")->fetch()['c'];
             $totalClients = $pdo->query("SELECT COUNT(*) as c FROM Client")->fetch()['c'];
             $newThisMonth = $pdo->query("SELECT COUNT(*) as c FROM Account WHERE TO_CHAR(createdAt, 'YYYY-MM') = TO_CHAR(CURRENT_DATE, 'YYYY-MM')")->fetch()['c'];
             
-            // Comptes expirés bientôt (dans les 30 prochains jours)
-            $expiringSoon = $pdo->query("SELECT COUNT(*) as c FROM Account WHERE subscriptionExpiresAt IS NOT NULL AND subscriptionExpiresAt BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '30 days'")->fetch()['c'];
+            // Taux de conversion (Premium / Total * 100)
+            $conversionRate = $totalAccounts > 0 ? round(($premiumAccounts / $totalAccounts) * 100, 2) : 0;
 
-            // Dernières inscriptions
-            $recentAccounts = $pdo->query("SELECT email, companyName, firstName, lastName, subscriptionPlan, subscriptionStatus, createdAt FROM Account ORDER BY createdAt DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+            // ARPU (Average Revenue Per User)
+            $arpu = $premiumAccounts > 0 ? round($totalRevenue / $premiumAccounts, 2) : 0;
+
+            // Build MRR and Acquisition curves based on timeframe
+            $dateGroupFormat = '%Y-%m';
+            $limitStr = '-12 months';
+            if ($timeframe === '24h') { $dateGroupFormat = '%Y-%m-%d %H:00'; $limitStr = '-24 hours'; }
+            elseif ($timeframe === '7d') { $dateGroupFormat = '%Y-%m-%d'; $limitStr = '-7 days'; }
+            elseif ($timeframe === '1m') { $dateGroupFormat = '%Y-%m-%d'; $limitStr = '-1 month'; }
+            elseif ($timeframe === '3m') { $dateGroupFormat = '%Y-%W'; $limitStr = '-3 months'; } // par semaine
+            elseif ($timeframe === '6m') { $dateGroupFormat = '%Y-%m'; $limitStr = '-6 months'; }
+            else { $dateGroupFormat = '%Y-%m'; $limitStr = '-1 year'; }
+
+            // MRR Curve
+            // Since we are using SQLite in local mode usually, we use strftime
+            $mrrQuery = "SELECT strftime('$dateGroupFormat', createdAt) as date, SUM(amount) as mrr FROM SubscriptionPayment WHERE status = 'COMPLETED' AND createdAt >= datetime('now', '$limitStr') GROUP BY date ORDER BY date ASC";
+            $mrrCurve = $pdo->query($mrrQuery)->fetchAll(PDO::FETCH_ASSOC);
+
+            // Free vs Paid Curve
+            $acqQuery = "
+                SELECT 
+                    strftime('$dateGroupFormat', createdAt) as date, 
+                    SUM(CASE WHEN subscriptionPlan = 'free' THEN 1 ELSE 0 END) as freeAccounts,
+                    SUM(CASE WHEN subscriptionPlan = 'premium' THEN 1 ELSE 0 END) as paidAccounts
+                FROM Account 
+                WHERE createdAt >= datetime('now', '$limitStr')
+                GROUP BY date ORDER BY date ASC
+            ";
+            $acqCurve = $pdo->query($acqQuery)->fetchAll(PDO::FETCH_ASSOC);
 
             echo json_encode([
-                "totalAccounts"    => (int)$totalAccounts,
-                "premiumAccounts"  => (int)$premiumAccounts,
-                "freeAccounts"     => (int)$freeAccounts,
-                "suspendedAccounts"=> (int)$suspendedAccounts,
-                "totalRevenue"     => (float)$totalRevenue,
-                "totalInvoices"    => (int)$totalInvoices,
-                "totalClients"     => (int)$totalClients,
-                "newThisMonth"     => (int)$newThisMonth,
-                "expiringSoon"     => (int)$expiringSoon,
-                "recentAccounts"   => $recentAccounts,
+                "kpis" => [
+                    "totalAccounts"    => (int)$totalAccounts,
+                    "premiumAccounts"  => (int)$premiumAccounts,
+                    "freeAccounts"     => (int)$freeAccounts,
+                    "suspendedAccounts"=> (int)$suspendedAccounts,
+                    "totalRevenue"     => (float)$totalRevenue,
+                    "totalInvoices"    => (int)$totalInvoices,
+                    "totalReceipts"    => (int)$totalReceipts,
+                    "totalClients"     => (int)$totalClients,
+                    "newThisMonth"     => (int)$newThisMonth,
+                    "conversionRate"   => $conversionRate,
+                    "arpu"             => $arpu
+                ],
+                "mrrCurve" => $mrrCurve,
+                "acquisitionCurve" => $acqCurve
             ]);
             exit;
         }
@@ -94,6 +129,37 @@ class SuperAdminController {
                 $stmt->execute([$isSuspended, $targetId]);
                 echo json_encode(["success" => true]);
                 exit;
+            }
+        }
+        
+        if ($method === 'POST' && str_starts_with($action, 'accounts/') && str_ends_with($action, '/remind')) {
+            $targetId = explode('/', $action)[1];
+            
+            $stmt = $pdo->prepare("SELECT email, firstName FROM Account WHERE id = ?");
+            $stmt->execute([$targetId]);
+            $account = $stmt->fetch();
+            
+            if (!$account) {
+                http_response_code(404); echo json_encode(["error" => "Compte introuvable"]); exit;
+            }
+            
+            // Get last proforma invoice number
+            $stmtInv = $pdo->prepare("SELECT invoiceNumber FROM SubscriptionInvoice WHERE accountId = ? AND status = 'proforma' ORDER BY createdAt DESC LIMIT 1");
+            $stmtInv->execute([$targetId]);
+            $inv = $stmtInv->fetch();
+            
+            if ($inv) {
+                require_once __DIR__ . '/../core/SystemMailer.php';
+                SystemMailer::sendReminderEmail($pdo, $account['email'], $account['firstName'] ?? 'Client', $inv['invoiceNumber']);
+                
+                try {
+                    $pdo->prepare("INSERT INTO AdminLog (action, targetAccountId, details) VALUES (?, ?, ?)")->execute(['REMIND', $targetId, "Admin $accountId sent reminder to $targetId"]);
+                } catch (Exception $e) {}
+                
+                echo json_encode(["success" => true, "message" => "Relance envoyée avec succès."]);
+                exit;
+            } else {
+                http_response_code(400); echo json_encode(["error" => "Aucune facture proforma à relancer pour ce compte."]); exit;
             }
         }
         

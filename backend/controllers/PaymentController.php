@@ -60,7 +60,7 @@ class PaymentController {
         }
 
         $accountId = $currentAccount['id'];
-        $amount = 500000; // 500 000 GNF
+        $amount = 1000; // 1000 GNF
         $reference = 'SUB-' . uniqid() . '-' . time();
 
         // 1. Enregistrer dans SubscriptionPayment
@@ -208,13 +208,31 @@ class PaymentController {
                         $stmt = $this->pdo->prepare("UPDATE Account SET subscriptionPlan = 'annuel', subscriptionStatus = 'active', subscriptionExpiresAt = ?, lastPaymentDate = CURRENT_TIMESTAMP WHERE id = ?");
                         $stmt->execute([$expiresAt, $accountId]);
 
-                        // Générer une facture d'abonnement (Self-Billing)
-                        $invoiceId = uniqid('sub_inv_');
-                        $invoiceNumber = 'INV-SUB-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4));
-                        $stmtInv = $this->pdo->prepare("INSERT INTO SubscriptionInvoice (id, accountId, invoiceNumber, amount) VALUES (?, ?, ?, ?)");
-                        $stmtInv->execute([$invoiceId, $accountId, $invoiceNumber, $amount]);
+                        // Mettre à jour la facture proforma en payée
+                        $stmtFindInv = $this->pdo->prepare("SELECT id, invoiceNumber FROM SubscriptionInvoice WHERE accountId = ? AND status = 'proforma' ORDER BY createdAt DESC LIMIT 1");
+                        $stmtFindInv->execute([$accountId]);
+                        $proforma = $stmtFindInv->fetch();
                         
-                        // TODO: Envoyer un email de confirmation avec la facture
+                        $invoiceId = $proforma ? $proforma['id'] : null;
+                        if ($invoiceId) {
+                            $this->pdo->prepare("UPDATE SubscriptionInvoice SET status = 'paid' WHERE id = ?")->execute([$invoiceId]);
+                        }
+                        
+                        // Générer un reçu
+                        $receiptId = uniqid('sub_rec_');
+                        $receiptNumber = 'REC-SUB-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4));
+                        $stmtRec = $this->pdo->prepare("INSERT INTO SubscriptionReceipt (id, accountId, receiptNumber, subscriptionInvoiceId, amount) VALUES (?, ?, ?, ?, ?)");
+                        $stmtRec->execute([$receiptId, $accountId, $receiptNumber, $invoiceId, $amount]);
+                        
+                        // Fetch Account info for email
+                        $stmtAcc = $this->pdo->prepare("SELECT email, firstName FROM Account WHERE id = ?");
+                        $stmtAcc->execute([$accountId]);
+                        $acc = $stmtAcc->fetch();
+                        
+                        if ($acc) {
+                            require_once __DIR__ . '/../core/SystemMailer.php';
+                            SystemMailer::sendPaymentConfirmation($this->pdo, $acc['email'], $acc['firstName'] ?? 'Client', $amount, $receiptNumber);
+                        }
                     }
                 }
             }

@@ -10,7 +10,7 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
   const { login } = useAppStore();
 
   const [loginData, setLoginData] = useState({ email: '', password: '' });
-  const [regData, setRegData] = useState({ firstName: '', lastName: '', email: '', company: '', password: '', confirm: '' });
+  const [regData, setRegData] = useState({ firstName: '', lastName: '', email: '', phone: '', company: '', password: '', confirm: '' });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); setError(''); setLoading(true);
@@ -42,6 +42,7 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: regData.email, password: regData.password,
+          phone: regData.phone,
           company: regData.company, firstName: regData.firstName, lastName: regData.lastName
         })
       });
@@ -130,7 +131,10 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
               {field('Prénom', 'text', 'Jean', regData.firstName, v => setRegData(p => ({ ...p, firstName: v })))}
               {field('Nom', 'text', 'Diallo', regData.lastName, v => setRegData(p => ({ ...p, lastName: v })))}
             </div>
-            {field('Email professionnel', 'email', 'vous@entreprise.com', regData.email, v => setRegData(p => ({ ...p, email: v })))}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              {field('Email', 'email', 'vous@entreprise.com', regData.email, v => setRegData(p => ({ ...p, email: v })))}
+              {field('Téléphone (WhatsApp)', 'tel', '+224 62X XX XX XX', regData.phone, v => setRegData(p => ({ ...p, phone: v })))}
+            </div>
             {field('Nom de l\'entreprise', 'text', 'Sarl Mon Entreprise', regData.company, v => setRegData(p => ({ ...p, company: v })))}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               {field('Mot de passe', 'password', '••••••••', regData.password, v => setRegData(p => ({ ...p, password: v })))}

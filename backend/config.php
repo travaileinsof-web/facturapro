@@ -71,7 +71,7 @@ if (!class_exists('MyPDOStatement')) {
 // =============================================================
 define('SUBSCRIPTION_PLANS', [
     'free'    => ['name' => 'Essai Gratuit', 'duration_days' => 1,   'price_gnf' => 0],
-    'annuel'  => ['name' => 'Annuel',        'duration_days' => 365, 'price_gnf' => 500000],
+    'annuel'  => ['name' => 'Annuel',        'duration_days' => 365, 'price_gnf' => 1000],
 ]);
 
 // =============================================================

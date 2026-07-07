@@ -41,7 +41,7 @@ export function Pricing() {
 
   const plan = {
     name: 'Forfait Unique (Annuel)',
-    price: '500 000 GNF',
+    price: '1 000 GNF',
     period: '/ an',
     description: 'La solution complète pour votre entreprise.',
     features: ['Factures illimitées', 'Clients illimités', 'Logo & signature', 'Export PDF', 'Support prioritaire 24/7', 'Assistant IA (Bientôt)'],
@@ -135,7 +135,7 @@ export function Pricing() {
                 style={{ width: '100%', padding: '12px', background: '#059669', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '15px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', opacity: loading ? 0.7 : 1 }}
               >
                 {loading && <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />}
-                Procéder au paiement (500 000 GNF)
+                Procéder au paiement (1 000 GNF)
               </button>
             </form>
             

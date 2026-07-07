@@ -7,6 +7,11 @@ class AuthController {
             $companyName = $body['company'] ?? '';
             $firstName = $body['firstName'] ?? '';
             $lastName = $body['lastName'] ?? '';
+            $phone = $body['phone'] ?? '';
+            
+            if (empty($phone)) {
+                http_response_code(400); echo json_encode(["error" => "Le numéro de téléphone est obligatoire."]); exit;
+            }
             
             $stmt = $pdo->prepare("SELECT id FROM Account WHERE email = ?");
             $stmt->execute([$email]);
@@ -18,8 +23,18 @@ class AuthController {
             $token = bin2hex(random_bytes(32));
             $hash = password_hash($password, PASSWORD_DEFAULT);
             
-            $stmt = $pdo->prepare("INSERT INTO Account (id, email, passwordHash, token, companyName, firstName, lastName, subscriptionPlan, subscriptionStatus) VALUES (?, ?, ?, ?, ?, ?, ?, 'free', 'trial')");
-            $stmt->execute([$accountId, $email, $hash, $token, $companyName, $firstName, $lastName]);
+            $stmt = $pdo->prepare("INSERT INTO Account (id, email, passwordHash, token, companyName, firstName, lastName, phone, subscriptionPlan, subscriptionStatus) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'free', 'trial')");
+            $stmt->execute([$accountId, $email, $hash, $token, $companyName, $firstName, $lastName, $phone]);
+            
+            // Génération de la Proforma d'abonnement
+            $invoiceId = uniqid('sub_inv_');
+            $invoiceNumber = 'INV-SUB-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4));
+            $stmtInv = $pdo->prepare("INSERT INTO SubscriptionInvoice (id, accountId, invoiceNumber, amount, status) VALUES (?, ?, ?, ?, 'proforma')");
+            $stmtInv->execute([$invoiceId, $accountId, $invoiceNumber, 1000]);
+            
+            // Envoi de l'Email de Bienvenue
+            require_once __DIR__ . '/../core/SystemMailer.php';
+            SystemMailer::sendWelcomeEmail($pdo, $email, $firstName, $invoiceNumber);
             
             echo json_encode([
                 "id" => $accountId, "name" => trim("$firstName $lastName"),

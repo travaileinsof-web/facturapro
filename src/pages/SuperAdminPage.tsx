@@ -60,18 +60,18 @@ export function SuperAdminPage() {
           <form onSubmit={(e) => {
             e.preventDefault();
             const form = e.target as HTMLFormElement;
-            const email = (form.elements.namedItem('email') as HTMLInputElement).value;
+            const username = (form.elements.namedItem('username') as HTMLInputElement).value;
             const password = (form.elements.namedItem('password') as HTMLInputElement).value;
             
-            fetch('/api/auth/login', {
+            fetch('/api/admin_auth/login', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email, password })
+              body: JSON.stringify({ username, password })
             })
             .then(res => res.json())
             .then(data => {
               if (data.token) {
-                if (data.role === 'admin') {
+                if (data.role === 'superadmin') {
                   useAppStore.setState({ user: data, isAuthenticated: true });
                   setIsAdmin(true);
                 } else {
@@ -79,13 +79,13 @@ export function SuperAdminPage() {
                   form.reset();
                 }
               } else {
-                alert('Identifiants incorrects.');
+                alert('Identifiants administrateur incorrects.');
               }
             }).catch(() => alert('Erreur de connexion.'));
           }} style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
             <div>
-              <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', fontWeight: 600, color: 'var(--foreground-subtle)' }}>Email Administratif</label>
-              <input name="email" type="email" required style={{ width: '100%', padding: '10px 12px', background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--foreground)', fontSize: '13px', outline: 'none' }} 
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '12px', fontWeight: 600, color: 'var(--foreground-subtle)' }}>Identifiant Administrateur</label>
+              <input name="username" type="text" required style={{ width: '100%', padding: '10px 12px', background: 'var(--surface-2)', border: '1px solid var(--border)', color: 'var(--foreground)', fontSize: '13px', outline: 'none' }} 
                      onFocus={e => e.target.style.borderColor = 'var(--gold)'} onBlur={e => e.target.style.borderColor = 'var(--border)'} />
             </div>
             <div>
