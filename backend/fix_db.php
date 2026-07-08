@@ -1,16 +1,18 @@
 <?php
-$pdo = new PDO('sqlite:C:/Users/GBESSI/Desktop/OFFICIAL_PROJECTS/facturapro/backend/facturapro.sqlite');
-$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+require_once __DIR__ . '/config.php';
 
-$sql = "CREATE TABLE IF NOT EXISTS SubscriptionPayment (
-    id VARCHAR(50) PRIMARY KEY,
-    accountId VARCHAR(50),
-    amount DECIMAL(10,2),
-    currency VARCHAR(10),
-    plan VARCHAR(50),
-    status VARCHAR(50),
-    transactionId VARCHAR(255),
-    createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-)";
-$pdo->exec($sql);
-echo "Table SubscriptionPayment créée avec succès.\n";
+try {
+    $pdo = new PDO(DB_DSN, DB_USER, DB_PASS, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+    
+    // Add status to SubscriptionInvoice
+    $pdo->exec("ALTER TABLE SubscriptionInvoice ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'proforma'");
+    echo "Column status added to SubscriptionInvoice successfully.\n";
+    
+    // Verify columns in Account just in case
+    $pdo->exec("ALTER TABLE Account ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'user'");
+    echo "Column role added to Account successfully (if missing).\n";
+
+    echo "Done.\n";
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+}

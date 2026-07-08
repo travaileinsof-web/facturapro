@@ -88,8 +88,13 @@ $subAction = $segments[2] ?? null;
 // ==========================================
 // AUTHENTICATION
 // ==========================================
-if ($resource === 'auth') {
-    AuthController::handle($pdo, $method, $id, $body);
+if ($resource === 'auth' && in_array($id, ['login', 'register'])) {
+    try {
+        AuthController::handle($pdo, $method, $id, $body);
+    } catch (Throwable $e) {
+        http_response_code(500);
+        echo json_encode(["error" => "Erreur Interne: " . $e->getMessage()]);
+    }
     exit;
 }
 
@@ -145,6 +150,24 @@ $currentAccount = $stmt->fetch();
 
 if (!$currentAccount) {
     http_response_code(401); echo json_encode(["error" => "Token invalide ou expiré."]); exit;
+}
+
+if ($resource === 'auth' && $id === 'me') {
+    echo json_encode([
+        "id" => $currentAccount['id'], 
+        "name" => trim($currentAccount['firstName'] . " " . $currentAccount['lastName']),
+        "email" => $currentAccount['email'], 
+        "company" => $currentAccount['companyName'], 
+        "token" => $currentAccount['token'],
+        "subscriptionPlan" => $currentAccount['subscriptionPlan'] ?? 'free',
+        "subscriptionStatus" => $currentAccount['subscriptionStatus'] ?? 'trial',
+        "createdAt" => $currentAccount['createdAt'],
+        "primaryColor" => $currentAccount['primaryColor'] ?? '#B38E36',
+        "secondaryColor" => $currentAccount['secondaryColor'] ?? null,
+        "accentColor" => $currentAccount['accentColor'] ?? null,
+        "role" => $currentAccount['role'] ?? 'user'
+    ]);
+    exit;
 }
 
 if (!empty($currentAccount['isSuspended'])) {

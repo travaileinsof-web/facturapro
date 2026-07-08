@@ -182,8 +182,8 @@ function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boole
               {initials}
             </div>
             <div className="sidebar-shrink">
-              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name || user?.company || 'Utilisateur'}</div>
-              <div style={{ fontSize: '10px', color: 'var(--foreground-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.company}</div>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.company || user?.name || 'Utilisateur'}</div>
+              <div style={{ fontSize: '10px', color: 'var(--foreground-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.company && user?.name && user.name !== user.company ? user.name : ''}</div>
             </div>
           </div>
 
@@ -248,6 +248,32 @@ function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [prevModule, setPrevModule] = useState(currentModule);
+
+  useEffect(() => {
+    // 1) Sync latest user data from backend (especially for subscription updates after payment)
+    if (user?.token) {
+      fetch('/api/v1/auth/me', {
+        headers: { 'Authorization': `Bearer ${user.token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.id) {
+          useAppStore.getState().login(data);
+        } else if (data.error === "Token invalide ou expiré.") {
+          handleLogout();
+        }
+      })
+      .catch(console.error);
+    }
+
+    // 2) Check for successful payment redirect
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') === 'success') {
+      toast.success("Paiement validé ! Bienvenue dans la version Premium.");
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   const [animKey, setAnimKey] = useState(0);
   const active = NAV.find(n => n.id === currentModule);
 
@@ -458,7 +484,7 @@ function AppLayout() {
               </PopoverTrigger>
               <PopoverContent className="w-56 p-0 mr-4 mt-2" align="end">
                 <div className="p-4 border-b border-[var(--border)] bg-[var(--surface-2)]">
-                  <p className="text-[13px] font-bold text-[var(--foreground)]">{user?.name || 'Utilisateur'}</p>
+                  <p className="text-[13px] font-bold text-[var(--foreground)]">{user?.company || user?.name || 'Utilisateur'}</p>
                   <p className="text-[11px] text-[var(--foreground-muted)] truncate">{user?.email || 'email@example.com'}</p>
                 </div>
                 <div className="p-2 flex flex-col gap-1">

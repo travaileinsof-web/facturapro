@@ -18,7 +18,7 @@ interface Stats {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const ADMIN_API = '/api/v1/admin';
-const PLANS = { free: 'Essai Gratuit', mensuel: 'Mensuel', annuel: 'Annuel' };
+const PLANS = { free: 'Essai Gratuit', mensuel: 'Mensuel', annuel: 'Premium' };
 const STATUS_LABELS: Record<string, [string, string]> = {
   trial:     ['Essai', '#f59e0b'],
   active:    ['Actif', '#10b981'],
@@ -402,7 +402,7 @@ export function Admin() {
                 <select value={editData.subscriptionPlan} onChange={e => setEditData(d => ({...d, subscriptionPlan:e.target.value}))} style={{ width:'100%', padding:'10px', background:'#0a0f1e', border:'1px solid #1e2d4a', borderRadius:'8px', color:'#f0f6ff', fontSize:'13px', outline:'none' }}>
                   <option value="free">Essai Gratuit</option>
                   <option value="mensuel">Mensuel (100 000 GNF)</option>
-                  <option value="annuel">Annuel (1 000 000 GNF)</option>
+                  <option value="annuel">Premium (1 000 000 GNF)</option>
                 </select>
               </div>
               <div>
