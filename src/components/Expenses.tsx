@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import { useForm } from 'react-hook-form';
 import { PageHeader } from './ui/PageHeader';
-import { Plus } from 'lucide-react';
+import { Plus, TrendingDown } from 'lucide-react';
 import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
 
@@ -83,6 +83,7 @@ export function Expenses() {
       <PageHeader 
         title="Dépenses & Charges" 
         description="Suivez et gérez les dépenses de votre entreprise."
+        icon={<TrendingDown size={20} />}
         actions={
           <button onClick={openNew} className="fp-btn-primary">
             <Plus size={16} className="mr-2" /> Enregistrer une Dépense
@@ -135,12 +136,14 @@ export function Expenses() {
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Enregistrer une Dépense</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
-            <div className="p-6 grid gap-5">
+        <DialogContent className="sm:max-w-[425px] p-0">
+          <DialogHeader 
+            icon={FileTextIcon}
+            title="Enregistrer une Dépense"
+            desc="Remplissez les détails de la dépense."
+          />
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+            <div className="overflow-y-auto custom-scrollbar flex-1 px-8 py-6 grid gap-5 bg-[var(--background)]">
               <div>
                 <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Catégorie</label>
                 <select {...register('category')} className="fp-input w-full">

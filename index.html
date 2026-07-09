@@ -4,9 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="google" content="notranslate">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <title>FacturaPro SaaS</title>
   </head>
   <body>
+    <script>
+      window.addEventListener('error', function(e) {
+        var div = document.createElement('div');
+        div.style.background = 'red'; div.style.color = 'white'; div.style.padding = '20px'; div.style.position = 'fixed'; div.style.top = '0'; div.style.left = '0'; div.style.zIndex = '999999';
+        div.innerHTML = '<h2>Global Error:</h2><pre>' + e.error?.stack + '\n\n' + e.message + '</pre>';
+        document.body.appendChild(div);
+      });
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

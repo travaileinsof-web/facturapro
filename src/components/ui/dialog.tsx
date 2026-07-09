@@ -29,7 +29,7 @@ function DialogOverlay({
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 isolate z-50 bg-black/20 supports-backdrop-filter:backdrop-blur-sm duration-150 data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
         className
       )}
       {...props}
@@ -51,7 +51,7 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 bg-[var(--surface-1)] text-sm text-[var(--foreground)] shadow-2xl border border-[var(--border)] duration-100 outline-none sm:max-w-md data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 overflow-hidden",
+          "fixed top-1/2 left-1/2 z-50 flex w-full max-w-[calc(100%-2rem)] max-h-[calc(100vh-4rem)] -translate-x-1/2 -translate-y-1/2 bg-[var(--surface)] text-sm text-[var(--foreground)] shadow-[0_32px_96px_rgba(0,0,0,0.18)] rounded-none border border-[var(--border)] duration-150 outline-none sm:max-w-lg data-open:animate-in data-open:fade-in-0 data-open:zoom-in-[0.97] data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-[0.97] overflow-hidden flex-col",
           className
         )}
         {...props}
@@ -63,13 +63,12 @@ function DialogContent({
             render={
               <Button
                 variant="ghost"
-                className="absolute top-2 right-2"
+                className="absolute top-3 right-3 opacity-50 hover:opacity-100 transition-opacity"
                 size="icon-sm"
               />
             }
           >
-            <XIcon
-            />
+            <XIcon />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
         )}
@@ -78,13 +77,37 @@ function DialogContent({
   )
 }
 
-function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
+function DialogHeader({ 
+  className, icon: Icon, title, desc, children, ...props 
+}: React.ComponentProps<"div"> & { icon?: any, title?: React.ReactNode, desc?: React.ReactNode }) {
+  if (Icon || title || desc) {
+    return (
+      <div data-slot="dialog-header" className={cn("flex flex-col bg-[var(--surface)] shrink-0", className)} {...props}>
+        <div className="flex gap-6 items-center px-10 pt-10 pb-8">
+          {Icon && (
+            <div className="flex shrink-0 items-center justify-center bg-[var(--gold-dim)] text-[var(--gold)]" style={{ width: '54px', height: '54px', borderRadius: 0 }}>
+              <Icon size={24} strokeWidth={1.5} />
+            </div>
+          )}
+          <div className="flex flex-col justify-center">
+            {title && (typeof title === 'string' ? <DialogTitle className="text-[20px] tracking-tight mb-1.5">{title}</DialogTitle> : title)}
+            {desc && <p className="text-[14px] text-[var(--foreground-muted)] font-normal">{desc}</p>}
+          </div>
+        </div>
+        <div className="h-[1px] bg-[var(--border)] w-full" />
+        {children}
+      </div>
+    )
+  }
+
   return (
     <div
       data-slot="dialog-header"
-      className={cn("flex flex-col gap-2 p-6 bg-[var(--surface-2)] border-b border-[var(--border)]", className)}
+      className={cn("flex flex-col gap-2 px-8 pt-8 pb-5 bg-[var(--surface)] border-b border-[var(--border)]", className)}
       {...props}
-    />
+    >
+      {children}
+    </div>
   )
 }
 
@@ -100,7 +123,7 @@ function DialogFooter({
     <div
       data-slot="dialog-footer"
       className={cn(
-        "flex flex-col-reverse gap-3 p-6 bg-[var(--surface-2)] border-t border-[var(--border)] sm:flex-row sm:justify-end",
+        "flex flex-col-reverse gap-3 px-8 py-6 bg-[var(--surface-2)] border-t border-[var(--border)] sm:flex-row sm:justify-end mt-auto",
         className
       )}
       {...props}

@@ -155,14 +155,26 @@ function AdminSettings({ token }: { token: string }) {
     MAIL_USER: '',
     MAIL_PASS: '',
     MAIL_FROM: '',
-    MAIL_FROM_NAME: 'FacturaPro'
+    MAIL_FROM_NAME: 'FacturaPro',
+    REMINDER_SETTINGS: {
+      active: false,
+      beforeDays: [30, 15, 5, 3],
+      dayOf: true,
+      afterDays: [3, 5, 15, 30]
+    }
   });
 
   useEffect(() => {
     fetch('/api/admin/settings', {
       headers: { 'Authorization': `Bearer ${token}` }
     }).then(r => r.json()).then(data => {
-      setSettings((prev: any) => ({ ...prev, ...data }));
+      setSettings((prev: any) => {
+          const newData = { ...prev, ...data };
+          if (!newData.REMINDER_SETTINGS) {
+              newData.REMINDER_SETTINGS = prev.REMINDER_SETTINGS;
+          }
+          return newData;
+      });
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [token]);
@@ -196,10 +208,20 @@ function AdminSettings({ token }: { token: string }) {
     </div>
   );
 
+  const handleReminderChange = (key: string, value: any) => {
+      setSettings({
+          ...settings,
+          REMINDER_SETTINGS: {
+              ...settings.REMINDER_SETTINGS,
+              [key]: value
+          }
+      });
+  };
+
   if (loading) return <div>Chargement...</div>;
 
   return (
-    <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div className="fp-card" style={{ padding: '32px' }}>
         <h3 style={{ margin: '0 0 24px', fontSize: '18px', fontFamily: 'var(--font-display)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--foreground)' }}>
           <Mail size={18} style={{ color: 'var(--gold)' }} />
@@ -219,6 +241,57 @@ function AdminSettings({ token }: { token: string }) {
             {field('Nom Expéditeur', 'MAIL_FROM_NAME', 'text', 'FacturaPro')}
           </div>
           
+          <div style={{ height: '1px', background: 'var(--border)', margin: '24px 0' }}></div>
+          
+          <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontFamily: 'var(--font-display)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--foreground)' }}>
+            <Calendar size={18} style={{ color: 'var(--gold)' }} />
+            Automatisation des Relances
+          </h3>
+          
+          <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input 
+                  type="checkbox" 
+                  checked={settings.REMINDER_SETTINGS?.active || false}
+                  onChange={(e) => handleReminderChange('active', e.target.checked)}
+                  id="reminderActive"
+              />
+              <label htmlFor="reminderActive" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--foreground)' }}>
+                  Activer l'envoi automatique des relances
+              </label>
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', opacity: settings.REMINDER_SETTINGS?.active ? 1 : 0.5, pointerEvents: settings.REMINDER_SETTINGS?.active ? 'auto' : 'none' }}>
+              <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--foreground)', marginBottom: '8px' }}>Jours AVANT expiration (séparés par des virgules)</label>
+                  <input
+                    type="text" value={settings.REMINDER_SETTINGS?.beforeDays?.join(', ') || ''}
+                    onChange={e => handleReminderChange('beforeDays', e.target.value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)))}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--foreground)', outline: 'none' }}
+                  />
+                  <div style={{ fontSize: '11px', color: 'var(--foreground-muted)', marginTop: '4px' }}>Ex: 30, 15, 5, 3</div>
+              </div>
+              <div style={{ marginBottom: '16px' }}>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--foreground)', marginBottom: '8px' }}>Jours APRÈS expiration (séparés par des virgules)</label>
+                  <input
+                    type="text" value={settings.REMINDER_SETTINGS?.afterDays?.join(', ') || ''}
+                    onChange={e => handleReminderChange('afterDays', e.target.value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)))}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--foreground)', outline: 'none' }}
+                  />
+                  <div style={{ fontSize: '11px', color: 'var(--foreground-muted)', marginTop: '4px' }}>Ex: 3, 5, 15, 30</div>
+              </div>
+          </div>
+          <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px', opacity: settings.REMINDER_SETTINGS?.active ? 1 : 0.5, pointerEvents: settings.REMINDER_SETTINGS?.active ? 'auto' : 'none' }}>
+              <input 
+                  type="checkbox" 
+                  checked={settings.REMINDER_SETTINGS?.dayOf || false}
+                  onChange={(e) => handleReminderChange('dayOf', e.target.checked)}
+                  id="reminderDayOf"
+              />
+              <label htmlFor="reminderDayOf" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--foreground)' }}>
+                  Envoyer un rappel le jour exact de l'expiration (Jour J)
+              </label>
+          </div>
+
           <button type="submit" className="fp-btn-primary" disabled={saving} style={{ width: '100%', marginTop: '16px' }}>
             {saving ? 'Sauvegarde...' : 'Sauvegarder les paramètres'}
           </button>
@@ -407,7 +480,7 @@ function AdminDashboard({ stats }: { stats: any; accounts: any[] }) {
                     </div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
-                    <PlanBadge plan={acc.subscriptionPlan} status={acc.subscriptionStatus} />
+                    <PlanBadge plan={acc.subscriptionPlan} status={acc.subscriptionStatus} computedStatus={acc.computedStatus} />
                     <span style={{ fontSize: '10px', color: 'var(--foreground-subtle)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                       {new Date(acc.createdAt).toLocaleDateString('fr-FR')}
                     </span>
@@ -424,20 +497,30 @@ function AdminDashboard({ stats }: { stats: any; accounts: any[] }) {
 }
 
 // ─── Composants Utilitaires ───────────────────────────────────────────────────
-function PlanBadge({ plan, status }: { plan?: string; status?: string }) {
-  const isPremium = plan === 'premium' && status === 'active';
-  const isTrial = status === 'trial';
-  const isExpired = status === 'expired';
-
+function PlanBadge({ plan, status, computedStatus }: { plan?: string; status?: string; computedStatus?: string }) {
   let cls = 'fp-badge-neutral';
-  let label = plan || status || 'Inconnu';
+  let label = computedStatus || plan || status || 'Inconnu';
   
-  if (isPremium) {
-    cls = 'fp-badge-gold'; label = 'Premium';
-  } else if (isTrial) {
-    cls = 'fp-badge-blue'; label = 'Essai';
-  } else if (isExpired) {
-    cls = 'fp-badge-red'; label = 'Expiré';
+  if (computedStatus === 'active') {
+    cls = 'fp-badge-gold'; label = 'Forfait Premium';
+  } else if (computedStatus === 'expired') {
+    cls = 'fp-badge-red'; label = 'Premium Expiré';
+  } else if (computedStatus === 'trial') {
+    cls = 'fp-badge-blue'; label = 'Compte Essai';
+  } else if (computedStatus === 'trial_expired') {
+    cls = 'fp-badge-red'; label = 'Essai Expiré';
+  } else {
+    // Fallback
+    const isPremium = plan === 'premium' && status === 'active';
+    const isTrial = status === 'trial';
+    const isExpired = status === 'expired';
+    if (isPremium) {
+      cls = 'fp-badge-gold'; label = 'Forfait Premium';
+    } else if (isTrial) {
+      cls = 'fp-badge-blue'; label = 'Compte Essai';
+    } else if (isExpired) {
+      cls = 'fp-badge-red'; label = 'Expiré';
+    }
   }
 
   return <span className={`fp-badge ${cls}`}>{label}</span>;
@@ -536,7 +619,7 @@ function AdminAccounts({ accounts, onSelect }: { accounts: any[]; onSelect: (id:
                 </td>
                 <td className="fp-table-td">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-start' }}>
-                    <PlanBadge plan={acc.subscriptionPlan} status={acc.subscriptionStatus} />
+                    <PlanBadge plan={acc.subscriptionPlan} status={acc.subscriptionStatus} computedStatus={acc.computedStatus} />
                     {acc.isSuspended ? (
                       <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--destructive)' }}>
                         <Ban size={10} /> Suspendu
@@ -678,7 +761,7 @@ function AdminAccountDetails({ accountId, token, onBack }: { accountId: string; 
         </div>
 
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <PlanBadge plan={data.subscriptionPlan} status={data.subscriptionStatus} />
+          <PlanBadge plan={data.subscriptionPlan} status={data.subscriptionStatus} computedStatus={data.computedStatus} />
           <button
             onClick={toggleSuspend}
             className="fp-btn-primary"

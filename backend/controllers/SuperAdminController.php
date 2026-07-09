@@ -49,6 +49,9 @@ class SuperAdminController {
             $acqCurve = $pdo->query($acqQuery)->fetchAll(PDO::FETCH_ASSOC);
 
             $recentAccounts = $pdo->query("SELECT id, email, companyName, subscriptionPlan, subscriptionStatus, createdAt FROM Account ORDER BY createdAt DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($recentAccounts as &$racc) {
+                $racc['computedStatus'] = Helper::computeSubscriptionStatus($racc);
+            }
 
             // Fetch recent logs (assuming a LogAdmin table exists, or we return empty if not)
             // If it doesn't exist, just return empty array
@@ -84,6 +87,9 @@ class SuperAdminController {
             // Liste des comptes
             $stmt = $pdo->query("SELECT id, email, companyName, firstName, lastName, phone, subscriptionPlan, subscriptionStatus, subscriptionExpiresAt, createdAt, isSuspended FROM Account ORDER BY createdAt DESC");
             $accounts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($accounts as &$acc) {
+                $acc['computedStatus'] = Helper::computeSubscriptionStatus($acc);
+            }
             echo json_encode($accounts);
             exit;
         }
@@ -99,6 +105,8 @@ class SuperAdminController {
             if (!$account) {
                 http_response_code(404); echo json_encode(["error" => "Compte introuvable"]); exit;
             }
+
+            $account['computedStatus'] = Helper::computeSubscriptionStatus($account);
 
             // Quotas
             $stmt = $pdo->prepare("SELECT COUNT(*) as total FROM Client WHERE accountId = ?");
@@ -126,12 +134,23 @@ class SuperAdminController {
             $subAction = $parts[2] ?? '';
 
             if ($subAction === 'subscription') {
+                $stmtCheck = $pdo->prepare("SELECT email, firstName, subscriptionPlan, subscriptionStatus FROM Account WHERE id = ?");
+                $stmtCheck->execute([$targetId]);
+                $acc = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
                 $plan = $body['plan'] ?? 'free';
                 $status = $body['status'] ?? 'trial';
                 $expiresAt = $body['expiresAt'] ?? null;
                 
                 $stmt = $pdo->prepare("UPDATE Account SET subscriptionPlan = ?, subscriptionStatus = ?, subscriptionExpiresAt = ? WHERE id = ?");
                 $stmt->execute([$plan, $status, $expiresAt, $targetId]);
+
+                // Envoi de l'email si on active l'abonnement
+                if ($acc && $status === 'active' && ($acc['subscriptionStatus'] !== 'active' || $acc['subscriptionPlan'] !== $plan)) {
+                    require_once __DIR__ . '/../core/SystemMailer.php';
+                    SystemMailer::sendSubscriptionUpgradeEmail($pdo, $acc['email'], $acc['firstName'] ?? 'Client', $plan);
+                }
+
                 echo json_encode(["success" => true]);
                 exit;
             }
@@ -251,6 +270,8 @@ class SuperAdminController {
             } catch(Exception $e) {
                 // Table might not exist yet, ignoring error for now
             }
+
+            $targetAccount['computedStatus'] = Helper::computeSubscriptionStatus($targetAccount);
 
             echo json_encode([
                 "id" => $targetAccount['id'], 

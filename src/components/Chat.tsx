@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { buildInvoiceHTML } from '../lib/pdfTemplate';
 import { buildReceiptHTML } from '../lib/pdfTemplate';
 import { exportHTMLToPDF } from '../lib/pdfExport';
-import { formatCurrency, apiFetch } from '../lib/store';
+import { formatCurrency, apiFetch, escapeHTML } from '../lib/store';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -294,7 +294,8 @@ Comment puis-je vous aider ?`,
 
 function FormattedText({ text }: { text: string }) {
   // Basic markdown: **bold**, *italic*, code blocks, line breaks
-  const formatted = text
+  const safeText = escapeHTML(text);
+  const formatted = safeText
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
     .replace(/`(.+?)`/g, '<code style="background:#f1f5f9;padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px;">$1</code>')

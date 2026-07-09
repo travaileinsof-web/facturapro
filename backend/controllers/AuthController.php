@@ -2,12 +2,12 @@
 class AuthController {
     public static function handle($pdo, $method, $id, $body) {
         if ($id === 'register' && $method === 'POST') {
-            $email = $body['email'] ?? '';
+            $email = Validator::sanitizeEmail($body['email'] ?? '');
             $password = $body['password'] ?? '';
-            $companyName = $body['company'] ?? '';
-            $firstName = $body['firstName'] ?? '';
-            $lastName = $body['lastName'] ?? '';
-            $phone = $body['phone'] ?? '';
+            $companyName = Validator::sanitizeString($body['company'] ?? '');
+            $firstName = Validator::sanitizeString($body['firstName'] ?? '');
+            $lastName = Validator::sanitizeString($body['lastName'] ?? '');
+            $phone = Validator::sanitizeString($body['phone'] ?? '');
             
             if (empty($phone)) {
                 http_response_code(400); echo json_encode(["error" => "Le numéro de téléphone est obligatoire."]); exit;
@@ -50,7 +50,7 @@ class AuthController {
         }
         
         if ($id === 'login' && $method === 'POST') {
-            $email = $body['email'] ?? '';
+            $email = Validator::sanitizeEmail($body['email'] ?? '');
             $password = $body['password'] ?? '';
             
             $stmt = $pdo->prepare("SELECT * FROM Account WHERE email = ?");
@@ -64,14 +64,17 @@ class AuthController {
                     $pdo->prepare("UPDATE Account SET token = ? WHERE id = ?")->execute([$token, $acc['id']]);
                 }
                 echo json_encode([
-                    "id" => $acc['id'], "name" => trim($acc['firstname'] . " " . $acc['lastname']),
-                    "email" => $acc['email'], "company" => $acc['companyname'], "token" => $token,
-                    "subscriptionPlan" => $acc['subscriptionplan'] ?? 'free',
-                    "subscriptionStatus" => $acc['subscriptionstatus'] ?? 'trial',
-                    "createdAt" => $acc['createdat'],
-                    "primaryColor" => $acc['primarycolor'] ?? $acc['primaryColor'] ?? '#B38E36',
-                    "secondaryColor" => $acc['secondarycolor'] ?? $acc['secondaryColor'] ?? null,
-                    "accentColor" => $acc['accentcolor'] ?? $acc['accentColor'] ?? null,
+                    "id" => $acc['id'],
+                    "name" => trim(($acc['firstName'] ?? $acc['firstname'] ?? '') . " " . ($acc['lastName'] ?? $acc['lastname'] ?? '')),
+                    "email" => $acc['email'],
+                    "company" => $acc['companyName'] ?? $acc['companyname'] ?? null,
+                    "token" => $token,
+                    "subscriptionPlan" => $acc['subscriptionPlan'] ?? $acc['subscriptionplan'] ?? 'free',
+                    "subscriptionStatus" => $acc['subscriptionStatus'] ?? $acc['subscriptionstatus'] ?? 'trial',
+                    "createdAt" => $acc['createdAt'] ?? $acc['createdat'] ?? null,
+                    "primaryColor" => $acc['primaryColor'] ?? $acc['primarycolor'] ?? '#B38E36',
+                    "secondaryColor" => $acc['secondaryColor'] ?? $acc['secondarycolor'] ?? null,
+                    "accentColor" => $acc['accentColor'] ?? $acc['accentcolor'] ?? null,
                     "role" => $acc['role'] ?? 'user'
                 ]);
             } else {

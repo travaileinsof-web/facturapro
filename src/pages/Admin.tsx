@@ -14,6 +14,9 @@ interface Stats {
   expiredAccounts: number; suspendedAccounts: number; mensuelAccounts: number;
   annuelAccounts: number; totalRevenuePlatform: number; newAccountsThisMonth: number;
   recentAccounts: Partial<Account>[]; recentLogs: any[];
+  premiumAccounts?: number; freeAccounts?: number; totalRevenue?: number;
+  totalInvoices?: number; totalClients?: number; newThisMonth?: number;
+  conversionRate?: number | string;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────

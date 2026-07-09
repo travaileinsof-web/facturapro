@@ -4,13 +4,13 @@ import { formatCurrency, useAppStore, apiFetch } from '../lib/store';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter } from './ui/dialog';
 import { useForm } from 'react-hook-form';
 import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
 import { PlusIcon, PackageIcon } from 'lucide-react';
 import { PageHeader } from './ui/PageHeader';
-import { DialogFooter } from './ui/dialog';
+import { Field } from './ui/Field';
 
 export function Catalog() {
   const refreshCatalog = useAppStore(state => state.refreshCatalog);
@@ -94,6 +94,7 @@ export function Catalog() {
       <PageHeader 
         title="Catalogue" 
         description="Gérez vos services et produits pré-enregistrés pour une facturation plus rapide."
+        icon={<PackageIcon size={20} />}
         actions={
           <button onClick={openNew} className="fp-btn-primary">
             <PlusIcon size={14} className="mr-2" /> Ajouter au Catalogue
@@ -155,48 +156,45 @@ export function Catalog() {
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden border-0 shadow-2xl">
-          <DialogHeader className="px-8 py-6 bg-[var(--surface-2)] border-b border-[var(--border)]">
-            <DialogTitle className="text-xl font-display font-semibold text-[var(--foreground)] tracking-tight">
-              {editingItem ? 'Modifier l\'élément' : 'Ajouter au catalogue'}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
-            <div className="px-8 py-8 grid gap-y-6 bg-[var(--background)]">
-              <div className="grid grid-cols-2 gap-x-6">
-                <div>
-                  <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2">Type</label>
-                  <select {...register('type')} className="fp-input w-full bg-[var(--surface-1)] focus:bg-[var(--background)]">
-                    <option value="service">Service</option>
-                    <option value="produit">Produit</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2">Catégorie</label>
-                  <input className="fp-input w-full bg-[var(--surface-1)] focus:bg-[var(--background)]" {...register('category')} placeholder="Ex: Développement, Plomberie..." required />
-                </div>
-              </div>
+        <DialogContent className="sm:max-w-[500px] p-0">
+          <DialogHeader 
+            icon={PackageIcon} 
+            title={editingItem ? 'Modifier l\'élément' : 'Ajouter au catalogue'} 
+            desc="Renseignez les informations de votre produit ou service." 
+          />
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0 bg-[var(--background)]">
+            <div className="overflow-y-auto custom-scrollbar flex-1" style={{ padding: '32px 40px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+              <Field label="Type">
+                <select {...register('type')} className="fp-input">
+                  <option value="service">Service</option>
+                  <option value="produit">Produit</option>
+                </select>
+              </Field>
+              <Field label="Catégorie">
+                <input className="fp-input" {...register('category')} placeholder="Ex: Développement, Plomberie..." required />
+              </Field>
               
-              <div>
-                <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2">Nom de la prestation / produit <span className="text-[var(--primary)]">*</span></label>
-                <input className="fp-input w-full bg-[var(--surface-1)] focus:bg-[var(--background)]" {...register('name')} required placeholder="Ex: Création Site Web Vitrine" />
+              <div style={{ gridColumn: 'span 2' }}>
+                <Field label={<>Nom de la prestation / produit <span style={{ color: 'var(--primary)' }}>*</span></>}>
+                  <input className="fp-input" {...register('name')} required placeholder="Ex: Création Site Web Vitrine" />
+                </Field>
               </div>
 
-              <div>
-                <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2">Description détaillée</label>
-                <textarea {...register('description')} className="fp-input w-full min-h-[100px] resize-y bg-[var(--surface-1)] focus:bg-[var(--background)]" placeholder="Description qui apparaîtra sur la facture..." />
+              <div style={{ gridColumn: 'span 2' }}>
+                <Field label="Description détaillée">
+                  <textarea {...register('description')} className="fp-input" style={{ minHeight: '100px', resize: 'vertical' }} placeholder="Description qui apparaîtra sur la facture..." />
+                </Field>
               </div>
 
-              <div>
-                <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2">Prix Unitaire par défaut (HT) <span className="text-[var(--primary)]">*</span></label>
-                <div className="relative">
-                  <input className="fp-input w-full bg-[var(--surface-1)] focus:bg-[var(--background)] pl-8" type="number" step="0.01" {...register('unitPrice')} required />
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] font-bold text-[var(--foreground-muted)]">{currency}</span>
+              <Field label={<>Prix Unitaire par défaut (HT) <span style={{ color: 'var(--primary)' }}>*</span></>}>
+                <div style={{ position: 'relative' }}>
+                  <input className="fp-input" style={{ paddingLeft: '32px' }} type="number" step="0.01" {...register('unitPrice')} required />
+                  <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '13px', fontWeight: 700, color: 'var(--foreground-muted)' }}>{currency}</span>
                 </div>
-              </div>
+              </Field>
             </div>
 
-            <DialogFooter className="px-8 py-4 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end gap-3">
+            <DialogFooter>
               <button type="button" className="fp-btn-outline" onClick={() => setIsModalOpen(false)}>Annuler</button>
               <button type="submit" className="fp-btn-primary">
                 {editingItem ? 'Mettre à jour' : 'Ajouter au catalogue'}

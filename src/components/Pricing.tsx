@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { CheckCircle2, Loader2, X } from 'lucide-react';
+import { CheckCircle2, Loader2, X, TrendingUp } from 'lucide-react';
 import { useAppStore, apiFetch } from '../lib/store';
+import { PageHeader } from './ui/PageHeader';
 
 export function Pricing() {
   const { user } = useAppStore();
@@ -53,6 +54,11 @@ export function Pricing() {
 
   return (
     <div style={{ maxWidth: '900px', margin: '0 auto', position: 'relative' }}>
+      <PageHeader
+        title="Abonnement"
+        description="Choisissez le forfait qui convient à votre activité."
+        icon={<TrendingUp size={20} />}
+      />
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
         <h2 style={{ fontSize: '32px', fontWeight: 800, color: '#0f172a', marginBottom: '12px', letterSpacing: '-0.5px' }}>
           Passez à la vitesse supérieure

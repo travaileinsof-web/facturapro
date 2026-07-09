@@ -138,6 +138,7 @@ export function Reminders() {
       <PageHeader 
         title="Relances & Impayés" 
         description="Gérez vos factures en attente de paiement et relancez vos clients en un clic."
+        icon={<AlertTriangle size={20} />}
       />
 
       <div className="fp-card" style={{ overflow: 'hidden', overflowX: 'auto' }}>

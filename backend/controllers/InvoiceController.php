@@ -99,26 +99,29 @@ class InvoiceController {
             }
             $number = sprintf("%s-%s-%03d", $prefix, $today, $seq);
 
-            $items = json_encode($body['items'] ?? []);
+            $sanitizedItems = Validator::sanitizeArray($body['items'] ?? []);
+            $items = json_encode($sanitizedItems);
             $subtotal = 0;
-            foreach ($body['items'] as $item) $subtotal += ($item['quantity'] * $item['unitPrice']);
+            foreach ($sanitizedItems as $item) $subtotal += (($item['quantity'] ?? 0) * ($item['unitPrice'] ?? 0));
             $taxAmount = $subtotal * (($body['taxRate']??0) / 100);
             $total = $subtotal + $taxAmount - ($body['discount']??0);
+            $notes = Validator::sanitizeString($body['notes'] ?? null);
+            $type = Validator::sanitizeString($type);
 
             $dueDate = empty($body['dueDate']) ? null : $body['dueDate'];
             $stmt = $pdo->prepare("INSERT INTO ProformaInvoice (id, accountId, number, clientId, items, subtotal, taxRate, taxAmount, discount, total, status, type, notes, dueDate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $newId, $accountId, $number, $body['clientId'], $items, $subtotal, $body['taxRate']??0, 
-                $taxAmount, $body['discount']??0, $total, 'brouillon', $type, $body['notes']??null, $dueDate
+                $taxAmount, $body['discount']??0, $total, 'brouillon', $type, $notes, $dueDate
             ]);
             $stmt = $pdo->prepare("SELECT * FROM ProformaInvoice WHERE id = ?");
             $stmt->execute([$newId]);
             echo json_encode($stmt->fetch());
         } elseif ($method === 'PUT' && $id) {
-            $items = json_encode($body['items'] ?? []);
+            $sanitizedItems = Validator::sanitizeArray(is_array($body['items'] ?? []) ? $body['items'] : []);
+            $items = json_encode($sanitizedItems);
             $subtotal = 0;
-            $decodedItems = is_array($body['items']) ? $body['items'] : [];
-            foreach ($decodedItems as $item) $subtotal += ($item['quantity'] * $item['unitPrice']);
+            foreach ($sanitizedItems as $item) $subtotal += (($item['quantity'] ?? 0) * ($item['unitPrice'] ?? 0));
             $taxAmount = $subtotal * (($body['taxRate']??0) / 100);
             $total = $subtotal + $taxAmount - ($body['discount']??0);
 
@@ -151,11 +154,12 @@ class InvoiceController {
                 $newStatus = $body['status'];
             }
 
+            $notes = Validator::sanitizeString($body['notes'] ?? null);
             $dueDate = empty($body['dueDate']) ? null : $body['dueDate'];
             $stmt = $pdo->prepare("UPDATE ProformaInvoice SET clientId=?, items=?, subtotal=?, taxRate=?, taxAmount=?, discount=?, total=?, status=?, type=?, number=?, notes=?, dueDate=? WHERE id=? AND accountId=?");
             $stmt->execute([
                 $body['clientId'], $items, $subtotal, $body['taxRate']??0, 
-                $taxAmount, $body['discount']??0, $total, $newStatus, $newType, $number, $body['notes']??null, $dueDate,
+                $taxAmount, $body['discount']??0, $total, $newStatus, $newType, $number, $notes, $dueDate,
                 $id, $accountId
             ]);
 

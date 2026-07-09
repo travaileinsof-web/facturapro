@@ -44,6 +44,9 @@ try {
         )",
         "CREATE TABLE IF NOT EXISTS Document (
             id VARCHAR(50) PRIMARY KEY, accountId VARCHAR(50) NOT NULL, entityType VARCHAR(50) NOT NULL, entityId VARCHAR(50) NOT NULL, fileName VARCHAR(255) NOT NULL, fileUrl TEXT NOT NULL, fileType VARCHAR(50) NULL, fileSize INTEGER DEFAULT 0, uploadedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (accountId) REFERENCES Account(id) ON DELETE CASCADE
+        )",
+        "CREATE TABLE IF NOT EXISTS SubscriptionReminderLog (
+            id SERIAL PRIMARY KEY, accountId VARCHAR(50) NOT NULL, reminderType VARCHAR(50) NOT NULL, sentAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (accountId) REFERENCES Account(id) ON DELETE CASCADE
         )"
     ];
 
@@ -56,6 +59,13 @@ try {
     if ($stmt->fetchColumn() == 0) {
         $insert = $pdo->prepare("INSERT INTO PlatformSettings (id) VALUES ('global')");
         $insert->execute();
+    }
+    
+    // Add reminderSettings column if not exists
+    try {
+        $pdo->exec("ALTER TABLE PlatformSettings ADD COLUMN reminderSettings TEXT NULL");
+    } catch (PDOException $e) {
+        // Ignorer l'erreur si la colonne existe déjà
     }
     
     // Create default super admin if none exists

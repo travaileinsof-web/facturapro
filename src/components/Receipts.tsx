@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
-import { Check, ChevronsUpDown, Mail, MessageCircle, DownloadIcon, FileTextIcon, FilterIcon, PlusIcon, PrinterIcon } from 'lucide-react';
+import { Check, ChevronsUpDown, Mail, MessageCircle, DownloadIcon, FileTextIcon, FilterIcon, PlusIcon, PrinterIcon, Receipt } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useForm } from 'react-hook-form';
 import { PageHeader } from './ui/PageHeader';
@@ -16,6 +16,9 @@ import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
 import { buildReceiptHTML } from '../lib/pdfTemplate';
 import { exportHTMLToPDF, generatePDFBase64 } from '../lib/pdfExport';
+import { ConfirmDialog } from './ui/ConfirmDialog';
+import { Pagination } from './ui/pagination';
+import { Field } from './ui/Field';
 
 export function Receipts() {
   const refreshReceipts = useAppStore(state => state.refreshReceipts);
@@ -23,6 +26,10 @@ export function Receipts() {
   const triggerRefresh = useAppStore(state => state.triggerRefresh);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [openCombobox, setOpenCombobox] = useState(false);
+  const [receiptToDelete, setReceiptToDelete] = useState<string | null>(null);
+
+  const ITEMS_PER_PAGE = 10;
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { data: receipts, isLoading, refetch } = useQuery({
     queryKey: ['receipts', refreshReceipts],
@@ -111,8 +118,9 @@ export function Receipts() {
     }
   };
 
-  const deleteReceipt = async (id: string) => {
-    if(!confirm("Supprimer ce reçu (L'état de la facture liée sera recalculé) ?")) return;
+  const confirmDeleteReceipt = async () => {
+    if(!receiptToDelete) return;
+    const id = receiptToDelete;
     const res = await apiFetch(`/api/receipts/${id}`, { method: 'DELETE' });
     if(res.ok) {
        toast.success("Reçu supprimé");
@@ -125,6 +133,7 @@ export function Receipts() {
        const err = await res.json().catch(() => ({}));
        toast.error(err.error || "Erreur de suppression");
     }
+    setReceiptToDelete(null);
   };
 
   const shareViaEmail = async (rec: any) => {
@@ -227,11 +236,6 @@ export function Receipts() {
   };
 
   const downloadPDF = async (rec: any) => {
-    const printWindow = window.open('', '_blank', 'width=900,height=1200');
-    if (!printWindow) {
-      toast.error('Autorisez les popups pour ce site pour générer le PDF.');
-      return;
-    }
 
     const toastId = toast.loading("Génération du PDF en cours...");
     try {
@@ -244,37 +248,22 @@ export function Receipts() {
       if (!fullRec || !fullRec.id) throw new Error('Reçu introuvable');
       const html = buildReceiptHTML(fullRec, settings);
       
-      printWindow.document.write(`<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', sans-serif; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    @media print { body { margin: 0; } @page { margin: 0; size: A4; } .no-print { display: none !important; } }
-  </style>
-</head>
-<body>
-${html}
-<div class="no-print" style="text-align:center;padding:20px;background:#f1f5f9;border-top:1px solid #e2e8f0;">
-  <p style="color:#64748b;font-size:13px;margin-bottom:12px;">Cliquez sur <strong>Imprimer</strong> et choisissez <strong>"Enregistrer en PDF"</strong> comme destination.</p>
-  <button onclick="window.print()" style="background:#0f172a;color:#fff;padding:10px 28px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">🖨 Imprimer / Sauvegarder en PDF</button>
-</div>
-</body></html>`);
-      printWindow.document.close();
+      await exportHTMLToPDF(html, `Recu_${rec.number}`);
       toast.success("Fenêtre d'impression ouverte !", { id: toastId });
     } catch (e: any) {
-      printWindow.close();
       toast.error(e?.message || "Erreur lors de la génération PDF", { id: toastId });
     }
   };
+
+  const totalPages = Math.ceil((receipts?.length || 0) / ITEMS_PER_PAGE);
+  const paginatedReceipts = receipts?.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   return (
     <div className="space-y-6">
       <PageHeader 
         title="Reçus" 
         description="Gérez les paiements encaissés et éditez les reçus de vos clients."
+        icon={<Receipt size={20} />}
         actions={
           <button onClick={openNew} className="fp-btn-primary">
             Nouveau Reçu
@@ -306,7 +295,7 @@ ${html}
                 </td>
               </tr>
             ) : (
-              receipts?.map((rec: any) => (
+              paginatedReceipts?.map((rec: any) => (
                 <tr key={rec.id}>
                   <td>
                     <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--foreground-subtle)' }}>
@@ -329,7 +318,7 @@ ${html}
                       <button className="fp-btn-ghost" onClick={() => shareViaEmail(rec)}>
                         <Mail size={14} style={{ color: '#4f46e5' }} /> Email
                       </button>
-                      <button className="fp-btn-ghost fp-text-rose" onClick={() => deleteReceipt(rec.id)}>Supprimer</button>
+                      <button className="fp-btn-ghost fp-text-rose" onClick={() => setReceiptToDelete(rec.id)}>Supprimer</button>
                     </div>
                   </td>
                 </tr>
@@ -339,93 +328,103 @@ ${html}
         </table>
       </div>
 
+      <Pagination 
+        currentPage={currentPage} 
+        totalPages={totalPages} 
+        onPageChange={setCurrentPage} 
+        className="mt-4"
+      />
+
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-2xl max-w-2xl p-6 sm:p-8 overflow-hidden rounded-2xl bg-[var(--background)] shadow-2xl border border-[var(--border)] flex flex-col">
-          <DialogHeader className="mb-6 shrink-0">
-            <DialogTitle className="text-xl font-display font-semibold text-[var(--foreground)] tracking-tight">Nouveau Reçu</DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-            <form id="receipt-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-10 pr-2">
+        <DialogContent className="sm:max-w-3xl max-w-3xl p-0">
+          <DialogHeader 
+            className="shrink-0"
+            icon={Receipt}
+            title="Nouveau Reçu"
+            desc="Enregistrez un paiement reçu de la part d'un client."
+          />
+          <div className="flex-1 overflow-y-auto custom-scrollbar bg-[var(--background)]">
+            <form id="receipt-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6" style={{ padding: '32px 40px' }}>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-6">
-                <div>
-                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Client *</label>
+                <Field label={<>Client <span style={{ color: 'var(--primary)' }}>*</span></>}>
                   <select className="fp-input w-full" {...register('clientId', { required: true })}>
                     <option value="">Sélectionner un client</option>
                     {clients?.map((c: any) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
-                </div>
+                </Field>
 
                 <div className="col-span-2">
-                  <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Facture associée (Optionnel)</label>
-                  <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
-                    <PopoverTrigger
-                      render={
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          aria-expanded={openCombobox}
-                          className="w-full justify-between font-normal fp-input"
-                          style={{ height: '42px', borderRadius: 0, border: '1px solid var(--border)' }}
-                          disabled={!watchClientId}
-                        >
-                          {watchInvoiceId
-                            ? (() => {
-                                const inv = availableInvoices?.find((i: any) => i.id === watchInvoiceId);
-                                if (!inv) return "-- Aucune / Accueil Libre --";
-                                const items = safeJSONParse(inv.items, []);
-                                const summary = items.length ? (items.length > 1 ? `${items[0].description} (+${items.length - 1})` : items[0].description) : '';
-                                return `${inv.number} ${summary ? `- ${summary}` : ''} (Reste: ${formatCurrency(inv.amountRemaining || 0)})`;
-                              })()
-                            : "-- Aucune / Accueil Libre --"}
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      }
-                    />
-                    <PopoverContent className="w-[500px] p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Rechercher par numéro ou objet..." />
-                        <CommandList>
-                          <CommandEmpty>Aucune facture trouvée.</CommandEmpty>
-                          <CommandGroup>
-                            <CommandItem
-                              onSelect={() => {
-                                handleInvoiceChange({ target: { value: "" } });
-                                setOpenCombobox(false);
-                              }}
-                            >
-                              <Check className={cn("mr-2 h-4 w-4", watchInvoiceId === "" ? "opacity-100" : "opacity-0")} />
-                              -- Aucune / Accueil Libre --
-                            </CommandItem>
-                            {availableInvoices?.map((inv: any) => {
-                               const items = safeJSONParse(inv.items, []);
-                               const summary = items.length ? (items.length > 1 ? `${items[0].description} et ${items.length - 1} autre(s)` : items[0].description) : '';
-                               
-                               return (
-                                 <CommandItem
-                                   key={inv.id}
-                                   value={`${inv.number} ${summary}`}
-                                   onSelect={() => {
-                                     handleInvoiceChange({ target: { value: inv.id } });
-                                     setOpenCombobox(false);
-                                   }}
-                                 >
-                                   <Check className={cn("mr-2 h-4 w-4", watchInvoiceId === inv.id ? "opacity-100" : "opacity-0")} />
-                                   <div className="flex flex-col">
-                                     <span className="font-medium">{inv.number} {summary ? `- ${summary}` : ''}</span>
-                                     <span className="text-xs text-slate-500">
-                                       Montant: {formatCurrency(inv.total)} | Reste à payer : {formatCurrency(inv.amountRemaining || 0)}
-                                     </span>
-                                   </div>
-                                 </CommandItem>
-                               );
-                            })}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                  <Field label="Facture associée (Optionnel)">
+                    <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                      <PopoverTrigger
+                        render={
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={openCombobox}
+                            className="w-full justify-between font-normal fp-input"
+                            style={{ height: '42px', borderRadius: 0, border: '1px solid var(--border)' }}
+                            disabled={!watchClientId}
+                          >
+                            {watchInvoiceId
+                              ? (() => {
+                                  const inv = availableInvoices?.find((i: any) => i.id === watchInvoiceId);
+                                  if (!inv) return "-- Aucune / Accueil Libre --";
+                                  const items = safeJSONParse(inv.items, []);
+                                  const summary = items.length ? (items.length > 1 ? `${items[0].description} (+${items.length - 1})` : items[0].description) : '';
+                                  return `${inv.number} ${summary ? `- ${summary}` : ''} (Reste: ${formatCurrency(inv.amountRemaining || 0)})`;
+                                })()
+                              : "-- Aucune / Accueil Libre --"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        }
+                      />
+                      <PopoverContent className="w-[500px] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Rechercher par numéro ou objet..." />
+                          <CommandList>
+                            <CommandEmpty>Aucune facture trouvée.</CommandEmpty>
+                            <CommandGroup>
+                              <CommandItem
+                                onSelect={() => {
+                                  handleInvoiceChange({ target: { value: "" } });
+                                  setOpenCombobox(false);
+                                }}
+                              >
+                                <Check className={cn("mr-2 h-4 w-4", watchInvoiceId === "" ? "opacity-100" : "opacity-0")} />
+                                -- Aucune / Accueil Libre --
+                              </CommandItem>
+                              {availableInvoices?.map((inv: any) => {
+                                 const items = safeJSONParse(inv.items, []);
+                                 const summary = items.length ? (items.length > 1 ? `${items[0].description} et ${items.length - 1} autre(s)` : items[0].description) : '';
+                                 
+                                 return (
+                                   <CommandItem
+                                     key={inv.id}
+                                     value={`${inv.number} ${summary}`}
+                                     onSelect={() => {
+                                       handleInvoiceChange({ target: { value: inv.id } });
+                                       setOpenCombobox(false);
+                                     }}
+                                   >
+                                     <Check className={cn("mr-2 h-4 w-4", watchInvoiceId === inv.id ? "opacity-100" : "opacity-0")} />
+                                     <div className="flex flex-col">
+                                       <span className="font-medium">{inv.number} {summary ? `- ${summary}` : ''}</span>
+                                       <span className="text-xs text-slate-500">
+                                         Montant: {formatCurrency(inv.total)} | Reste à payer : {formatCurrency(inv.amountRemaining || 0)}
+                                       </span>
+                                     </div>
+                                   </CommandItem>
+                                 );
+                              })}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </Field>
 
                   {selectedInvoice && (
                      <div className="mt-3 p-4 bg-emerald-50 text-sm max-h-40 overflow-y-auto" style={{ border: '1px solid var(--emerald)', background: 'rgba(16,185,129,0.05)' }}>
@@ -446,37 +445,46 @@ ${html}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
-                 <div>
-                    <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Montant *</label>
+                 <Field label={<>Montant <span style={{ color: 'var(--primary)' }}>*</span></>}>
                     <input className="fp-input w-full" type="number" step="0.01" {...register('amount', { required: true, valueAsNumber: true })} />
-                 </div>
-                 <div>
-                    <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Date de Paiement *</label>
+                 </Field>
+                 <Field label={<>Date de Paiement <span style={{ color: 'var(--primary)' }}>*</span></>}>
                     <input className="fp-input w-full" type="date" {...register('paymentDate', { required: true })} />
-                 </div>
+                 </Field>
                  <div className="col-span-1 md:col-span-2">
-                    <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Mode de Paiement *</label>
-                    <select className="fp-input w-full" {...register('paymentMethod')}>
-                       <option value="virement_bancaire">Virement Bancaire</option>
-                       <option value="especes">Espèces</option>
-                       <option value="cheque">Chèque</option>
-                       <option value="mobile_money">Mobile Money</option>
-                    </select>
+                    <Field label={<>Mode de Paiement <span style={{ color: 'var(--primary)' }}>*</span></>}>
+                      <select className="fp-input w-full" {...register('paymentMethod')}>
+                         <option value="virement_bancaire">Virement Bancaire</option>
+                         <option value="especes">Espèces</option>
+                         <option value="cheque">Chèque</option>
+                         <option value="mobile_money">Mobile Money</option>
+                      </select>
+                    </Field>
                  </div>
               </div>
 
-              <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Notes Complémentaires</label>
+              <Field label="Notes Complémentaires">
                 <textarea className="fp-input w-full min-h-[80px] resize-y" {...register('notes')} />
-              </div>
+              </Field>
             </form>
           </div>
-          <DialogFooter className="mt-6 pt-6 border-t border-[var(--border)] flex justify-end gap-4 shrink-0">
+          <DialogFooter className="shrink-0">
              <button type="button" className="fp-btn-outline" onClick={() => setIsModalOpen(false)}>Annuler</button>
              <button type="submit" form="receipt-form" className="fp-btn-primary">Enregistrer le Reçu</button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!receiptToDelete}
+        onOpenChange={(open) => !open && setReceiptToDelete(null)}
+        title="Supprimer ce reçu ?"
+        description="L'état de la facture liée sera recalculé automatiquement. Cette action est irréversible."
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        variant="danger"
+        onConfirm={confirmDeleteReceipt}
+      />
     </div>
   );
 }

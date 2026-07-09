@@ -8,11 +8,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { toast } from 'sonner';
-import { CurrencyConverter } from './CurrencyConverter';
 import { PageHeader } from './ui/PageHeader';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, FileTextIcon } from 'lucide-react';
 import { buildInvoiceHTML } from '../lib/pdfTemplate';
 import { exportHTMLToPDF, generatePDFBase64 } from '../lib/pdfExport';
+import { ConfirmDialog } from './ui/ConfirmDialog';
+import { Pagination } from './ui/pagination';
+import { Textarea } from './ui/textarea';
+import { Field } from './ui/Field';
 
 
 export function Invoices() {
@@ -24,6 +27,15 @@ export function Invoices() {
   const [filterStatus, setFilterStatus] = useState('toutes');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingInvoice, setEditingInvoice] = useState<any>(null);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<string | null>(null);
+  const [invoiceToConvert, setInvoiceToConvert] = useState<{ inv: any, targetType: string } | null>(null);
+
+  const ITEMS_PER_PAGE = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterType, filterStatus]);
 
   const { data: invoices, isLoading, refetch } = useQuery({
     queryKey: ['invoices', refreshInvoices, filterStatus],
@@ -169,9 +181,9 @@ export function Invoices() {
     });
   };
 
-  const deleteInvoice = async (id: string) => {
-    if(!confirm("Supprimer cette facture ?")) return;
-    
+  const confirmDeleteInvoice = async () => {
+    if(!invoiceToDelete) return;
+    const id = invoiceToDelete;
     const promise = apiFetch(`/api/invoices/${id}`, { method: 'DELETE' }).then(async (res) => {
       if(!res.ok) throw new Error("Erreur de suppression");
       triggerRefresh('invoices');
@@ -186,10 +198,12 @@ export function Invoices() {
       success: 'Facture supprimée',
       error: 'Erreur de suppression'
     });
+    setInvoiceToDelete(null);
   };
 
-  const convertToFacture = async (inv: any, targetType: string) => {
-    if(!confirm(`Convertir ce document en ${targetType === 'facture' ? 'Facture' : 'Facture Pro Forma'} ?`)) return;
+  const confirmConvertToFacture = async () => {
+    if(!invoiceToConvert) return;
+    const { inv, targetType } = invoiceToConvert;
     const payload = {
       ...inv,
       type: targetType,
@@ -210,6 +224,7 @@ export function Invoices() {
       success: 'Document converti avec succès',
       error: 'Erreur de conversion'
     });
+    setInvoiceToConvert(null);
   };
 
   const shareViaWhatsApp = async (inv: any) => {
@@ -311,13 +326,6 @@ export function Invoices() {
   };
 
   const downloadPDF = async (inv: any) => {
-    // IMPORTANT: window.open() DOIT être appelé AVANT tout await
-    // sinon les navigateurs bloquent le popup (politique de sécurité)
-    const printWindow = window.open('', '_blank', 'width=900,height=1200');
-    if (!printWindow) {
-      toast.error('Autorisez les popups pour ce site pour générer le PDF.');
-      return;
-    }
 
     const toastId = toast.loading("Génération du PDF en cours...");
     try {
@@ -329,37 +337,23 @@ export function Invoices() {
       const fullInv = await invRes.json();
       const html = buildInvoiceHTML(fullInv, settings);
 
-      printWindow.document.write(`<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', sans-serif; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    @media print { body { margin: 0; } @page { margin: 0; size: A4; } .no-print { display: none !important; } }
-  </style>
-</head>
-<body>
-${html}
-<div class="no-print" style="text-align:center;padding:20px;background:#f1f5f9;border-top:1px solid #e2e8f0;">
-  <p style="color:#64748b;font-size:13px;margin-bottom:12px;">Cliquez sur <strong>Imprimer</strong> et choisissez <strong>"Enregistrer en PDF"</strong> comme destination.</p>
-  <button onclick="window.print()" style="background:#0f172a;color:#fff;padding:10px 28px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">🖨 Imprimer / Sauvegarder en PDF</button>
-</div>
-</body></html>`);
-      printWindow.document.close();
+      await exportHTMLToPDF(html, `Facture_${inv.number}`);
       toast.success("Fenêtre d'impression ouverte !", { id: toastId });
     } catch (e: any) {
-      printWindow.close();
       toast.error(e?.message || "Erreur lors de la génération du PDF", { id: toastId });
     }
   };
+
+  const filteredInvoices = invoices?.filter((inv: any) => filterType === 'tous' || inv.type === filterType) || [];
+  const totalPages = Math.ceil((filteredInvoices.length || 0) / ITEMS_PER_PAGE);
+  const paginatedInvoices = filteredInvoices.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   return (
     <div className="space-y-6">
       <PageHeader 
         title="Factures & Devis" 
         description="Créez, envoyez et suivez vos documents de facturation."
+        icon={<FileTextIcon size={20} />}
         actions={
           <>
             <div style={{ display: 'flex', gap: '12px' }}>
@@ -410,7 +404,11 @@ ${html}
             </tr>
           </thead>
           <tbody>
-            {invoices?.filter((inv: any) => filterType === 'tous' || inv.type === filterType).map((inv: any) => {
+            {isLoading ? (
+              <tr><td colSpan={8} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Chargement...</td></tr>
+            ) : filteredInvoices.length === 0 ? (
+              <tr><td colSpan={8} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Aucune facture trouvée</td></tr>
+            ) : paginatedInvoices.map((inv: any) => {
                const paid = (inv.receipts || []).reduce((sum: number, r: any) => sum + r.amount, 0);
                const reste = inv.total - paid;
                return (
@@ -439,18 +437,18 @@ ${html}
                    <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
                      {inv.type === 'devis' && (
                        <>
-                         <button style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', cursor: 'pointer' }} onClick={() => convertToFacture(inv, 'proforma')}>Pro Forma</button>
-                         <button style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', cursor: 'pointer' }} onClick={() => convertToFacture(inv, 'facture')}>Facture</button>
+                         <button style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', cursor: 'pointer' }} onClick={() => setInvoiceToConvert({ inv, targetType: 'proforma' })}>Pro Forma</button>
+                         <button style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', cursor: 'pointer' }} onClick={() => setInvoiceToConvert({ inv, targetType: 'facture' })}>Facture</button>
                        </>
                      )}
                      {inv.type === 'proforma' && (
-                       <button style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', cursor: 'pointer' }} onClick={() => convertToFacture(inv, 'facture')}>Facture</button>
+                       <button style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', cursor: 'pointer' }} onClick={() => setInvoiceToConvert({ inv, targetType: 'facture' })}>Facture</button>
                      )}
                      <button style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'var(--surface)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', cursor: 'pointer' }} onClick={() => downloadPDF(inv)}>PDF</button>
                      <button style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'var(--surface)', border: '1px solid #25D366', color: '#25D366', cursor: 'pointer' }} onClick={() => shareViaWhatsApp(inv)}>WA</button>
                      <button style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'var(--surface)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', cursor: 'pointer' }} onClick={() => shareViaEmail(inv)}>@</button>
                      <button style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'var(--surface)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', cursor: 'pointer' }} onClick={() => openEdit(inv)}>Modifier</button>
-                     <button style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'transparent', border: '1px solid rgba(220,38,38,0.3)', color: 'var(--destructive)', cursor: 'pointer' }} title={inv.receipts?.length ? "Impossible : Reçus associés" : ""} onClick={() => { if(!inv.receipts?.length) deleteInvoice(inv.id); }}>Sup.</button>
+                     <button style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'transparent', border: '1px solid rgba(220,38,38,0.3)', color: 'var(--destructive)', cursor: 'pointer' }} title={inv.receipts?.length ? "Impossible : Reçus associés" : ""} onClick={() => { if(!inv.receipts?.length) setInvoiceToDelete(inv.id); }}>Sup.</button>
                    </div>
                  </td>
               </tr>
@@ -459,56 +457,60 @@ ${html}
         </table>
       </div>
 
+      <Pagination 
+        currentPage={currentPage} 
+        totalPages={totalPages} 
+        onPageChange={setCurrentPage} 
+        className="mt-4"
+      />
+
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-5xl max-w-5xl p-6 sm:p-8 overflow-hidden rounded-2xl bg-[var(--background)] shadow-2xl border border-[var(--border)] h-[90vh] flex flex-col">
-          <DialogHeader className="mb-6 shrink-0">
-            <DialogTitle className="text-xl font-display font-semibold text-[var(--foreground)] tracking-tight">
-              {editingInvoice ? 'Modifier Document' : 'Nouveau Document'}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-            <form id="invoice-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-10 pr-2">
-
-              {/* — Type de document — */}
-              <div>
-                <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-3">Type de document</label>
-                <div className="flex bg-[var(--surface-2)] rounded-lg p-1 w-fit border border-[var(--border)] shadow-sm">
-                  {(['facture', 'proforma', 'devis'] as const).map((t) => {
-                    const labels: Record<string, string> = { facture: 'Facture', proforma: 'Pro Forma', devis: 'Devis' };
-                    const isActive = watch('type') === t;
-                    return (
-                      <label key={t} className={`cursor-pointer px-6 py-2 text-[13px] font-semibold rounded-md transition-all duration-200 ${isActive ? 'bg-white text-[var(--foreground)] shadow-sm' : 'text-[var(--foreground-muted)] hover:text-[var(--foreground)]'}`}>
-                        <input type="radio" value={t} {...register('type')} className="hidden" />
-                        {labels[t]}
-                      </label>
-                    );
-                  })}
+        <DialogContent className="sm:max-w-5xl max-w-5xl p-0 h-[90vh]">
+          <DialogHeader 
+            className="shrink-0"
+            icon={FileTextIcon}
+            title={editingInvoice ? 'Modifier Document' : 'Nouveau Document'}
+            desc="Remplissez les détails de la facture, du devis ou du pro forma."
+          />
+          <div className="flex-1 overflow-y-auto custom-scrollbar bg-[var(--background)]">
+            <form id="invoice-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
+              <div style={{ padding: '40px 48px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+                {/* — Type de document — */}
+                <div style={{ gridColumn: 'span 2' }}>
+                  <Field label="Type de document">
+                    <div className="flex gap-5">
+                      {(['facture', 'proforma', 'devis'] as const).map((t) => {
+                        const labels: Record<string, string> = { facture: 'Facture', proforma: 'Pro Forma', devis: 'Devis' };
+                        const isActive = watch('type') === t;
+                        return (
+                          <label key={t} className={`cursor-pointer px-10 py-4 text-[14px] font-semibold rounded-none border transition-all duration-200 text-center min-w-[140px] ${isActive ? 'bg-[var(--gold-dim)] border-[var(--gold)] text-[var(--gold)] shadow-sm' : 'bg-white border-[var(--border)] text-[var(--foreground-muted)] hover:border-[var(--foreground-subtle)] hover:text-[var(--foreground)]'}`}>
+                            <input type="radio" value={t} {...register('type')} className="hidden" />
+                            {labels[t]}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </Field>
                 </div>
-              </div>
 
-              {/* — Client + Date — */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
-                <div>
-                  <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2">Client <span className="text-[var(--primary)]">*</span></label>
+                {/* — Client + Date — */}
+                <Field label={<>Client <span style={{ color: 'var(--primary)' }}>*</span></>}>
                   <select {...register('clientId')} className="fp-input w-full bg-white shadow-sm">
                     <option value="">— Sélectionner un client —</option>
                     {clients?.map((c: any) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
-                </div>
-                <div>
-                  <label className="block text-[13px] font-semibold text-[var(--foreground)] mb-2 flex justify-between items-center">
-                    Date d'échéance
-                    <span className="text-[11px] font-normal text-[var(--foreground-muted)]">Requis pour relances auto.</span>
-                  </label>
+                </Field>
+
+                <Field label="Date d'échéance" hint="Requis pour relances auto.">
                   <input type="date" className="fp-input w-full bg-white shadow-sm" {...register('dueDate')} />
-                </div>
+                </Field>
               </div>
 
               {/* — Articles — */}
-              <div className="flex flex-col border border-[var(--border)] rounded-xl overflow-hidden bg-white shadow-sm mt-2">
-                <div className="grid grid-cols-[250px_1fr_100px_130px_130px_50px] gap-4 bg-[var(--surface-2)] border-b border-[var(--border)] px-4 py-3">
+              <div className="flex flex-col border-t border-b border-[var(--border)] overflow-hidden bg-white shadow-sm mt-2">
+                <div className="grid grid-cols-[250px_1fr_100px_130px_130px_50px] gap-6 bg-[var(--surface-2)] border-b border-[var(--border)] px-8 py-5">
                   <div className="text-[12px] font-bold text-[var(--foreground-muted)] uppercase tracking-wider">Article / Service</div>
                   <div className="text-[12px] font-bold text-[var(--foreground-muted)] uppercase tracking-wider">Description</div>
                   <div className="text-[12px] font-bold text-[var(--foreground-muted)] uppercase tracking-wider text-right">Qté</div>
@@ -516,9 +518,9 @@ ${html}
                   <div className="text-[12px] font-bold text-[var(--foreground-muted)] uppercase tracking-wider text-right">Total</div>
                   <div></div>
                 </div>
-                <div className="flex flex-col p-4 gap-4 bg-[var(--surface-1)]">
+                <div className="flex flex-col p-8 gap-6 bg-[var(--surface-1)]">
                   {fields.map((field, index) => (
-                    <div key={field.id} className="grid grid-cols-[250px_1fr_100px_130px_130px_50px] gap-4 items-center bg-white p-3 rounded-lg border border-[var(--border)] shadow-sm group hover:border-[var(--border-hover)] transition-colors">
+                    <div key={field.id} className="grid grid-cols-[250px_1fr_100px_130px_130px_50px] gap-6 items-center bg-white p-4 rounded-none border border-[var(--border)] shadow-sm group hover:border-[var(--border-hover)] transition-colors">
                       <div>
                         <select onChange={(e) => handleCatalogSelect(index, e.target.value)} defaultValue="" className="fp-input w-full bg-[var(--surface)] text-[13px] text-[var(--foreground)] cursor-pointer">
                           <option value="">Sélectionner...</option>
@@ -539,22 +541,21 @@ ${html}
                       <div className="text-right font-semibold text-[14px] text-[var(--foreground)] font-mono flex items-center justify-end">
                         {formatCurrency((isNaN(watchItems[index]?.quantity) ? 0 : watchItems[index]?.quantity || 0) * (isNaN(watchItems[index]?.unitPrice) ? 0 : watchItems[index]?.unitPrice || 0))}
                       </div>
-                      <button type="button" className="flex items-center justify-center w-8 h-8 rounded-md text-[var(--foreground-subtle)] hover:text-[var(--destructive)] hover:bg-red-50 transition-colors mx-auto" onClick={() => remove(index)}>
+                      <button type="button" className="flex items-center justify-center w-8 h-8 rounded-none text-[var(--foreground-subtle)] hover:text-[var(--destructive)] hover:bg-red-50 transition-colors mx-auto" onClick={() => remove(index)}>
                         <Trash2 size={15} />
                       </button>
                     </div>
                   ))}
                 </div>
-                <div className="px-5 py-4 bg-[var(--surface-1)] border-t border-[var(--border)] flex items-center justify-between">
-                  <button type="button" className="flex items-center gap-2 text-[13px] font-semibold text-[var(--foreground)] hover:text-[var(--primary)] transition-colors px-3 py-1.5 rounded-md hover:bg-white" onClick={() => append({ description: '', quantity: 1, unitPrice: 0 })}>
-                    <Plus size={14} /> Ajouter une ligne
+                <div className="px-10 py-8 bg-[var(--surface-1)] border-t border-[var(--border)] flex items-center justify-start">
+                  <button type="button" className="flex items-center gap-3 text-[14px] font-semibold text-[var(--primary)] hover:text-[var(--primary-dark)] transition-colors px-6 py-3 border border-dashed border-[var(--primary)] rounded-none hover:bg-blue-50/50" onClick={() => append({ description: '', quantity: 1, unitPrice: 0 })}>
+                    <Plus size={18} /> Ajouter une ligne
                   </button>
-                  <CurrencyConverter />
                 </div>
               </div>
 
               {/* — Notes + Totaux — */}
-              <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-8">
+              <div style={{ padding: '40px 48px' }} className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-10">
                 <div className="flex flex-col gap-6">
                   {editingInvoice && (
                     <div className="bg-white rounded-xl border border-[var(--border)] shadow-sm px-6 py-4 flex items-center justify-between">
@@ -562,35 +563,34 @@ ${html}
                       <span className={`fp-badge ${editingInvoice.status === 'payée' ? 'fp-badge-green' : editingInvoice.status === 'envoyée' ? 'fp-badge-blue' : 'fp-badge-neutral'} capitalize`}>{editingInvoice.status === 'brouillon' ? 'Non entamée' : editingInvoice.status}</span>
                     </div>
                   )}
-                  <div className="flex flex-col gap-2">
-                    <label className="block text-[13px] font-semibold text-[var(--foreground)]">Remarques / Conditions</label>
+                  <Field label="Remarques / Conditions">
                     <textarea {...register('notes')} className="fp-input w-full min-h-[140px] resize-y bg-white shadow-sm" placeholder="Conditions de paiement, mentions légales, informations bancaires..." />
-                  </div>
+                  </Field>
                 </div>
 
                 <div className="bg-[var(--surface-2)] rounded-xl border border-[var(--border)] overflow-hidden flex flex-col">
-                  <div className="px-6 py-4 border-b border-[var(--border)] bg-[var(--surface-1)]">
+                  <div className="px-8 py-6 border-b border-[var(--border)] bg-[var(--surface-1)]">
                     <h3 className="text-[14px] font-bold tracking-wide uppercase text-[var(--foreground)]">Récapitulatif</h3>
                   </div>
-                  <div className="p-6 flex flex-col gap-5">
+                  <div className="p-10 flex flex-col gap-8">
                     <div className="flex justify-between items-center">
-                      <span className="text-[13px] font-medium text-[var(--foreground-subtle)]">Sous-total HT</span>
-                      <span className="text-[14px] font-semibold font-mono text-[var(--foreground)]">{formatCurrency(subtotal)}</span>
+                      <span className="text-[14px] font-medium text-[var(--foreground-subtle)]">Sous-total HT</span>
+                      <span className="text-[15px] font-semibold font-mono text-[var(--foreground)]">{formatCurrency(subtotal)}</span>
                     </div>
                     <div className="flex justify-between items-center gap-4">
-                      <span className="text-[13px] font-medium text-[var(--foreground-subtle)]">TVA (%)</span>
-                      <input type="number" className="fp-input w-[100px] text-right font-mono bg-white" {...register('taxRate', { valueAsNumber: true })} />
+                      <span className="text-[14px] font-medium text-[var(--foreground-subtle)]">TVA (%)</span>
+                      <input type="number" className="fp-input w-[120px] text-right font-mono bg-white" style={{ padding: '12px 16px' }} {...register('taxRate', { valueAsNumber: true })} />
                     </div>
                     <div className="flex justify-between items-center gap-4">
-                      <span className="text-[13px] font-medium text-[var(--foreground-subtle)]">Remise globale</span>
+                      <span className="text-[14px] font-medium text-[var(--foreground-subtle)]">Remise globale</span>
                       <div className="relative">
-                        <input type="number" className="fp-input w-[120px] text-right font-mono pr-8 bg-white" {...register('discount', { valueAsNumber: true })} />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] font-bold text-[var(--foreground-muted)]">{currency}</span>
+                        <input type="number" className="fp-input w-[140px] text-right font-mono pr-10 bg-white" style={{ padding: '12px 16px' }} {...register('discount', { valueAsNumber: true })} />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] font-bold text-[var(--foreground-muted)]">{currency}</span>
                       </div>
                     </div>
-                    <div className="pt-5 mt-2 border-t-2 border-[var(--border)] flex justify-between items-end">
-                      <span className="text-[14px] font-bold uppercase tracking-wider text-[var(--foreground)]">Total TTC</span>
-                      <span className="text-3xl font-bold font-mono text-[var(--primary)]">{formatCurrency(total)}</span>
+                    <div className="pt-8 mt-4 border-t-2 border-[var(--border)] flex justify-between items-end">
+                      <span className="text-[15px] font-bold uppercase tracking-wider text-[var(--foreground)]">Total TTC</span>
+                      <span className="text-4xl font-bold font-mono text-[var(--primary)]">{formatCurrency(total)}</span>
                     </div>
                   </div>
                 </div>
@@ -598,12 +598,34 @@ ${html}
 
             </form>
           </div>
-          <DialogFooter className="mt-6 pt-6 border-t border-[var(--border)] flex justify-end gap-4 shrink-0">
+          <DialogFooter className="shrink-0">
              <button type="button" className="fp-btn-outline" onClick={() => setIsModalOpen(false)}>Annuler</button>
              <button type="submit" form="invoice-form" className="fp-btn-primary">Sauvegarder le document</button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      <ConfirmDialog
+        open={!!invoiceToDelete}
+        onOpenChange={(open) => !open && setInvoiceToDelete(null)}
+        title="Supprimer cette facture ?"
+        description="Cette action est irréversible. Les reçus associés pourraient être impactés."
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        variant="danger"
+        onConfirm={confirmDeleteInvoice}
+      />
+
+      <ConfirmDialog
+        open={!!invoiceToConvert}
+        onOpenChange={(open) => !open && setInvoiceToConvert(null)}
+        title={`Convertir en ${invoiceToConvert?.targetType === 'facture' ? 'Facture' : 'Facture Pro Forma'} ?`}
+        description="Le statut de ce document sera mis à jour de façon permanente."
+        confirmLabel="Convertir"
+        cancelLabel="Annuler"
+        variant="primary"
+        onConfirm={confirmConvertToFacture}
+      />
     </div>
   );
 }

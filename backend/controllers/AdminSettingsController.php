@@ -12,6 +12,7 @@ class AdminSettingsController {
                     'MAIL_USER' => $row['smtpUser'],
                     'MAIL_PASS' => $row['smtpPass'],
                     'MAIL_FROM_NAME' => $row['companyName'],
+                    'REMINDER_SETTINGS' => $row['reminderSettings'] ? json_decode($row['reminderSettings'], true) : null
                 ];
             }
             echo json_encode($settings);
@@ -25,9 +26,10 @@ class AdminSettingsController {
                 $smtpUser = $body['MAIL_USER'] ?? '';
                 $smtpPass = $body['MAIL_PASS'] ?? '';
                 $companyName = $body['MAIL_FROM_NAME'] ?? '';
+                $reminderSettings = isset($body['REMINDER_SETTINGS']) ? json_encode($body['REMINDER_SETTINGS']) : null;
                 
-                $stmt = $pdo->prepare("UPDATE PlatformSettings SET smtpHost = ?, smtpPort = ?, smtpUser = ?, smtpPass = ?, companyName = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = 'global'");
-                $stmt->execute([$smtpHost, $smtpPort, $smtpUser, $smtpPass, $companyName]);
+                $stmt = $pdo->prepare("UPDATE PlatformSettings SET smtpHost = ?, smtpPort = ?, smtpUser = ?, smtpPass = ?, companyName = ?, reminderSettings = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = 'global'");
+                $stmt->execute([$smtpHost, $smtpPort, $smtpUser, $smtpPass, $companyName, $reminderSettings]);
                 
                 echo json_encode(["success" => true, "message" => "Paramètres mis à jour"]);
                 exit;

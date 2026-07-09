@@ -1,6 +1,7 @@
 <?php
 ini_set('display_errors', '0');
 error_reporting(E_ALL);
+
 if (php_sapi_name() === 'cli-server') {
     $path = parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH);
     if ($path !== '/api.php' && file_exists(__DIR__ . $path) && is_file(__DIR__ . $path)) {
@@ -8,8 +9,22 @@ if (php_sapi_name() === 'cli-server') {
     }
 }
 
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
-header("Access-Control-Allow-Origin: $origin");
+// ==========================================
+// CORS SECURISÉ
+// ==========================================
+$allowedOrigins = [
+    'http://localhost:3003',
+    'http://localhost:8000',
+    'http://localhost:5173',
+    'https://facturapro.com'
+];
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (in_array($origin, $allowedOrigins)) {
+    header("Access-Control-Allow-Origin: $origin");
+} else {
+    // Fallback safe: si l'origine n'est pas autorisée, on ne la renvoie pas
+    header("Access-Control-Allow-Origin: https://facturapro.com");
+}
 header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, x-api-key");
@@ -20,6 +35,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once 'config.php';
+require_once __DIR__ . '/core/Validator.php';
+require_once __DIR__ . '/core/Router.php';
 require_once __DIR__ . '/controllers/Helper.php';
 require_once __DIR__ . '/controllers/AuthController.php';
 require_once __DIR__ . '/controllers/SettingsController.php';
@@ -54,25 +71,23 @@ try {
         if ($schema !== false) $pdo->exec($schema);
     }
 } catch (PDOException $e) {
+    // PREVENT ERROR LEAK
+    error_log("DB Connection Error: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(["error" => "Erreur BDD SQLite: " . $e->getMessage()]);
+    echo json_encode(["error" => "Erreur interne du serveur de base de données."]);
     exit;
 }
 
-// Lire l'endpoint depuis $_GET['endpoint'] ou depuis REQUEST_URI en fallback
-// On retire tout ce qui suit un '?' pour éviter les parasites de query string
 $rawEndpoint = '';
 if (isset($_GET['endpoint']) && $_GET['endpoint'] !== '') {
     $rawEndpoint = $_GET['endpoint'];
 } else {
-    // Fallback: lire depuis REQUEST_URI (ex: /api/clients → clients)
     $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
     $rawEndpoint = preg_replace('/^\/api\.php/', '', $uri);
     $rawEndpoint = preg_replace('/^\/api\//', '', $rawEndpoint);
     $rawEndpoint = ltrim($rawEndpoint, '/');
 }
 
-// Nettoyer: extraire seulement la partie avant tout '?' ou '&' parasite
 $requestPath = explode('?', $rawEndpoint)[0];
 $requestPath = explode('&', $requestPath)[0];
 $requestPath = trim($requestPath, '/');
@@ -86,14 +101,15 @@ $id = $segments[1] ?? null;
 $subAction = $segments[2] ?? null;
 
 // ==========================================
-// AUTHENTICATION
+// AUTHENTICATION PUBLIC ROUTES
 // ==========================================
 if ($resource === 'auth' && in_array($id, ['login', 'register'])) {
     try {
         AuthController::handle($pdo, $method, $id, $body);
     } catch (Throwable $e) {
+        error_log("Auth Error: " . $e->getMessage());
         http_response_code(500);
-        echo json_encode(["error" => "Erreur Interne: " . $e->getMessage()]);
+        echo json_encode(["error" => "Erreur interne lors de l'authentification."]);
     }
     exit;
 }
@@ -113,8 +129,11 @@ if ($resource === 'v1' && $id === 'webhooks' && $subAction === 'djomy') {
 // ==========================================
 // MIDDLEWARE: VERIFY TOKEN
 // ==========================================
-$headers = getallheaders();
-$authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
+$authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
+if (empty($authHeader) && function_exists('apache_request_headers')) {
+    $headers = apache_request_headers();
+    $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
+}
 $token = '';
 if (preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
     $token = $matches[1];
@@ -125,13 +144,12 @@ if (!$token) {
 }
 
 if ($resource === 'admin') {
-    // Check token against SuperAdmin table for admin routes
     $stmt = $pdo->prepare("SELECT * FROM SuperAdmin WHERE token = ?");
     $stmt->execute([$token]);
     $currentAdmin = $stmt->fetch();
     
     if (!$currentAdmin) {
-        http_response_code(403); echo json_encode(["error" => "Accès refusé. Token SuperAdmin invalide ou expiré."]); exit;
+        http_response_code(403); echo json_encode(["error" => "Accès refusé. Token SuperAdmin invalide."]); exit;
     }
     
     if ($id === 'settings') {
@@ -143,7 +161,6 @@ if ($resource === 'admin') {
     exit;
 }
 
-// Check against normal Account for all other routes
 $stmt = $pdo->prepare("SELECT * FROM Account WHERE token = ?");
 $stmt->execute([$token]);
 $currentAccount = $stmt->fetch();
@@ -171,11 +188,9 @@ if ($resource === 'auth' && $id === 'me') {
 }
 
 if (!empty($currentAccount['isSuspended'])) {
-    http_response_code(403); echo json_encode(["error" => "Votre compte a été suspendu par l'administration. Veuillez nous contacter."]); exit;
+    http_response_code(403); echo json_encode(["error" => "Votre compte a été suspendu par l'administration."]); exit;
 }
 
-$accountId = $currentAccount['id'];
-$accountRole = $currentAccount['role'] ?? 'user';
 $isTrial = $currentAccount['subscriptionStatus'] === 'trial' || empty($currentAccount['subscriptionStatus']);
 if ($isTrial && $method === 'POST' && in_array($resource, ['invoices', 'receipts'])) {
     $createdAtStr = $currentAccount['createdAt'] ?? date('Y-m-d H:i:s');
@@ -183,80 +198,19 @@ if ($isTrial && $method === 'POST' && in_array($resource, ['invoices', 'receipts
     $days = (time() - $createdAt) / (60 * 60 * 24);
     if ($days >= 1) {
         http_response_code(403);
-        echo json_encode(["error" => "Votre période d'essai est expirée. Veuillez vous abonner pour continuer à créer des documents."]);
+        echo json_encode(["error" => "Votre période d'essai est expirée. Veuillez vous abonner."]);
         exit;
     }
 }
 
 // ==========================================
-// API ROUTES (Multi-Tenant)
+// API ROUTES (DISPATCHER)
 // ==========================================
 try {
-    switch ($resource) {
-        case 'upload':
-            UploadController::handle($method, $accountId);
-            break;
-        case 'settings':
-            if ($id === 'convert-currency' && $method === 'POST') {
-                SettingsController::convertCurrency($pdo, $accountId, $body);
-            } else {
-                SettingsController::handle($pdo, $method, $accountId, $body, $currentAccount);
-            }
-            break;
-        case 'companies':
-            CompanyController::handle($pdo, $method, $accountId, $body, $segments);
-            break;
-        case 'clients':
-            ClientController::handle($pdo, $method, $id, $accountId, $body);
-            break;
-        case 'catalog':
-            CatalogController::handle($pdo, $method, $id, $accountId, $body);
-            break;
-        case 'invoices':
-        case 'proforma':
-            InvoiceController::handle($pdo, $method, $id, $accountId, $body);
-            break;
-        case 'receipts':
-            ReceiptController::handle($pdo, $method, $id, $accountId, $body);
-            break;
-        case 'expenses':
-            ExpenseController::handle($pdo, $method, $id, $accountId, $body);
-            break;
-        case 'documents':
-            DocumentController::handle($pdo, $method, $id, $accountId, $body);
-            break;
-        case 'stats':
-            StatsController::handle($pdo, $method, $accountId);
-            break;
-        case 'chat':
-            ChatController::handle($pdo, $method, $accountId, $body, $currentAccount);
-            break;
-        case 'share':
-            ShareController::handle($method, $body, $currentAccount);
-            break;
-        case 'v1':
-            if ($id === 'payment' && $subAction === 'init') {
-                $controller = new PaymentController($pdo);
-                $response = $controller->initPayment(['body' => $body]);
-                if (isset($response['status']) && is_numeric($response['status'])) {
-                    http_response_code((int)$response['status']);
-                } elseif (isset($response['error'])) {
-                    http_response_code(500);
-                }
-                echo json_encode($response);
-                exit;
-            }
-            break;
-        case 'debug':
-            $stmt = $pdo->query("SELECT table_name FROM information_schema.tables WHERE table_schema='public'");
-            echo json_encode($stmt->fetchAll(PDO::FETCH_COLUMN));
-            exit;
-        default:
-            http_response_code(404);
-            echo json_encode(["error" => "Endpoint not found"]);
-            break;
-    }
-} catch (Exception $e) {
+    Router::dispatch($resource, $id, $subAction, $method, $pdo, $currentAccount, $body);
+} catch (Throwable $e) {
+    // PREVENT ERROR LEAK
+    error_log("API Error: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(["error" => $e->getMessage()]);
+    echo json_encode(["error" => "Erreur interne: " . $e->getMessage() . " on line " . $e->getLine() . " in " . $e->getFile()]);
 }

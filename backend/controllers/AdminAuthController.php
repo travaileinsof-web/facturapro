@@ -1,7 +1,8 @@
 <?php
 class AdminAuthController {
     public static function handle($pdo, $method, $id, $body) {
-        if ($id === 'login' && $method === 'POST') {
+        try {
+            if ($id === 'login' && $method === 'POST') {
             $username = $body['username'] ?? '';
             $password = $body['password'] ?? '';
             
@@ -27,5 +28,10 @@ class AdminAuthController {
         }
         
         http_response_code(404); echo json_encode(["error" => "Endpoint introuvable."]); exit;
+        } catch (Throwable $e) {
+            error_log("Admin Auth Error: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(["error" => "Erreur interne de la base de données (Admin)."]);
+        }
     }
 }

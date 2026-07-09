@@ -31,4 +31,28 @@ class Helper {
         $stmt = $pdo->prepare("UPDATE ProformaInvoice SET status = ? WHERE id = ? AND accountId = ?");
         $stmt->execute([$status, $invoiceId, $accountId]);
     }
+
+    public static function computeSubscriptionStatus($account) {
+        $plan = $account['subscriptionPlan'] ?? 'free';
+        $status = $account['subscriptionStatus'] ?? 'trial';
+        
+        if ($plan === 'premium' && $status === 'active') {
+            if (!empty($account['subscriptionExpiresAt']) && strtotime($account['subscriptionExpiresAt']) < time()) {
+                return 'expired';
+            }
+            return 'active';
+        }
+        
+        if ($status === 'trial' || $plan === 'free') {
+            $createdAtStr = $account['createdAt'] ?? date('Y-m-d H:i:s');
+            $createdAt = strtotime($createdAtStr);
+            $days = (time() - $createdAt) / (60 * 60 * 24);
+            if ($days >= 1) {
+                return 'trial_expired';
+            }
+            return 'trial';
+        }
+        
+        return $status;
+    }
 }

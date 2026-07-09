@@ -5,6 +5,7 @@ import { Input } from './ui/input';
 import { toast } from 'sonner';
 import { useState, useRef } from 'react';
 import { Eye, EyeOff, Upload, Loader2, Save, Building2, CreditCard, Lock, Mail, Zap, Palette, ChevronDown, Banknote, FileText } from 'lucide-react';
+import { PageHeader } from './ui/PageHeader';
 
 /* ── Section wrapper ─────────────────────────────────────────────── */
 function Section({ title, desc, icon: Icon, children, delay = 0 }: {
@@ -13,7 +14,7 @@ function Section({ title, desc, icon: Icon, children, delay = 0 }: {
   return (
     <div className="fp-card" style={{ opacity: 0, animation: `fp-fade-up 0.5s ease ${delay}s forwards` }}>
       <div style={{ padding: '24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-        <div style={{ width: '40px', height: '40px', background: 'var(--gold-dim)', border: '1px solid var(--border-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ width: '40px', height: '40px', background: 'rgba(179,142,54,0.08)', border: 'none', borderRadius: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <Icon size={18} style={{ color: 'var(--gold)' }}/>
         </div>
         <div>
@@ -170,16 +171,27 @@ export function Settings() {
   );
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '9px 12px', background: 'var(--surface-2)',
+    width: '100%', padding: '10px 14px', background: 'var(--surface)',
     border: '1px solid var(--border)', borderRadius: '0',
     color: 'var(--foreground)', fontSize: '13px', fontFamily: 'var(--font-sans)',
-    outline: 'none', transition: 'border-color 0.15s',
+    outline: 'none', transition: 'all 0.15s cubic-bezier(0.4,0,0.2,1)',
+    boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.02)'
   };
 
   const selectStyle: React.CSSProperties = { ...inputStyle, cursor: 'pointer', appearance: 'none' };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: '960px', margin: '0 auto', paddingBottom: '40px' }}>
+      <PageHeader
+        title="Paramètres"
+        description="Configurez votre profil, votre société et vos intégrations."
+        icon={<FileText size={20} />}
+        actions={
+          <button type="submit" className="fp-btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Save size={15} /> Enregistrer
+          </button>
+        }
+      />
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '600px', margin: '0 auto' }}>
 
         {/* Security */}
@@ -187,15 +199,15 @@ export function Settings() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <Field label="Mot de passe actuel (requis pour modifier)">
               <input type={showPassword ? 'text' : 'password'} {...register('currentPassword')} style={inputStyle} placeholder="••••••••"
-                onFocus={e => { e.target.style.borderColor='var(--gold)'; e.target.style.boxShadow='0 0 0 3px var(--gold-dim)'; }}
-                onBlur={e => { e.target.style.borderColor='var(--border)'; e.target.style.boxShadow='none'; }}
+                onFocus={e => { e.target.style.borderColor='var(--primary)'; e.target.style.boxShadow='inset 0 0 0 1px var(--primary)'; e.target.style.background='var(--background)'; }}
+                onBlur={e => { e.target.style.borderColor='var(--border)'; e.target.style.boxShadow='inset 0 1px 2px rgba(0,0,0,0.02)'; e.target.style.background='var(--surface)'; }}
               />
             </Field>
             <Field label="Nouveau mot de passe">
               <div style={{ position: 'relative' }}>
                 <input type={showPassword ? 'text' : 'password'} {...register('password')} style={inputStyle} placeholder="Laisser vide pour ne pas modifier"
-                  onFocus={e => { e.target.style.borderColor='var(--gold)'; e.target.style.boxShadow='0 0 0 3px var(--gold-dim)'; }}
-                  onBlur={e => { e.target.style.borderColor='var(--border)'; e.target.style.boxShadow='none'; }}
+                  onFocus={e => { e.target.style.borderColor='var(--primary)'; e.target.style.boxShadow='inset 0 0 0 1px var(--primary)'; e.target.style.background='var(--background)'; }}
+                  onBlur={e => { e.target.style.borderColor='var(--border)'; e.target.style.boxShadow='inset 0 1px 2px rgba(0,0,0,0.02)'; e.target.style.background='var(--surface)'; }}
                 />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--foreground-subtle)', display: 'flex' }}>
                   {showPassword ? <EyeOff size={14}/> : <Eye size={14}/>}

@@ -43,20 +43,36 @@ class ClientController {
             }
             echo json_encode($clients);
         } elseif ($method === 'POST') {
+            $name = Validator::sanitizeString($body['name'] ?? '');
+            $email = Validator::sanitizeEmail($body['email'] ?? null);
+            $phone = Validator::sanitizeString($body['phone'] ?? null);
+            $address = Validator::sanitizeString($body['address'] ?? null);
+            $city = Validator::sanitizeString($body['city'] ?? null);
+            $country = Validator::sanitizeString($body['country'] ?? null);
+            $notes = Validator::sanitizeString($body['notes'] ?? null);
+
             $newId = Helper::uuid();
             $stmt = $pdo->prepare("INSERT INTO Client (id, accountId, name, email, phone, address, city, country, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
-                $newId, $accountId, $body['name'], $body['email']??null, $body['phone']??null, 
-                $body['address']??null, $body['city']??null, $body['country']??null, $body['notes']??null
+                $newId, $accountId, $name, $email, $phone, 
+                $address, $city, $country, $notes
             ]);
             $stmt = $pdo->prepare("SELECT * FROM Client WHERE id = ?");
             $stmt->execute([$newId]);
             echo json_encode($stmt->fetch());
         } elseif ($method === 'PUT' && $id) {
+            $name = Validator::sanitizeString($body['name'] ?? '');
+            $email = Validator::sanitizeEmail($body['email'] ?? null);
+            $phone = Validator::sanitizeString($body['phone'] ?? null);
+            $address = Validator::sanitizeString($body['address'] ?? null);
+            $city = Validator::sanitizeString($body['city'] ?? null);
+            $country = Validator::sanitizeString($body['country'] ?? null);
+            $notes = Validator::sanitizeString($body['notes'] ?? null);
+
             $stmt = $pdo->prepare("UPDATE Client SET name=?, email=?, phone=?, address=?, city=?, country=?, notes=? WHERE id=? AND accountId=?");
             $stmt->execute([
-                $body['name'], $body['email']??null, $body['phone']??null, 
-                $body['address']??null, $body['city']??null, $body['country']??null, $body['notes']??null, $id, $accountId
+                $name, $email, $phone, 
+                $address, $city, $country, $notes, $id, $accountId
             ]);
             $stmt = $pdo->prepare("SELECT * FROM Client WHERE id = ?");
             $stmt->execute([$id]);

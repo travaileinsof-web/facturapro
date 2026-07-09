@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import { Users, FileText, Banknote, Clock, TrendingUp, TrendingDown, ArrowRight, Minus, CheckCircle, XCircle } from 'lucide-react';
+import { Users, FileText, Banknote, Clock, TrendingUp, TrendingDown, ArrowRight, Minus, CheckCircle, XCircle, LayoutDashboard } from 'lucide-react';
 import { formatCurrency, formatDate, useAppStore, apiFetch } from '../lib/store';
 import { PageHeader } from './ui/PageHeader';
 import { useSearchParams } from 'react-router-dom';
@@ -139,7 +139,7 @@ export function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const paymentStatus = searchParams.get('payment');
 
-  const header = <PageHeader title="Tableau de Bord" description="Vue d'ensemble de vos finances et performances" />;
+  const header = <PageHeader title="Tableau de Bord" description="Vue d'ensemble de vos finances et performances" icon={<LayoutDashboard size={20} />} />;
 
   /* Skeleton loader */
   if (isLoading) {

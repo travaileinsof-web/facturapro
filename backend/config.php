@@ -34,7 +34,9 @@ $GLOBALS['camelCaseCols'] = [
     'entityid' => 'entityId', 'filename' => 'fileName',
     'fileurl' => 'fileUrl', 'filetype' => 'fileType',
     'filesize' => 'fileSize', 'uploadedat' => 'uploadedAt',
-    'clientname' => 'clientName', 'invoicenumber' => 'invoiceNumber'
+    'clientname' => 'clientName', 'invoicenumber' => 'invoiceNumber',
+    'remindertype' => 'reminderType', 'sentat' => 'sentAt',
+    'remindersettings' => 'reminderSettings'
 ];
 
 if (!class_exists('MyPDOStatement')) {
