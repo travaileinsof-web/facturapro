@@ -1,0 +1,72 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   FACTURAPRO DESIGN SYSTEM — TOKENS
+   Source of truth. NEVER hardcode values in components.
+   Every spacing, color, radius, shadow must come from here.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── 1. Spacing Scale ──────────────────────────────────────────────── */
+  --space-1:  4px;   /* micro : icon <-> text */
+  --space-2:  8px;   /* label -> its input */
+  --space-3:  12px;  /* between lines of same group */
+  --space-4:  16px;  /* between fields of same form */
+  --space-5:  24px;  /* between sub-sections of same block */
+  --space-6:  32px;  /* between distinct sections (menu groups) */
+  --space-8:  48px;  /* major separation */
+  --space-10: 64px;  /* page breathing, outer margins */
+
+  /* ── 2. Color Palette ──────────────────────────────────────────────── */
+  --color-primary:        #B8860B;
+  --color-primary-hover:  #9A6F09;
+  --color-primary-subtle: #F5EFE0;
+
+  --color-text-primary:     #1A1A1A;
+  --color-text-secondary:   #6B6B6B;
+  --color-text-placeholder: #A0A0A0;
+
+  --color-border-default: #E0E0E0;
+  --color-border-subtle:  #EFEFEF;
+  --color-border-focus:   var(--color-primary);
+
+  --color-bg-page:         #FAFAFA;
+  --color-bg-card:         #FFFFFF;
+  --color-bg-modal-header: #FFFFFF;
+  --color-bg-modal-body:   #FDFDFD;
+  --color-bg-modal-footer: #F7F7F7;
+
+  --color-success: #2E7D32;
+  --color-warning: #ED6C02;
+  --color-danger:  #D32F2F;
+  --color-info:    #0288D1;
+
+  /* ── 3. Typography ─────────────────────────────────────────────────── */
+  --font-family: 'Inter', system-ui, sans-serif;
+
+  --text-xs:   12px; /* line-height: 16px */
+  --text-sm:   13px; /* line-height: 18px */
+  --text-base: 14px; /* line-height: 20px */
+  --text-md:   16px; /* line-height: 24px */
+  --text-lg:   20px; /* line-height: 28px */
+  --text-xl:   24px; /* line-height: 32px */
+
+  --font-weight-regular:   400;
+  --font-weight-medium:    500;
+  --font-weight-semibold:  600;
+  --font-weight-bold:      700;
+
+  /* ── 4. Radius ─────────────────────────────────────────────────────── */
+  --radius-sm:   6px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-full: 999px;
+
+  /* ── 5. Shadows ────────────────────────────────────────────────────── */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,0.14);
+
+  /* ── 6. Modal Widths (3 fixed sizes only — no custom widths ever) ─── */
+  --modal-width-sm: 480px;  /* short form: 1 col, ≤5 fields (Catalog) */
+  --modal-width-md: 720px;  /* standard form: 2 cols (Client, Receipt) */
+  --modal-width-lg: 960px;  /* complex form with table (Invoice) */
+}

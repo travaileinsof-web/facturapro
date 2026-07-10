@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { formatCurrency, formatDate, useAppStore, safeJSONParse, apiFetch } from '../lib/store';
 import { Button } from './ui/button';
-import { Input } from './ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogBody } from './ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
 import { Check, ChevronsUpDown, Mail, MessageCircle, DownloadIcon, FileTextIcon, FilterIcon, PlusIcon, PrinterIcon, Receipt } from 'lucide-react';
@@ -12,13 +11,14 @@ import { cn } from '../lib/utils';
 import { useForm } from 'react-hook-form';
 import { PageHeader } from './ui/PageHeader';
 import { Trash2 } from 'lucide-react';
-import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
 import { buildReceiptHTML } from '../lib/pdfTemplate';
 import { exportHTMLToPDF, generatePDFBase64 } from '../lib/pdfExport';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 import { Pagination } from './ui/pagination';
 import { Field } from './ui/Field';
+import { DatePicker } from './ui/DatePicker';
+import { Input } from './ui/input';
 
 export function Receipts() {
   const refreshReceipts = useAppStore(state => state.refreshReceipts);
@@ -259,7 +259,7 @@ export function Receipts() {
   const paginatedReceipts = receipts?.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
       <PageHeader 
         title="Reçus" 
         description="Gérez les paiements encaissés et éditez les reçus de vos clients."
@@ -286,11 +286,11 @@ export function Receipts() {
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: 'var(--foreground-muted)' }}>Chargement...</td></tr>
+              <tr><td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-6)', color: 'var(--foreground-muted)' }}>Chargement...</td></tr>
             ) : receipts?.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '48px' }}>
-                  <div style={{ fontSize: '24px', opacity: 0.5, marginBottom: '8px' }}>🧾</div>
+                <td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-8)' }}>
+                  <div style={{ fontSize: '24px', opacity: 0.5, marginBottom: 'var(--space-2)' }}>🧾</div>
                   <div style={{ fontWeight: 500, color: 'var(--foreground)' }}>Aucun reçu enregistré</div>
                 </td>
               </tr>
@@ -310,7 +310,7 @@ export function Receipts() {
                   <td style={{ textTransform: 'capitalize' }}>{rec.paymentMethod?.replace('_', ' ')}</td>
                   <td>{formatDate(rec.paymentDate)}</td>
                   <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
                       <button className="fp-btn-ghost" onClick={() => downloadPDF(rec)}>Télécharger PDF</button>
                       <button className="fp-btn-ghost" onClick={() => shareViaWhatsApp(rec)}>
                         <MessageCircle size={14} style={{ color: '#25D366' }} /> WhatsApp
@@ -335,17 +335,17 @@ export function Receipts() {
         className="mt-4"
       />
 
+      {/* ── Modal Reçu : taille md (720px) — design system strict ── */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-3xl max-w-3xl p-0">
-          <DialogHeader 
-            className="shrink-0"
+        <DialogContent size="md" showCloseButton>
+          <DialogHeader
             icon={Receipt}
             title="Nouveau Reçu"
             desc="Enregistrez un paiement reçu de la part d'un client."
           />
-          <div className="flex-1 overflow-y-auto custom-scrollbar bg-[var(--background)]">
-            <form id="receipt-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6" style={{ padding: '32px 40px' }}>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-6">
+          <form id="receipt-form" onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+            <DialogBody>
+              <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: 'var(--space-5)' }}>
                 <Field label={<>Client <span style={{ color: 'var(--primary)' }}>*</span></>}>
                   <select className="fp-input w-full" {...register('clientId', { required: true })}>
                     <option value="">Sélectionner un client</option>
@@ -427,12 +427,12 @@ export function Receipts() {
                   </Field>
 
                   {selectedInvoice && (
-                     <div className="mt-3 p-4 bg-emerald-50 text-sm max-h-40 overflow-y-auto" style={{ border: '1px solid var(--emerald)', background: 'rgba(16,185,129,0.05)' }}>
-                        <div className="flex justify-between items-center mb-2">
+                     <div className="text-sm max-h-40 overflow-y-auto" style={{ marginTop: 'var(--space-3)', padding: 'var(--space-4)', border: '1px solid var(--emerald)', background: 'rgba(16,185,129,0.05)' }}>
+                        <div className="flex justify-between items-center" style={{ marginBottom: 'var(--space-2)' }}>
                            <p className="font-semibold text-emerald-800" style={{ color: 'var(--emerald)' }}>Aperçu Facture {selectedInvoice.number}</p>
                            <p className="font-medium text-emerald-900" style={{ color: 'var(--emerald)' }}>Reste: {formatCurrency(selectedInvoice.amountRemaining || 0)}</p>
                         </div>
-                        <ul className="text-slate-600 mt-1 list-disc list-inside space-y-1">
+                        <ul className="text-slate-600 list-disc list-inside" style={{ marginTop: 'var(--space-1)', display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
                           {safeJSONParse(selectedInvoice.items).map((it:any, idx: number) => (
                              <li key={idx}>
                                 <span className="font-medium text-slate-700">{it.description}</span> (x{it.quantity}) - {formatCurrency(it.unitPrice)}
@@ -444,33 +444,39 @@ export function Receipts() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
-                 <Field label={<>Montant <span style={{ color: 'var(--primary)' }}>*</span></>}>
-                    <input className="fp-input w-full" type="number" step="0.01" {...register('amount', { required: true, valueAsNumber: true })} />
-                 </Field>
-                 <Field label={<>Date de Paiement <span style={{ color: 'var(--primary)' }}>*</span></>}>
-                    <input className="fp-input w-full" type="date" {...register('paymentDate', { required: true })} />
-                 </Field>
-                 <div className="col-span-1 md:col-span-2">
-                    <Field label={<>Mode de Paiement <span style={{ color: 'var(--primary)' }}>*</span></>}>
-                      <select className="fp-input w-full" {...register('paymentMethod')}>
-                         <option value="virement_bancaire">Virement Bancaire</option>
-                         <option value="especes">Espèces</option>
-                         <option value="cheque">Chèque</option>
-                         <option value="mobile_money">Mobile Money</option>
-                      </select>
-                    </Field>
-                 </div>
+              {/* Grille 2 colonnes : amount + date */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4) var(--space-5)', marginTop: 'var(--space-5)' }}>
+                <Field label="Montant" required>
+                  <Input type="number" step="0.01" {...register('amount', { required: true, valueAsNumber: true })} />
+                </Field>
+                {/* DatePicker unifié — plus jamais d'input type=date natif */}
+                <Field label="Date de Paiement" required>
+                  <DatePicker
+                    value={watch('paymentDate')}
+                    onChange={v => setValue('paymentDate', v)}
+                    required
+                  />
+                </Field>
+                <Field label="Mode de Paiement" required fullWidth>
+                  <select {...register('paymentMethod')}>
+                    <option value="virement_bancaire">Virement Bancaire</option>
+                    <option value="especes">Espèces</option>
+                    <option value="cheque">Chèque</option>
+                    <option value="mobile_money">Mobile Money</option>
+                  </select>
+                </Field>
               </div>
 
-              <Field label="Notes Complémentaires">
-                <textarea className="fp-input w-full min-h-[80px] resize-y" {...register('notes')} />
-              </Field>
-            </form>
-          </div>
-          <DialogFooter className="shrink-0">
-             <button type="button" className="fp-btn-outline" onClick={() => setIsModalOpen(false)}>Annuler</button>
-             <button type="submit" form="receipt-form" className="fp-btn-primary">Enregistrer le Reçu</button>
+              <div style={{ marginTop: 'var(--space-5)' }}>
+                <Field label="Notes Complémentaires">
+                  <textarea {...register('notes')} />
+                </Field>
+              </div>
+            </DialogBody>
+          </form>
+          <DialogFooter>
+            <button type="button" className="fp-btn-outline" onClick={() => setIsModalOpen(false)}>Annuler</button>
+            <button type="submit" form="receipt-form" className="fp-btn-primary">Enregistrer le Reçu</button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

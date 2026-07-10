@@ -59,8 +59,8 @@ export function Pricing() {
         description="Choisissez le forfait qui convient à votre activité."
         icon={<TrendingUp size={20} />}
       />
-      <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <h2 style={{ fontSize: '32px', fontWeight: 800, color: '#0f172a', marginBottom: '12px', letterSpacing: '-0.5px' }}>
+      <div style={{ textAlign: 'center', marginBottom: 'var(--space-8)' }}>
+        <h2 style={{ fontSize: '32px', fontWeight: 800, color: '#0f172a', marginBottom: 'var(--space-3)', letterSpacing: '-0.5px' }}>
           Passez à la vitesse supérieure
         </h2>
         <p style={{ fontSize: '16px', color: '#64748b', maxWidth: '500px', margin: '0 auto' }}>
@@ -68,40 +68,40 @@ export function Pricing() {
         </p>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 'var(--space-5)' }}>
         <div style={{ 
           width: '100%',
           maxWidth: '450px',
           background: '#fff', 
           borderRadius: 0, 
           border: '2px solid #059669',
-          padding: '32px',
+          padding: 'var(--space-6)',
           position: 'relative',
           boxShadow: '0 12px 24px rgba(5, 150, 105, 0.1)'
         }}>
-          <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', background: '#059669', color: '#fff', padding: '4px 12px', borderRadius: 0, fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <div style={{ position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)', background: '#059669', color: '#fff', padding: 'var(--space-1) var(--space-3)', borderRadius: 0, fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
             Le plus avantageux
           </div>
-          <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>{plan.name}</h3>
-          <p style={{ fontSize: '14px', color: '#64748b', minHeight: '40px', marginBottom: '20px' }}>{plan.description}</p>
+          <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a', marginBottom: 'var(--space-2)' }}>{plan.name}</h3>
+          <p style={{ fontSize: '14px', color: '#64748b', minHeight: '40px', marginBottom: 'var(--space-5)' }}>{plan.description}</p>
           
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--space-1)', marginBottom: 'var(--space-5)' }}>
             <span style={{ fontSize: '36px', fontWeight: 800, color: '#0f172a', letterSpacing: '-1px' }}>{plan.price}</span>
             <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 500 }}>{plan.period}</span>
           </div>
 
           <button 
             onClick={() => setShowModal(true)}
-            style={{ width: '100%', padding: '14px', background: plan.color, color: '#fff', border: 'none', borderRadius: 0, fontSize: '15px', fontWeight: 700, cursor: 'pointer', marginBottom: '32px', transition: 'opacity 0.2s', boxShadow: `0 4px 12px ${plan.color}30` }}
+            style={{ width: '100%', padding: 'var(--space-4)', background: plan.color, color: '#fff', border: 'none', borderRadius: 0, fontSize: '15px', fontWeight: 700, cursor: 'pointer', marginBottom: 'var(--space-6)', transition: 'opacity 0.2s', boxShadow: `0 4px 12px ${plan.color}30` }}
             onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}
           >
             {plan.action}
           </button>
 
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
             {plan.features.map((feat, j) => (
-              <li key={j} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', color: '#334155', fontWeight: 500 }}>
+              <li key={j} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontSize: '14px', color: '#334155', fontWeight: 500 }}>
                 <CheckCircle2 style={{ width: '18px', height: '18px', color: '#059669', flexShrink: 0 }} />
                 {feat}
               </li>
@@ -111,41 +111,41 @@ export function Pricing() {
       </div>
 
       {showModal && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div style={{ background: '#fff', padding: '30px', borderRadius: '12px', width: '100%', maxWidth: '400px', position: 'relative' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-5)' }}>
+          <div style={{ background: '#fff', padding: 'var(--space-6)', borderRadius: '12px', width: '100%', maxWidth: '400px', position: 'relative' }}>
             <button onClick={() => !loading && setShowModal(false)} style={{ position: 'absolute', top: '15px', right: '15px', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
               <X size={20} />
             </button>
-            <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>Paiement de l'abonnement</h3>
-            <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '24px' }}>Vous serez redirigé vers la plateforme sécurisée Djomy. Veuillez confirmer votre numéro de téléphone.</p>
+            <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a', marginBottom: 'var(--space-2)' }}>Paiement de l'abonnement</h3>
+            <p style={{ fontSize: '14px', color: '#64748b', marginBottom: 'var(--space-5)' }}>Vous serez redirigé vers la plateforme sécurisée Djomy. Veuillez confirmer votre numéro de téléphone.</p>
             
             <form onSubmit={handleSubscribe}>
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Numéro de téléphone (Format: 00224...)</label>
+              <div style={{ marginBottom: 'var(--space-5)' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#334155', marginBottom: 'var(--space-2)' }}>Numéro de téléphone (Format: 00224...)</label>
                 <input 
                   type="text" 
                   value={phone} 
                   onChange={e => setPhone(e.target.value)}
                   placeholder="00224623707722"
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '14px' }}
+                  style={{ width: '100%', padding: 'var(--space-3)', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '14px' }}
                   required
                   disabled={loading}
                 />
               </div>
 
-              {error && <div style={{ color: '#ef4444', fontSize: '13px', marginBottom: '16px', background: '#fef2f2', padding: '10px', borderRadius: '6px' }}>{error}</div>}
+              {error && <div style={{ color: '#ef4444', fontSize: '13px', marginBottom: 'var(--space-4)', background: '#fef2f2', padding: 'var(--space-3)', borderRadius: '6px' }}>{error}</div>}
 
               <button 
                 type="submit" 
                 disabled={loading}
-                style={{ width: '100%', padding: '12px', background: '#059669', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '15px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', opacity: loading ? 0.7 : 1 }}
+                style={{ width: '100%', padding: 'var(--space-3)', background: '#059669', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '15px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--space-2)', opacity: loading ? 0.7 : 1 }}
               >
                 {loading && <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />}
                 Procéder au paiement (1 000 GNF)
               </button>
             </form>
             
-            <div style={{ textAlign: 'center', marginTop: '16px' }}>
+            <div style={{ textAlign: 'center', marginTop: 'var(--space-4)' }}>
               <span style={{ fontSize: '12px', color: '#94a3b8' }}>Paiement sécurisé par Djomy</span>
             </div>
           </div>

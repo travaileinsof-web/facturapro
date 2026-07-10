@@ -134,7 +134,7 @@ export function Reminders() {
   };
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
       <PageHeader 
         title="Relances & Impayés" 
         description="Gérez vos factures en attente de paiement et relancez vos clients en un clic."
@@ -155,13 +155,13 @@ export function Reminders() {
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: 'var(--foreground-muted)' }}>Chargement...</td></tr>
+              <tr><td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-6)', color: 'var(--foreground-muted)' }}>Chargement...</td></tr>
             ) : pendingInvoices.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ textAlign: 'center', padding: '48px' }}>
-                  <AlertTriangle size={32} style={{ margin: '0 auto 12px', color: 'var(--emerald)' }} />
-                  <div style={{ fontWeight: 500, color: 'var(--foreground)' }}>Excellente nouvelle !</div>
-                  <p style={{ color: 'var(--foreground-muted)', fontSize: '13px', marginTop: '4px' }}>Vous n'avez aucune facture en attente de paiement.</p>
+                <td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-8)' }}>
+                  <AlertTriangle size={32} style={{ margin: '0 auto var(--space-3)', color: 'var(--emerald)' }} />
+                  <div style={{ fontWeight: 500, color: 'var(--foreground)' }}>Aucun retard de paiement</div>
+                  <p style={{ color: 'var(--foreground-muted)', fontSize: '13px', marginTop: 'var(--space-1)' }}>Vous n'avez aucune facture en attente de paiement.</p>
                 </td>
               </tr>
             ) : (
@@ -173,7 +173,7 @@ export function Reminders() {
                 <tr key={inv.id}>
                   <td>
                     <div style={{ fontWeight: 600 }}>{inv.number}</div>
-                    {isLate && <span style={{ padding: '2px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', background: 'rgba(239,68,68,0.1)', color: 'var(--rose)', border: '1px solid rgba(239,68,68,0.2)' }}>En Retard</span>}
+                    {isLate && <span style={{ padding: 'var(--space-1)', borderRadius: '4px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', background: 'rgba(239,68,68,0.1)', color: 'var(--rose)', border: '1px solid rgba(239,68,68,0.2)' }}>En Retard</span>}
                   </td>
                   <td>{inv.client?.name}</td>
                   <td>{formatDate(inv.createdAt)}</td>
@@ -181,7 +181,7 @@ export function Reminders() {
                   <td>
                     {inv.lastReminderDate ? (
                       <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px', color: 'var(--foreground-muted)' }}>
-                        <Calendar size={12} style={{ marginRight: '4px' }} />
+                        <Calendar size={12} style={{ marginRight: 'var(--space-1)' }} />
                         {formatDate(inv.lastReminderDate)}
                       </div>
                     ) : (
@@ -189,7 +189,7 @@ export function Reminders() {
                     )}
                   </td>
                   <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
                       <button className="fp-btn-ghost" onClick={() => sendReminder(inv, 'whatsapp')}>
                         <MessageCircle size={14} style={{ color: '#25D366' }} /> WhatsApp
                       </button>

@@ -9,8 +9,9 @@ class AdminSettingsController {
                 $settings = [
                     'MAIL_HOST' => $row['smtpHost'],
                     'MAIL_PORT' => $row['smtpPort'],
+                    'MAIL_ENCRYPTION' => $row['smtpEncryption'] ?? 'tls',
                     'MAIL_USER' => $row['smtpUser'],
-                    'MAIL_PASS' => $row['smtpPass'],
+                    'MAIL_PASS' => '', // Ne pas renvoyer le mot de passe pour la sécurité et éviter l'autofill
                     'MAIL_FROM_NAME' => $row['companyName'],
                     'REMINDER_SETTINGS' => $row['reminderSettings'] ? json_decode($row['reminderSettings'], true) : null
                 ];
@@ -23,13 +24,29 @@ class AdminSettingsController {
             try {
                 $smtpHost = $body['MAIL_HOST'] ?? '';
                 $smtpPort = $body['MAIL_PORT'] ?? '';
+                $smtpEncryption = $body['MAIL_ENCRYPTION'] ?? 'tls';
                 $smtpUser = $body['MAIL_USER'] ?? '';
-                $smtpPass = $body['MAIL_PASS'] ?? '';
                 $companyName = $body['MAIL_FROM_NAME'] ?? '';
                 $reminderSettings = isset($body['REMINDER_SETTINGS']) ? json_encode($body['REMINDER_SETTINGS']) : null;
                 
-                $stmt = $pdo->prepare("UPDATE PlatformSettings SET smtpHost = ?, smtpPort = ?, smtpUser = ?, smtpPass = ?, companyName = ?, reminderSettings = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = 'global'");
-                $stmt->execute([$smtpHost, $smtpPort, $smtpUser, $smtpPass, $companyName, $reminderSettings]);
+                $updates = [
+                    "smtpHost = ?", "smtpPort = ?", "smtpEncryption = ?", 
+                    "smtpUser = ?", "companyName = ?", "reminderSettings = ?", 
+                    "updatedAt = CURRENT_TIMESTAMP"
+                ];
+                $params = [
+                    $smtpHost, $smtpPort, $smtpEncryption, 
+                    $smtpUser, $companyName, $reminderSettings
+                ];
+                
+                if (!empty($body['MAIL_PASS'])) {
+                    $updates[] = "smtpPass = ?";
+                    $params[] = $body['MAIL_PASS'];
+                }
+                
+                $sql = "UPDATE PlatformSettings SET " . implode(', ', $updates) . " WHERE id = 'global'";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($params);
                 
                 echo json_encode(["success" => true, "message" => "Paramètres mis à jour"]);
                 exit;

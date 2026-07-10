@@ -52,15 +52,17 @@ export function Admin() {
       <button
         onClick={() => setView(id)}
         style={{
-          padding: '10px 20px', fontSize: '12px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', cursor: 'pointer',
-          background: active ? 'var(--gold)' : 'transparent',
-          color: active ? 'white' : 'var(--foreground-muted)',
-          border: '1px solid',
-          borderColor: active ? 'var(--gold)' : 'transparent',
-          transition: 'all 0.2s'
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '8px 20px', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', cursor: 'pointer',
+          background: active ? 'var(--surface)' : 'transparent',
+          color: active ? 'var(--gold)' : 'var(--foreground-subtle)',
+          border: 'none',
+          borderRadius: '24px',
+          boxShadow: active ? '0 2px 8px rgba(0,0,0,0.08)' : 'none',
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
         onMouseEnter={e => { if (!active) (e.currentTarget as HTMLElement).style.color = 'var(--foreground)'; }}
-        onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.color = 'var(--foreground-muted)'; }}
+        onMouseLeave={e => { if (!active) (e.currentTarget as HTMLElement).style.color = 'var(--foreground-subtle)'; }}
       >
         {Icon && <Icon size={14} style={{ marginRight: '6px' }} />}
         {label}
@@ -105,17 +107,19 @@ export function Admin() {
           )}
           <button
             onClick={() => loadData(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--foreground-muted)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.5px' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--foreground-muted)', fontSize: '12px', fontWeight: 600, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.5px' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLElement).style.color = 'var(--foreground)'; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--surface)'; (e.currentTarget as HTMLElement).style.color = 'var(--foreground-muted)'; }}
           >
             <RefreshCw size={14} style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
             Actualiser
           </button>
-          <div style={{ width: '1px', height: '24px', background: 'var(--border)', margin: '0 8px' }}></div>
-          {navBtn('dashboard', 'Aperçu')}
-          {navBtn('accounts', 'Comptes & Utilisateurs')}
-          {navBtn('settings', 'Paramètres', Settings)}
+          <div style={{ width: '1px', height: '24px', background: 'var(--border)', margin: '0 16px' }}></div>
+          <div style={{ display: 'flex', alignItems: 'center', background: 'var(--surface-2)', padding: '4px', borderRadius: '32px', border: '1px solid var(--border)' }}>
+            {navBtn('dashboard', 'Aperçu')}
+            {navBtn('accounts', 'Comptes & Utilisateurs')}
+            {navBtn('settings', 'Paramètres', Settings)}
+          </div>
         </div>
       </div>
 
@@ -228,13 +232,25 @@ function AdminSettings({ token }: { token: string }) {
           Configuration SMTP / Emails
         </h3>
         <form onSubmit={handleSave}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px', gap: '16px' }}>
             {field('Serveur SMTP (Host)', 'MAIL_HOST', 'text', 'ex: mail.hostinger.com')}
             {field('Port', 'MAIL_PORT', 'number')}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: 'var(--foreground)', marginBottom: '8px' }}>Chiffrement</label>
+              <select
+                value={settings['MAIL_ENCRYPTION'] || 'tls'}
+                onChange={e => setSettings({ ...settings, MAIL_ENCRYPTION: e.target.value })}
+                style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--foreground)', outline: 'none', appearance: 'none', cursor: 'pointer' }}
+              >
+                <option value="tls">TLS</option>
+                <option value="ssl">SSL</option>
+                <option value="none">Aucun</option>
+              </select>
+            </div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             {field('Utilisateur SMTP', 'MAIL_USER', 'text', 'contact@votredomaine.com')}
-            {field('Mot de passe SMTP', 'MAIL_PASS', 'password')}
+            {field('Mot de passe SMTP', 'MAIL_PASS', 'password', '•••••••••••• (laisser vide = inchangé)')}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             {field('Email Expéditeur (From)', 'MAIL_FROM', 'email')}
@@ -548,12 +564,13 @@ function AdminAccounts({ accounts, onSelect }: { accounts: any[]; onSelect: (id:
     <button
       onClick={() => setFilter(id)}
       style={{
-        padding: '8px 16px', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', cursor: 'pointer',
-        background: filter === id ? 'var(--foreground)' : 'var(--surface)',
+        padding: '6px 14px', fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', cursor: 'pointer',
+        background: filter === id ? 'var(--gold)' : 'var(--surface)',
         color: filter === id ? 'white' : 'var(--foreground-muted)',
         border: '1px solid',
-        borderColor: filter === id ? 'var(--foreground)' : 'var(--border)',
-        transition: 'all 0.2s'
+        borderColor: filter === id ? 'var(--gold)' : 'var(--border)',
+        borderRadius: '20px',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
       }}
     >
       {label} <span style={{ opacity: 0.6, marginLeft: '4px' }}>({count})</span>
@@ -737,7 +754,9 @@ function AdminAccountDetails({ accountId, token, onBack }: { accountId: string; 
       {/* Retour */}
       <button
         onClick={onBack}
-        style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'var(--surface)', border: '1px solid var(--border)', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--foreground-muted)', cursor: 'pointer' }}
+        style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '24px', fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--foreground-muted)', cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)' }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLElement).style.color = 'var(--foreground)'; }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--surface)'; (e.currentTarget as HTMLElement).style.color = 'var(--foreground-muted)'; }}
       >
         <ArrowLeft size={14} /> Retour
       </button>
@@ -745,7 +764,7 @@ function AdminAccountDetails({ accountId, token, onBack }: { accountId: string; 
       {/* Header Fiche */}
       <div className="fp-card" style={{ padding: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '24px' }}>
         <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
-          <div style={{ width: '80px', height: '80px', background: 'var(--gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '32px', color: 'white' }}>
+          <div style={{ width: '80px', height: '80px', background: 'var(--gold)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '32px', color: 'white', boxShadow: '0 8px 16px rgba(0,0,0,0.1)' }}>
             {(data.companyName || data.email || '?').charAt(0).toUpperCase()}
           </div>
           <div>
@@ -753,7 +772,7 @@ function AdminAccountDetails({ accountId, token, onBack }: { accountId: string; 
               {data.companyName || 'Institution sans nom'}
             </h2>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', fontSize: '13px', color: 'var(--foreground-muted)' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: '6px', height: '6px', background: 'var(--success)' }}></div> {data.email}</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ width: '6px', height: '6px', background: 'var(--success)', borderRadius: '50%' }}></div> {data.email}</span>
               {data.phone && <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Phone size={14}/> {data.phone}</span>}
               {data.city && <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><MapPin size={14}/> {data.city}{data.country ? `, ${data.country}` : ''}</span>}
             </div>
@@ -764,15 +783,17 @@ function AdminAccountDetails({ accountId, token, onBack }: { accountId: string; 
           <PlanBadge plan={data.subscriptionPlan} status={data.subscriptionStatus} computedStatus={data.computedStatus} />
           <button
             onClick={toggleSuspend}
-            className="fp-btn-primary"
-            style={{ padding: '8px 16px', fontSize: '11px', background: data.isSuspended ? 'var(--success)' : 'var(--destructive)', borderColor: data.isSuspended ? 'var(--success)' : 'var(--destructive)' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'white', background: data.isSuspended ? 'var(--success)' : 'var(--destructive)', border: 'none', borderRadius: '24px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.9'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1'; (e.currentTarget as HTMLElement).style.transform = 'none'; }}
           >
             {data.isSuspended ? <><CheckCircle size={14}/> Rétablir</> : <><Ban size={14}/> Suspendre</>}
           </button>
           <button
             onClick={handleImpersonate}
-            className="fp-btn-primary"
-            style={{ padding: '8px 16px', fontSize: '11px', background: 'var(--foreground)', borderColor: 'var(--foreground)' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'white', background: 'var(--foreground)', border: 'none', borderRadius: '24px', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--gold)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--foreground)'; (e.currentTarget as HTMLElement).style.transform = 'none'; }}
           >
             <LogIn size={14}/> Accès Compte
           </button>
@@ -782,8 +803,8 @@ function AdminAccountDetails({ accountId, token, onBack }: { accountId: string; 
       {/* Statistiques rapides */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px' }}>
         {[
-          { label: 'Base Clients', value: data.totalClients, color: 'var(--blue-accent)' },
-          { label: 'Factures Générées', value: data.totalInvoices, color: 'var(--foreground-subtle)' },
+          { label: 'Base Clients', value: data.totalClients || 0, color: 'var(--blue-accent)' },
+          { label: 'Factures Générées', value: data.totalInvoices || 0, color: 'var(--foreground-subtle)' },
           { label: 'Volume Facturé', value: formatCurrency(Number(data.totalInvoicedAmount || 0)), color: 'var(--gold)' },
         ].map((s, i) => (
           <div key={i} className="fp-card" style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -832,29 +853,29 @@ function AdminAccountDetails({ accountId, token, onBack }: { accountId: string; 
           </p>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <button onClick={() => updateSub('premium', 'active', 1)} className="fp-btn-primary" style={{ width: '100%', justifyContent: 'space-between', background: 'var(--surface)', color: 'var(--foreground)', borderColor: 'var(--border)' }}>
+            <button onClick={() => updateSub('premium', 'active', 1)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '12px 16px', background: 'var(--surface)', color: 'var(--foreground)', border: '1px solid var(--border)', borderRadius: '12px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--foreground-muted)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--surface)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; }}>
               <span>Activer Premium (1 mois)</span>
               <span style={{ fontSize: '10px', color: 'var(--foreground-subtle)' }}>+30 Jours</span>
             </button>
-            <button onClick={() => updateSub('premium', 'active', 3)} className="fp-btn-primary" style={{ width: '100%', justifyContent: 'space-between', background: 'var(--surface)', color: 'var(--foreground)', borderColor: 'var(--border)' }}>
+            <button onClick={() => updateSub('premium', 'active', 3)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '12px 16px', background: 'var(--surface)', color: 'var(--foreground)', border: '1px solid var(--border)', borderRadius: '12px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--foreground-muted)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--surface)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; }}>
               <span>Activer Premium (3 mois)</span>
               <span style={{ fontSize: '10px', color: 'var(--foreground-subtle)' }}>+90 Jours</span>
             </button>
-            <button onClick={() => updateSub('premium', 'active', 12)} className="fp-btn-primary" style={{ width: '100%', justifyContent: 'space-between' }}>
+            <button onClick={() => updateSub('premium', 'active', 12)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '12px 16px', background: 'var(--gold)', color: 'white', border: 'none', borderRadius: '12px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)', boxShadow: '0 4px 12px rgba(212, 175, 55, 0.2)' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 16px rgba(212, 175, 55, 0.3)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(212, 175, 55, 0.2)'; }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Crown size={14}/> Accord Annuel Premium</span>
-              <span style={{ fontSize: '10px', color: 'white' }}>+365 Jours</span>
+              <span style={{ fontSize: '10px', color: 'white', opacity: 0.8 }}>+365 Jours</span>
             </button>
             
             <div style={{ height: '1px', background: 'var(--border)', margin: '16px 0' }}></div>
             
-            <button onClick={() => updateSub('free', 'expired', 0)} className="fp-btn-primary" style={{ width: '100%', justifyContent: 'center', background: 'var(--surface)', color: 'var(--warning)', borderColor: 'var(--warning)' }}>
+            <button onClick={() => updateSub('free', 'expired', 0)} style={{ width: '100%', padding: '10px', background: 'var(--surface)', color: 'var(--warning)', border: '1px solid var(--border)', borderRadius: '12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(245, 166, 35, 0.1)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--warning)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--surface)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; }}>
               Forcer L'Expiration
             </button>
-            <button onClick={handleDelete} className="fp-btn-primary" style={{ width: '100%', justifyContent: 'center', background: 'var(--surface)', color: 'var(--destructive)', borderColor: 'var(--destructive)' }}>
+            <button onClick={handleDelete} style={{ width: '100%', padding: '10px', background: 'var(--surface)', color: 'var(--destructive)', border: '1px solid var(--border)', borderRadius: '12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(224, 72, 72, 0.1)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--destructive)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--surface)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; }}>
               Supprimer le Compte Définitivement
             </button>
             <div style={{ height: '1px', background: 'var(--border)', margin: '8px 0' }}></div>
-            <button onClick={handleRemind} className="fp-btn-primary" style={{ width: '100%', justifyContent: 'center', background: 'var(--surface)', color: 'var(--blue-accent)', borderColor: 'var(--border)' }}>
+            <button onClick={handleRemind} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', padding: '10px', background: 'var(--surface)', color: 'var(--blue-accent)', border: '1px solid var(--border)', borderRadius: '12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(74, 144, 226, 0.1)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--blue-accent)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--surface)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; }}>
               <Mail size={14}/> Relancer pour le Paiement (Email)
             </button>
           </div>

@@ -14,8 +14,8 @@ export function PageHeader({ title, description, icon, actions, badge }: PageHea
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
-      paddingBottom: '28px',
-      marginBottom: '28px',
+      paddingBottom: 'var(--space-6)',
+      marginBottom: 'var(--space-6)',
       borderBottom: '1px solid var(--border)',
       position: 'relative',
     }}>
@@ -29,7 +29,7 @@ export function PageHeader({ title, description, icon, actions, badge }: PageHea
         background: 'var(--gold)',
       }} />
 
-      <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'center' }}>
         {icon && (
           <div style={{
             width: '46px', height: '46px',
@@ -43,7 +43,7 @@ export function PageHeader({ title, description, icon, actions, badge }: PageHea
           </div>
         )}
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
             <h1 style={{
               fontSize: '22px',
               fontWeight: 700,
@@ -64,7 +64,7 @@ export function PageHeader({ title, description, icon, actions, badge }: PageHea
                 color: 'var(--gold)',
                 background: 'var(--gold-dim)',
                 border: '1px solid var(--border-gold)',
-                padding: '2px 8px',
+                padding: 'var(--space-1) var(--space-2)',
               }}>
                 {badge}
               </span>
@@ -74,7 +74,7 @@ export function PageHeader({ title, description, icon, actions, badge }: PageHea
             <p style={{
               fontSize: '13px',
               color: 'var(--foreground-muted)',
-              marginTop: '5px',
+              marginTop: 'var(--space-1)',
               maxWidth: '560px',
               lineHeight: 1.55
             }}>
@@ -85,7 +85,7 @@ export function PageHeader({ title, description, icon, actions, badge }: PageHea
       </div>
 
       {actions && (
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexShrink: 0, marginLeft: '24px' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center', flexShrink: 0, marginLeft: 'var(--space-5)' }}>
           {actions}
         </div>
       )}

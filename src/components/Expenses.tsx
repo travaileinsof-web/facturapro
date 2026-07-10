@@ -3,12 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { formatCurrency, formatDate, useAppStore, apiFetch } from '../lib/store';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { Textarea } from './ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import { useForm } from 'react-hook-form';
 import { PageHeader } from './ui/PageHeader';
-import { Plus, TrendingDown } from 'lucide-react';
-import { Textarea } from './ui/textarea';
+import { Plus, TrendingDown, FileText as FileTextIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function Expenses() {
@@ -79,7 +79,7 @@ export function Expenses() {
   };
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
       <PageHeader 
         title="Dépenses & Charges" 
         description="Suivez et gérez les dépenses de votre entreprise."
@@ -104,11 +104,11 @@ export function Expenses() {
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: 'var(--foreground-muted)' }}>Chargement...</td></tr>
+              <tr><td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-6)', color: 'var(--foreground-muted)' }}>Chargement...</td></tr>
             ) : expenses?.length === 0 ? (
               <tr>
-                <td colSpan={5} style={{ textAlign: 'center', padding: '48px' }}>
-                  <div style={{ fontSize: '24px', opacity: 0.5, marginBottom: '8px' }}>💸</div>
+                <td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-8)' }}>
+                  <div style={{ fontSize: '24px', opacity: 0.5, marginBottom: 'var(--space-2)' }}>💸</div>
                   <div style={{ fontWeight: 500, color: 'var(--foreground)' }}>Aucune dépense enregistrée</div>
                 </td>
               </tr>
@@ -117,7 +117,7 @@ export function Expenses() {
                 <tr key={exp.id}>
                   <td style={{ fontWeight: 600 }}>{formatDate(exp.expenseDate)}</td>
                   <td>
-                    <span style={{ padding: '4px 8px', borderRadius: 0, fontSize: '11px', fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--border)', textTransform: 'capitalize' }}>
+                    <span style={{ padding: 'var(--space-1) var(--space-2)', borderRadius: 0, fontSize: '11px', fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--border)', textTransform: 'capitalize' }}>
                       {exp.category}
                     </span>
                   </td>
@@ -136,16 +136,16 @@ export function Expenses() {
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[425px] p-0">
+        <DialogContent className="sm:max-w-[425px]" style={{ padding: 0 }}>
           <DialogHeader 
             icon={FileTextIcon}
             title="Enregistrer une Dépense"
             desc="Remplissez les détails de la dépense."
           />
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
-            <div className="overflow-y-auto custom-scrollbar flex-1 px-8 py-6 grid gap-5 bg-[var(--background)]">
+            <div className="overflow-y-auto custom-scrollbar flex-1 grid bg-[var(--background)]" style={{ gap: 'var(--space-5)', padding: 'var(--space-6) var(--space-8)' }}>
               <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Catégorie</label>
+                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)]" style={{ marginBottom: 'var(--space-1)' }}>Catégorie</label>
                 <select {...register('category')} className="fp-input w-full">
                   <option value="Achats">Achats &amp; Matériel</option>
                   <option value="Salaires">Salaires &amp; Primes</option>
@@ -156,16 +156,16 @@ export function Expenses() {
                 </select>
               </div>
               <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Montant</label>
-                <input className="fp-input w-full" type="number" step="0.01" {...register('amount')} required />
+                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)]" style={{ marginBottom: 'var(--space-1)' }}>Montant</label>
+                <Input type="number" step="0.01" {...register('amount')} required />
               </div>
               <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Date de dépense</label>
-                <input className="fp-input w-full" type="date" {...register('expenseDate')} required />
+                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)]" style={{ marginBottom: 'var(--space-1)' }}>Date de dépense</label>
+                <Input type="date" {...register('expenseDate')} required />
               </div>
               <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)] mb-1.5">Description (facultative)</label>
-                <textarea className="fp-input w-full min-h-[80px] resize-y" {...register('description')} placeholder="Ex: Achat d'une nouvelle imprimante..." />
+                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)]" style={{ marginBottom: 'var(--space-1)' }}>Description (facultative)</label>
+                <Textarea {...register('description')} placeholder="Ex: Achat d'une nouvelle imprimante..." />
               </div>
             </div>
             <DialogFooter>

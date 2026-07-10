@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { formatCurrency, formatDate, useAppStore, safeJSONParse, apiFetch } from '../lib/store';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogBody } from './ui/dialog';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { toast } from 'sonner';
 import { PageHeader } from './ui/PageHeader';
@@ -14,8 +10,10 @@ import { buildInvoiceHTML } from '../lib/pdfTemplate';
 import { exportHTMLToPDF, generatePDFBase64 } from '../lib/pdfExport';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 import { Pagination } from './ui/pagination';
-import { Textarea } from './ui/textarea';
 import { Field } from './ui/Field';
+import { DatePicker } from './ui/DatePicker';
+import { Input } from './ui/input';
+import { Textarea } from './ui/textarea';
 
 
 export function Invoices() {
@@ -349,17 +347,16 @@ export function Invoices() {
   const paginatedInvoices = filteredInvoices.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
       <PageHeader 
         title="Factures & Devis" 
         description="Créez, envoyez et suivez vos documents de facturation."
         icon={<FileTextIcon size={20} />}
         actions={
           <>
-            <div style={{ display: 'flex', gap: '12px' }}>
+            <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
               <select 
-                className="fp-input"
-                style={{ width: 'auto', minWidth: '220px' }}
+                className="fp-input w-auto min-w-[220px]"
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
               >
@@ -369,8 +366,7 @@ export function Invoices() {
                 <option value="devis">Devis uniquement</option>
               </select>
               <select 
-                className="fp-input"
-                style={{ width: 'auto', minWidth: '180px' }}
+                className="fp-input w-auto min-w-[180px]"
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
               >
@@ -405,24 +401,24 @@ export function Invoices() {
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={8} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Chargement...</td></tr>
+              <tr><td colSpan={8} className="text-center text-[var(--foreground-muted)]" style={{ padding: 'var(--space-10) 0' }}>Chargement...</td></tr>
             ) : filteredInvoices.length === 0 ? (
-              <tr><td colSpan={8} style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Aucune facture trouvée</td></tr>
+              <tr><td colSpan={8} className="text-center text-[var(--foreground-muted)]" style={{ padding: 'var(--space-10) 0' }}>Aucune facture trouvée</td></tr>
             ) : paginatedInvoices.map((inv: any) => {
                const paid = (inv.receipts || []).reduce((sum: number, r: any) => sum + r.amount, 0);
                const reste = inv.total - paid;
                return (
               <tr key={inv.id}>
-                <td style={{ fontWeight: 600 }}>
+                  <td className="font-semibold">
                   {inv.number}
-                  {inv.type === 'devis' && <span className="fp-badge fp-badge-neutral" style={{ marginLeft: '8px' }}>Devis</span>}
-                  {inv.type === 'proforma' && <span className="fp-badge fp-badge-neutral" style={{ marginLeft: '8px', background: '#3b82f6', color: 'white', borderColor: '#2563eb' }}>Pro Forma</span>}
+                  {inv.type === 'devis' && <span className="fp-badge fp-badge-neutral ml-2">Devis</span>}
+                  {inv.type === 'proforma' && <span className="fp-badge ml-2 bg-blue-500 text-white border-blue-600">Pro Forma</span>}
                 </td>
                 <td>{inv.client?.name}</td>
                 <td>{formatDate(inv.createdAt)}</td>
-                <td style={{ fontWeight: 600 }}>{formatCurrency(inv.total)}</td>
-                <td style={{ color: 'var(--success)', fontWeight: 600 }}>{formatCurrency(inv.amountPaid || 0)}</td>
-                <td style={{ color: 'var(--warning)', fontWeight: 600 }}>{formatCurrency(inv.amountRemaining || 0)}</td>
+                <td className="font-semibold text-lg">{formatCurrency(inv.total)}</td>
+                <td className="font-semibold text-[var(--success)]">{formatCurrency(inv.amountPaid || 0)}</td>
+                <td className="font-semibold text-[var(--warning)]">{formatCurrency(inv.amountRemaining || 0)}</td>
                 <td>
                    <span className={`fp-badge ${
                       inv.status === 'payée' ? 'fp-badge-green' :
@@ -434,21 +430,21 @@ export function Invoices() {
                     </span>
                 </td>
                  <td>
-                   <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
+                   <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
                      {inv.type === 'devis' && (
                        <>
-                         <button style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', cursor: 'pointer' }} onClick={() => setInvoiceToConvert({ inv, targetType: 'proforma' })}>Pro Forma</button>
-                         <button style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', cursor: 'pointer' }} onClick={() => setInvoiceToConvert({ inv, targetType: 'facture' })}>Facture</button>
+                         <button className="text-xs font-semibold bg-[var(--surface-2)] border border-[var(--border-hover)] text-[var(--foreground)] cursor-pointer rounded-md hover:bg-[var(--border)] transition-colors" style={{ padding: 'var(--space-2) var(--space-3)' }} onClick={() => setInvoiceToConvert({ inv, targetType: 'proforma' })}>Pro Forma</button>
+                         <button className="text-xs font-semibold bg-[var(--surface-2)] border border-[var(--border-hover)] text-[var(--foreground)] cursor-pointer rounded-md hover:bg-[var(--border)] transition-colors" style={{ padding: 'var(--space-2) var(--space-3)' }} onClick={() => setInvoiceToConvert({ inv, targetType: 'facture' })}>Facture</button>
                        </>
                      )}
                      {inv.type === 'proforma' && (
-                       <button style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'var(--surface-2)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', cursor: 'pointer' }} onClick={() => setInvoiceToConvert({ inv, targetType: 'facture' })}>Facture</button>
+                       <button className="text-xs font-semibold bg-[var(--surface-2)] border border-[var(--border-hover)] text-[var(--foreground)] cursor-pointer rounded-md hover:bg-[var(--border)] transition-colors" style={{ padding: 'var(--space-2) var(--space-3)' }} onClick={() => setInvoiceToConvert({ inv, targetType: 'facture' })}>Facture</button>
                      )}
-                     <button style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'var(--surface)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', cursor: 'pointer' }} onClick={() => downloadPDF(inv)}>PDF</button>
-                     <button style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'var(--surface)', border: '1px solid #25D366', color: '#25D366', cursor: 'pointer' }} onClick={() => shareViaWhatsApp(inv)}>WA</button>
-                     <button style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'var(--surface)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', cursor: 'pointer' }} onClick={() => shareViaEmail(inv)}>@</button>
-                     <button style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'var(--surface)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', cursor: 'pointer' }} onClick={() => openEdit(inv)}>Modifier</button>
-                     <button style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 600, background: 'transparent', border: '1px solid rgba(220,38,38,0.3)', color: 'var(--destructive)', cursor: 'pointer' }} title={inv.receipts?.length ? "Impossible : Reçus associés" : ""} onClick={() => { if(!inv.receipts?.length) setInvoiceToDelete(inv.id); }}>Sup.</button>
+                     <button className="text-xs font-semibold bg-[var(--surface)] border border-[var(--border-hover)] text-[var(--foreground)] cursor-pointer rounded-md hover:bg-[var(--surface-2)] transition-colors" style={{ padding: 'var(--space-2) var(--space-3)' }} onClick={() => downloadPDF(inv)}>PDF</button>
+                     <button className="text-xs font-semibold bg-[var(--surface)] border border-[#25D366] text-[#25D366] cursor-pointer rounded-md hover:bg-[#25D366] hover:text-white transition-colors" style={{ padding: 'var(--space-2) var(--space-3)' }} onClick={() => shareViaWhatsApp(inv)}>WA</button>
+                     <button className="text-xs font-semibold bg-[var(--surface)] border border-[var(--border-hover)] text-[var(--foreground)] cursor-pointer rounded-md hover:bg-[var(--surface-2)] transition-colors" style={{ padding: 'var(--space-2) var(--space-3)' }} onClick={() => shareViaEmail(inv)}>@</button>
+                     <button className="text-xs font-semibold bg-[var(--surface)] border border-[var(--border-hover)] text-[var(--foreground)] cursor-pointer rounded-md hover:bg-[var(--surface-2)] transition-colors" style={{ padding: 'var(--space-2) var(--space-3)' }} onClick={() => openEdit(inv)}>Modifier</button>
+                     <button className="text-xs font-semibold bg-transparent border border-red-200 text-[var(--destructive)] cursor-pointer rounded-md hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" style={{ padding: 'var(--space-2) var(--space-3)' }} title={inv.receipts?.length ? "Impossible : Reçus associés" : ""} onClick={() => { if(!inv.receipts?.length) setInvoiceToDelete(inv.id); }}>Sup.</button>
                    </div>
                  </td>
               </tr>
@@ -464,38 +460,46 @@ export function Invoices() {
         className="mt-4"
       />
 
+      {/* ── Modal Document : taille lg (960px) — design system strict ── */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-5xl max-w-5xl p-0 h-[90vh]">
-          <DialogHeader 
-            className="shrink-0"
+        <DialogContent size="lg" showCloseButton>
+          <DialogHeader
             icon={FileTextIcon}
             title={editingInvoice ? 'Modifier Document' : 'Nouveau Document'}
             desc="Remplissez les détails de la facture, du devis ou du pro forma."
           />
-          <div className="flex-1 overflow-y-auto custom-scrollbar bg-[var(--background)]">
-            <form id="invoice-form" onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
-              <div style={{ padding: '40px 48px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
-                {/* — Type de document — */}
-                <div style={{ gridColumn: 'span 2' }}>
-                  <Field label="Type de document">
-                    <div className="flex gap-5">
-                      {(['facture', 'proforma', 'devis'] as const).map((t) => {
-                        const labels: Record<string, string> = { facture: 'Facture', proforma: 'Pro Forma', devis: 'Devis' };
-                        const isActive = watch('type') === t;
-                        return (
-                          <label key={t} className={`cursor-pointer px-10 py-4 text-[14px] font-semibold rounded-none border transition-all duration-200 text-center min-w-[140px] ${isActive ? 'bg-[var(--gold-dim)] border-[var(--gold)] text-[var(--gold)] shadow-sm' : 'bg-white border-[var(--border)] text-[var(--foreground-muted)] hover:border-[var(--foreground-subtle)] hover:text-[var(--foreground)]'}`}>
-                            <input type="radio" value={t} {...register('type')} className="hidden" />
-                            {labels[t]}
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </Field>
-                </div>
+          <form id="invoice-form" onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+            <DialogBody>
+              {/* Grille 2 colonnes : champs principaux — gap space-4 vertical / space-5 horizontal */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4) var(--space-5)', padding: 'var(--space-5)' }}>
+                {/* Type de document — pleine largeur */}
+                <Field label="Type de document" fullWidth>
+                  <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+                    {(['facture', 'proforma', 'devis'] as const).map((t) => {
+                      const labels: Record<string, string> = { facture: 'Facture', proforma: 'Pro Forma', devis: 'Devis' };
+                      const isActive = watch('type') === t;
+                      return (
+                        <label key={t} style={{
+                          cursor: 'pointer', padding: '0 var(--space-4)', height: '40px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-semibold)',
+                          borderRadius: 'var(--radius-md)',
+                          border: isActive ? '1px solid var(--color-primary)' : '1px solid var(--color-border-default)',
+                          background: isActive ? 'var(--color-primary-subtle)' : 'transparent',
+                          color: isActive ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                          transition: 'all 0.15s ease',
+                        }}>
+                          <input type="radio" value={t} {...register('type')} style={{ display: 'none' }} />
+                          {labels[t]}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </Field>
 
-                {/* — Client + Date — */}
-                <Field label={<>Client <span style={{ color: 'var(--primary)' }}>*</span></>}>
-                  <select {...register('clientId')} className="fp-input w-full bg-white shadow-sm">
+                {/* Client */}
+                <Field label="Client" required>
+                  <select {...register('clientId')}>
                     <option value="">— Sélectionner un client —</option>
                     {clients?.map((c: any) => (
                       <option key={c.id} value={c.id}>{c.name}</option>
@@ -503,92 +507,117 @@ export function Invoices() {
                   </select>
                 </Field>
 
+                {/* Date d'échéance — DatePicker unifié */}
                 <Field label="Date d'échéance" hint="Requis pour relances auto.">
-                  <input type="date" className="fp-input w-full bg-white shadow-sm" {...register('dueDate')} />
+                  <DatePicker
+                    value={watch('dueDate')}
+                    onChange={v => setValue('dueDate', v)}
+                  />
                 </Field>
               </div>
 
-              {/* — Articles — */}
-              <div className="flex flex-col border-t border-b border-[var(--border)] overflow-hidden bg-white shadow-sm mt-2">
-                <div className="grid grid-cols-[250px_1fr_100px_130px_130px_50px] gap-6 bg-[var(--surface-2)] border-b border-[var(--border)] px-8 py-5">
-                  <div className="text-[12px] font-bold text-[var(--foreground-muted)] uppercase tracking-wider">Article / Service</div>
-                  <div className="text-[12px] font-bold text-[var(--foreground-muted)] uppercase tracking-wider">Description</div>
-                  <div className="text-[12px] font-bold text-[var(--foreground-muted)] uppercase tracking-wider text-right">Qté</div>
-                  <div className="text-[12px] font-bold text-[var(--foreground-muted)] uppercase tracking-wider text-right">Prix Unitaire</div>
-                  <div className="text-[12px] font-bold text-[var(--foreground-muted)] uppercase tracking-wider text-right">Total</div>
-                  <div></div>
+              {/* ── Tableau des lignes : grille CSS partagée header + rows ── */}
+              <div style={{ borderTop: '1px solid var(--color-border-subtle)', borderBottom: '1px solid var(--color-border-subtle)', background: 'var(--color-bg-page)', marginTop: 'var(--space-4)' }}>
+                {/* Header colonnes : exactement même grid-template-columns que les lignes */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '240px 1fr 90px 130px 120px 40px',
+                  gap: 'var(--space-3)',
+                  padding: 'var(--space-3) var(--space-5)',
+                  background: 'var(--color-border-subtle)',
+                  borderBottom: '1px solid var(--color-border-default)',
+                }}>
+                  <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Article / Service</div>
+                  <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Description</div>
+                  <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Qté</div>
+                  <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Prix Unit.</div>
+                  <div style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', textAlign: 'right' }}>Total</div>
+                  <div />
                 </div>
-                <div className="flex flex-col p-8 gap-6 bg-[var(--surface-1)]">
+
+                {/* Lignes : même gridTemplateColumns que le header */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0', padding: 'var(--space-3) var(--space-5)', background: 'var(--color-bg-modal-body)' }}>
                   {fields.map((field, index) => (
-                    <div key={field.id} className="grid grid-cols-[250px_1fr_100px_130px_130px_50px] gap-6 items-center bg-white p-4 rounded-none border border-[var(--border)] shadow-sm group hover:border-[var(--border-hover)] transition-colors">
-                      <div>
-                        <select onChange={(e) => handleCatalogSelect(index, e.target.value)} defaultValue="" className="fp-input w-full bg-[var(--surface)] text-[13px] text-[var(--foreground)] cursor-pointer">
-                          <option value="">Sélectionner...</option>
-                          {catalogItems?.map((cat: any) => (
-                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <input className="fp-input w-full text-[13px] text-[var(--foreground)] placeholder-[var(--foreground-muted)]" placeholder="Description de l'article" {...register(`items.${index}.description` as const, { required: true })} />
-                      </div>
-                      <div>
-                        <input className="fp-input w-full text-[13px] text-right font-mono text-[var(--foreground)]" type="number" placeholder="1" {...register(`items.${index}.quantity` as const, { valueAsNumber: true })} />
-                      </div>
-                      <div>
-                        <input className="fp-input w-full text-[13px] text-right font-mono text-[var(--foreground)]" type="number" placeholder="0" {...register(`items.${index}.unitPrice` as const, { valueAsNumber: true })} />
-                      </div>
-                      <div className="text-right font-semibold text-[14px] text-[var(--foreground)] font-mono flex items-center justify-end">
+                    <div key={field.id} style={{
+                      display: 'grid',
+                      gridTemplateColumns: '240px 1fr 90px 130px 120px 40px',
+                      gap: 'var(--space-3)',
+                      alignItems: 'center',
+                      padding: 'var(--space-3) 0',
+                      borderBottom: index < fields.length - 1 ? '1px solid var(--color-border-subtle)' : 'none',
+                      minHeight: '48px',
+                    }}>
+                      <select onChange={(e) => handleCatalogSelect(index, e.target.value)} defaultValue="">
+                        <option value="">Sélectionner...</option>
+                        {catalogItems?.map((cat: any) => (
+                          <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
+                      </select>
+                      <Input placeholder="Description de l'article" {...register(`items.${index}.description` as const, { required: true })} />
+                      <Input type="number" placeholder="1" style={{ textAlign: 'right' }} {...register(`items.${index}.quantity` as const, { valueAsNumber: true })} />
+                      <Input type="number" placeholder="0" style={{ textAlign: 'right' }} {...register(`items.${index}.unitPrice` as const, { valueAsNumber: true })} />
+                      <div style={{ textAlign: 'right', fontWeight: 'var(--font-weight-semibold)', fontFamily: 'monospace', color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)' }}>
                         {formatCurrency((isNaN(watchItems[index]?.quantity) ? 0 : watchItems[index]?.quantity || 0) * (isNaN(watchItems[index]?.unitPrice) ? 0 : watchItems[index]?.unitPrice || 0))}
                       </div>
-                      <button type="button" className="flex items-center justify-center w-8 h-8 rounded-none text-[var(--foreground-subtle)] hover:text-[var(--destructive)] hover:bg-red-50 transition-colors mx-auto" onClick={() => remove(index)}>
-                        <Trash2 size={15} />
+                      <button type="button"
+                        style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--color-text-secondary)', transition: 'color 0.15s ease, background 0.15s ease' }}
+                        onClick={() => remove(index)}
+                        onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = 'var(--color-danger)'; el.style.background = 'rgba(211,47,47,0.08)'; }}
+                        onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = 'var(--color-text-secondary)'; el.style.background = 'transparent'; }}
+                      >
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   ))}
                 </div>
-                <div className="px-10 py-8 bg-[var(--surface-1)] border-t border-[var(--border)] flex items-center justify-start">
-                  <button type="button" className="flex items-center gap-3 text-[14px] font-semibold text-[var(--primary)] hover:text-[var(--primary-dark)] transition-colors px-6 py-3 border border-dashed border-[var(--primary)] rounded-none hover:bg-blue-50/50" onClick={() => append({ description: '', quantity: 1, unitPrice: 0 })}>
-                    <Plus size={18} /> Ajouter une ligne
+
+                {/* Bouton lien — fp-btn-link, JAMAIS de bordure pointillée */}
+                <div style={{ padding: 'var(--space-3) var(--space-5)', borderTop: '1px solid var(--color-border-subtle)' }}>
+                  <button
+                    type="button"
+                    className="fp-btn-link"
+                    onClick={() => append({ description: '', quantity: 1, unitPrice: 0 })}
+                  >
+                    <Plus size={14} /> Ajouter une ligne
                   </button>
                 </div>
               </div>
 
               {/* — Notes + Totaux — */}
-              <div style={{ padding: '40px 48px' }} className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-10">
-                <div className="flex flex-col gap-6">
+              <div style={{ padding: 'var(--space-10) var(--space-5)', display: 'grid', gap: 'var(--space-8)' }} className="grid-cols-1 lg:grid-cols-[1fr_380px]">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
                   {editingInvoice && (
-                    <div className="bg-white rounded-xl border border-[var(--border)] shadow-sm px-6 py-4 flex items-center justify-between">
+                    <div className="bg-white rounded-xl border border-[var(--border)] shadow-sm flex items-center justify-between" style={{ padding: 'var(--space-4) var(--space-6)' }}>
                       <p className="text-[13px] font-semibold text-[var(--foreground)]">Statut actuel du document</p>
                       <span className={`fp-badge ${editingInvoice.status === 'payée' ? 'fp-badge-green' : editingInvoice.status === 'envoyée' ? 'fp-badge-blue' : 'fp-badge-neutral'} capitalize`}>{editingInvoice.status === 'brouillon' ? 'Non entamée' : editingInvoice.status}</span>
                     </div>
                   )}
                   <Field label="Remarques / Conditions">
-                    <textarea {...register('notes')} className="fp-input w-full min-h-[140px] resize-y bg-white shadow-sm" placeholder="Conditions de paiement, mentions légales, informations bancaires..." />
+                    <Textarea {...register('notes')} placeholder="Conditions de paiement, mentions légales, informations bancaires..." />
                   </Field>
                 </div>
 
                 <div className="bg-[var(--surface-2)] rounded-xl border border-[var(--border)] overflow-hidden flex flex-col">
-                  <div className="px-8 py-6 border-b border-[var(--border)] bg-[var(--surface-1)]">
+                  <div className="border-b border-[var(--border)] bg-[var(--surface-1)]" style={{ padding: 'var(--space-6) var(--space-8)' }}>
                     <h3 className="text-[14px] font-bold tracking-wide uppercase text-[var(--foreground)]">Récapitulatif</h3>
                   </div>
-                  <div className="p-10 flex flex-col gap-8">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)', padding: 'var(--space-8)' }}>
                     <div className="flex justify-between items-center">
                       <span className="text-[14px] font-medium text-[var(--foreground-subtle)]">Sous-total HT</span>
                       <span className="text-[15px] font-semibold font-mono text-[var(--foreground)]">{formatCurrency(subtotal)}</span>
                     </div>
-                    <div className="flex justify-between items-center gap-4">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-4)' }}>
                       <span className="text-[14px] font-medium text-[var(--foreground-subtle)]">TVA (%)</span>
-                      <input type="number" className="fp-input w-[120px] text-right font-mono bg-white" style={{ padding: '12px 16px' }} {...register('taxRate', { valueAsNumber: true })} />
+                      <div className="w-[120px]"><Input type="number" style={{ textAlign: 'right', fontFamily: 'monospace' }} {...register('taxRate', { valueAsNumber: true })} /></div>
                     </div>
-                    <div className="flex justify-between items-center gap-4">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-4)' }}>
                       <span className="text-[14px] font-medium text-[var(--foreground-subtle)]">Remise globale</span>
-                      <div className="relative">
-                        <input type="number" className="fp-input w-[140px] text-right font-mono pr-10 bg-white" style={{ padding: '12px 16px' }} {...register('discount', { valueAsNumber: true })} />
+                      <div className="relative w-[140px]">
+                        <Input type="number" style={{ textAlign: 'right', fontFamily: 'monospace', paddingRight: 'var(--space-8)' }} {...register('discount', { valueAsNumber: true })} />
                         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] font-bold text-[var(--foreground-muted)]">{currency}</span>
                       </div>
                     </div>
-                    <div className="pt-8 mt-4 border-t-2 border-[var(--border)] flex justify-between items-end">
+                    <div className="border-t-2 border-[var(--border)] flex justify-between items-end" style={{ paddingTop: 'var(--space-8)', marginTop: 'var(--space-4)' }}>
                       <span className="text-[15px] font-bold uppercase tracking-wider text-[var(--foreground)]">Total TTC</span>
                       <span className="text-4xl font-bold font-mono text-[var(--primary)]">{formatCurrency(total)}</span>
                     </div>
@@ -596,11 +625,11 @@ export function Invoices() {
                 </div>
               </div>
 
-            </form>
-          </div>
-          <DialogFooter className="shrink-0">
-             <button type="button" className="fp-btn-outline" onClick={() => setIsModalOpen(false)}>Annuler</button>
-             <button type="submit" form="invoice-form" className="fp-btn-primary">Sauvegarder le document</button>
+            </DialogBody>
+          </form>
+          <DialogFooter>
+            <button type="button" className="fp-btn-outline" onClick={() => setIsModalOpen(false)}>Annuler</button>
+            <button type="submit" form="invoice-form" className="fp-btn-primary">Sauvegarder le document</button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

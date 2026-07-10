@@ -97,9 +97,9 @@ function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boole
         style={{ transform: open ? 'translateX(0)' : undefined }}>
 
         {/* ── Logo ── */}
-        <div style={{ padding: '18px 14px 12px', flexShrink: 0, position: 'relative' }}>
+        <div className="shrink-0 relative" style={{ padding: 'var(--space-5)' }}>
           <div className={cn("flex items-center", isCollapsed ? "justify-center" : "justify-between")}>
-            <Link to="/" className="flex items-center gap-[9px] no-underline">
+            <Link to="/" className="flex items-center no-underline" style={{ gap: 'var(--space-2)' }}>
               <FPLogo size={isCollapsed ? 32 : 26} />
               <div className="sidebar-shrink">
                 <div className="font-display font-bold text-[14px] text-[var(--foreground)] tracking-tight">FacturaPro</div>
@@ -109,7 +109,8 @@ function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boole
             {!isCollapsed && (
               <button 
                 onClick={onClose} 
-                className="sidebar-hide mobile-only flex p-1 bg-transparent border-none cursor-pointer text-[var(--foreground-subtle)] hover:text-[var(--foreground)] transition-colors duration-150"
+                className="sidebar-hide mobile-only flex bg-transparent border-none cursor-pointer text-[var(--foreground-subtle)] hover:text-[var(--foreground)] transition-colors duration-150"
+                style={{ padding: 'var(--space-1)' }}
               >
                 <X size={14}/>
               </button>
@@ -125,11 +126,11 @@ function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boole
         </div>
 
         {/* ── Divider ── */}
-        <div className="h-px bg-[var(--border)] mx-4 mb-4" />
+        <div className="h-px bg-[var(--border)]" style={{ margin: '0 var(--space-4) var(--space-4)' }} />
 
         {/* ── Nav ── */}
-        <nav className="flex-1 overflow-y-auto px-2.5">
-          <div className="text-[9px] text-[var(--foreground-subtle)] font-bold tracking-[1.2px] uppercase px-2 py-1 pb-1.5">Principal</div>
+        <nav className="flex-1 overflow-y-auto px-2 flex flex-col" style={{ paddingTop: 'var(--space-6)', paddingBottom: 'var(--space-6)', gap: 'var(--space-1)' }}>
+          <span style={{ fontSize: '11px', fontWeight: '800', color: 'var(--color-text-placeholder)', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '0 var(--space-4)', marginBottom: 'var(--space-2)' }}>Principal</span>
           {mainItems.map((item, i) => {
             const Icon = item.icon;
             const active = currentModule === item.id;
@@ -137,16 +138,14 @@ function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boole
               <button key={item.id} onClick={() => handleNav(item.id)}
                 className={`app-nav-item ${active ? 'active' : ''}`}
                 title={isCollapsed ? item.label : undefined}
-                style={{ opacity: 0, animation: `fp-fade-up 0.35s ease ${i * 0.035}s forwards`, display: 'flex', alignItems: 'center', justifyContent: isCollapsed ? 'center' : 'flex-start' }}>
-                <Icon className="nav-icon" style={{ width: '13px', height: '13px', flexShrink: 0, color: active ? 'var(--gold)' : 'var(--foreground-subtle)', transition: 'color 0.15s' }}/>
-                {!isCollapsed && <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>}
-                {active && !isCollapsed && <div className="nav-dot"/>}
+                style={{ opacity: 0, animation: `fp-fade-up 0.35s ease ${i * 0.035}s forwards`, justifyContent: isCollapsed ? 'center' : 'flex-start', padding: 'var(--space-2) var(--space-4)', gap: 'var(--space-3)', height: '44px', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-1)' }}>
+                <Icon className="nav-icon" style={{ width: '18px', height: '18px', flexShrink: 0 }} strokeWidth={2}/>
+                {!isCollapsed && <span style={{ flex: 1, textAlign: 'left', fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>{item.label}</span>}
               </button>
             );
           })}
 
-          <div style={{ height: '1px', background: 'var(--border)', margin: '8px 0' }}/>
-          <div style={{ fontSize: '9px', color: 'var(--foreground-subtle)', fontWeight: 700, letterSpacing: '1.2px', textTransform: 'uppercase', padding: '4px 8px 6px' }}>Outils</div>
+          <span style={{ fontSize: '11px', fontWeight: '800', color: 'var(--color-text-placeholder)', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '0 var(--space-4)', marginTop: 'var(--space-6)', marginBottom: 'var(--space-2)' }}>Outils</span>
           {toolsItems.map((item, i) => {
             const Icon = item.icon;
             const active = currentModule === item.id;
@@ -155,78 +154,70 @@ function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boole
               <button key={item.id} onClick={() => handleNav(item.id)}
                 className={`app-nav-item ${active ? 'active' : ''}`}
                 title={isCollapsed ? item.label : undefined}
-                style={{ opacity: 0, animation: `fp-fade-up 0.35s ease ${(mainItems.length + i) * 0.035}s forwards`, display: 'flex', alignItems: 'center', justifyContent: isCollapsed ? 'center' : 'flex-start' }}>
-                <Icon className="nav-icon" style={{ width: '13px', height: '13px', flexShrink: 0, color: active ? 'var(--gold)' : 'var(--foreground-subtle)', transition: 'color 0.15s' }}/>
+                style={{ opacity: 0, animation: `fp-fade-up 0.35s ease ${(mainItems.length + i) * 0.035}s forwards`, justifyContent: isCollapsed ? 'center' : 'flex-start', padding: 'var(--space-2) var(--space-4)', gap: 'var(--space-3)', height: '44px', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-1)' }}>
+                <Icon className="nav-icon" style={{ width: '18px', height: '18px', flexShrink: 0 }} strokeWidth={2}/>
                 {!isCollapsed && (
-                  <span style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '6px', textAlign: 'left' }}>
-                    {item.label}
-                    {isPremium && <span style={{ fontSize: '8px', background: 'var(--gold-dim)', color: 'var(--gold)', padding: '2px 4px', borderRadius: '2px', fontWeight: 800 }}>BIENTÔT</span>}
+                  <span style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', textAlign: 'left' }}>
+                    <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>{item.label}</span>
+                    {isPremium && <span style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(184,134,11,0.2)', padding: '2px 6px', fontSize: '9px', borderRadius: 'var(--radius-sm)', fontWeight: '800', letterSpacing: '0.5px' }}>PRO</span>}
                   </span>
                 )}
-                {active && !isCollapsed && <div className="nav-dot"/>}
               </button>
             );
           })}
         </nav>
 
-        {/* ── User + Plan ── */}
-        <div className="p-3 pb-4 border-t border-[var(--border)] shrink-0">
-          {/* User chip */}
-          <div className={cn(
-            "flex items-center gap-[9px] mb-2",
-            isCollapsed ? "p-0 justify-center bg-transparent border-none" : "px-2.5 py-2 justify-start bg-[var(--surface-2)] border border-[var(--border)]"
-          )}>
-            <div className="w-7 h-7 bg-[var(--gold-dim)] border border-[var(--border-gold)] flex items-center justify-center text-[11px] font-bold text-[var(--gold)] shrink-0">
+        {/* ── User + Plan footer ── */}
+        <div className="sidebar-footer-zone" style={{ padding: 'var(--space-3)', gap: 'var(--space-2)' }}>
+          {/* Identité utilisateur */}
+          <div className={`flex items-center gap-2 ${isCollapsed ? 'justify-center' : ''}`}>
+            <div style={{
+              width: '28px', height: '28px', flexShrink: 0,
+              borderRadius: 'var(--radius-sm)',
+              background: 'var(--color-bg-page)',
+              border: '1px solid var(--color-border-default)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '11px', fontWeight: 'var(--font-weight-bold)',
+              color: 'var(--color-text-secondary)',
+            }}>
               {initials}
             </div>
-            <div className="sidebar-shrink">
-              <div className="text-[11px] font-bold text-[var(--foreground)] truncate">{user?.company || user?.name || 'Utilisateur'}</div>
-              <div className="text-[10px] text-[var(--foreground-muted)] truncate">{user?.company && user?.name && user.name !== user.company ? user.name : ''}</div>
+            <div className="sidebar-shrink" style={{ minWidth: 0, lineHeight: 1.2 }}>
+              <div style={{ fontSize: '12px', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.company || user?.name || 'Utilisateur'}</div>
+              <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.company && user?.name && user.name !== user.company ? user.name : user?.email}</div>
             </div>
           </div>
 
-          {/* Trial Banner */}
+          {/* Trial Banner Ultra-Compact */}
           {isTrial && !isCollapsed && (
-            <div style={{ background: 'rgba(201,168,76,0.06)', border: '1px solid var(--border-gold)', padding: '10px', marginBottom: '8px' }}>
-              <div style={{ fontSize: '9px', color: 'var(--gold)', fontWeight: 800, letterSpacing: '0.8px', textTransform: 'uppercase', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <Zap size={9}/> Essai gratuit
+            <div style={{ background: 'var(--color-primary-subtle)', border: '1px solid rgba(184,134,11,0.2)', padding: 'var(--space-2)', borderRadius: 'var(--radius-sm)' }}>
+              <div className="flex justify-between items-center" style={{ marginBottom: '4px' }}>
+                <div style={{ fontSize: '10px', color: 'var(--color-primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', textTransform: 'uppercase' }}>
+                  <Zap size={10}/> {trialHours}h restantes
+                </div>
+                <button
+                  onClick={() => setCurrentModule('pricing' as any)}
+                  style={{ fontSize: '10px', color: 'var(--color-primary)', fontWeight: 'bold', textDecoration: 'underline' }}
+                >
+                  S'abonner
+                </button>
               </div>
-              <div style={{ fontSize: '10px', color: 'var(--foreground-muted)', marginBottom: '8px' }}>{trialHours} heure{trialHours !== 1 ? 's' : ''} restante{trialHours !== 1 ? 's' : ''}</div>
-              {/* Progress bar */}
-              <div style={{ height: '2px', background: 'var(--surface-3)', overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${Math.round((trialHours / 24) * 100)}%`, background: 'linear-gradient(90deg, var(--gold), var(--gold-light))', transition: 'width 0.6s ease' }}/>
+              <div style={{ height: '3px', background: 'var(--color-border-default)', borderRadius: 'var(--radius-full)' }}>
+                <div style={{ height: '100%', width: `${Math.round((trialHours / 24) * 100)}%`, background: 'var(--color-primary)', borderRadius: 'var(--radius-full)' }}/>
               </div>
-              <button onClick={() => setCurrentModule('pricing' as any)} style={{
-                width: '100%', marginTop: '8px', padding: '6px',
-                background: 'var(--gold)',
-                color: '#0A0A0F', border: 'none',
-                borderRadius: 0,
-                fontSize: '10px', fontWeight: 800, cursor: 'pointer',
-                letterSpacing: '0.5px', textTransform: 'uppercase', transition: 'opacity 0.15s',
-              }}
-                onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-                onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-              >
-                S'abonner →
-              </button>
             </div>
           )}
 
-          {/* Logout */}
-          <button onClick={() => { logout(); navigate('/'); }} style={{
-            display: 'flex', alignItems: 'center', justifyContent: isCollapsed ? 'center' : 'flex-start', gap: '7px', width: '100%',
-            padding: '8px 10px', background: 'transparent',
-            border: isCollapsed ? 'none' : '1px solid var(--border)',
-            borderRadius: 0,
-            cursor: 'pointer', color: 'var(--foreground-subtle)', fontSize: '11px',
-            fontFamily: 'var(--font-sans)', fontWeight: 600, transition: 'all 0.15s',
-            letterSpacing: '0.2px',
-          }}
+          {/* Déconnexion */}
+          <button
+            onClick={() => { logout(); navigate('/'); }}
+            className={`flex items-center gap-2 w-full ${isCollapsed ? 'justify-center' : 'justify-start'}`}
+            style={{ height: '28px', fontSize: '12px', color: 'var(--color-text-secondary)', borderRadius: 'var(--radius-sm)', padding: '0 var(--space-2)', transition: 'all 0.15s' }}
             title="Se déconnecter"
-            onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(239,68,68,0.08)'; el.style.color = '#ef4444'; el.style.borderColor = 'rgba(239,68,68,0.2)'; }}
-            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.color = 'var(--foreground-subtle)'; el.style.borderColor = isCollapsed ? 'transparent' : 'var(--border)'; }}
+            onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'var(--color-bg-page)'; el.style.color = 'var(--color-danger)'; }}
+            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.color = 'var(--color-text-secondary)'; }}
           >
-            <LogOut style={{ width: '11px', height: '11px' }}/> <span className="sidebar-shrink">Se déconnecter</span>
+            <LogOut size={13}/> <span className="sidebar-shrink">Se déconnecter</span>
           </button>
         </div>
       </aside>
@@ -346,19 +337,20 @@ function AppLayout() {
   if (isTrial && trialHours <= 0) {
     return (
       <div className="flex flex-col h-screen bg-[var(--background)] text-[var(--foreground)] overflow-y-auto">
-        <div className="flex-1 flex flex-col items-center justify-center p-10 px-5">
+        <div className="flex-1 flex flex-col items-center justify-center" style={{ padding: 'var(--space-10) var(--space-5)' }}>
           <div className="max-w-[600px] w-full text-center">
-            <Zap size={48} className="text-[var(--gold)] mx-auto mb-6" />
-            <h1 className="text-[28px] font-bold mb-4 text-[var(--foreground)]">Période d'essai terminée</h1>
-            <p className="text-[16px] text-[var(--foreground-subtle)] mb-10 leading-relaxed">
+            <Zap size={48} className="text-[var(--gold)] mx-auto" style={{ marginBottom: 'var(--space-6)' }} />
+            <h1 className="text-[28px] font-bold text-[var(--foreground)]" style={{ marginBottom: 'var(--space-4)' }}>Période d'essai terminée</h1>
+            <p className="text-[16px] text-[var(--foreground-subtle)] leading-relaxed" style={{ marginBottom: 'var(--space-10)' }}>
               Votre essai gratuit de 24 heures est arrivé à expiration. Pour continuer à utiliser FacturaPro sans interruption, veuillez activer votre abonnement ci-dessous.
             </p>
-            <div className="bg-[var(--surface-1)] border border-[var(--border)] rounded-3xl p-6 text-left shadow-[0_20px_40px_rgba(0,0,0,0.2)]">
+            <div className="bg-[var(--surface-1)] border border-[var(--border)] rounded-3xl text-left shadow-[0_20px_40px_rgba(0,0,0,0.2)]" style={{ padding: 'var(--space-6)' }}>
               <Pricing />
             </div>
             <button 
               onClick={() => { sessionStorage.removeItem('token'); window.location.href = '/login'; }} 
-              className="mt-8 bg-transparent border-none text-[var(--foreground-muted)] text-[14px] cursor-pointer underline hover:text-[var(--foreground)]"
+              className="bg-transparent border-none text-[var(--foreground-muted)] text-[14px] cursor-pointer underline hover:text-[var(--foreground)]"
+              style={{ marginTop: 'var(--space-8)' }}
             >
               Se déconnecter
             </button>
@@ -370,17 +362,20 @@ function AppLayout() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--background)', color: 'var(--foreground)', overflow: 'hidden' }}>
-
       {/* Trial banner */}
       {isTrial && trialHours <= 24 && (
-        <div className="relative z-[200] border-b border-[var(--border-gold)] px-5 py-2 flex items-center justify-center gap-3 backdrop-blur-md bg-gradient-to-r from-[rgba(201,168,76,0.15)] to-[rgba(226,200,120,0.1)]">
-          <Zap size={13} className="text-[var(--gold)] shrink-0" />
-          <span className="text-[12px] text-[var(--foreground-muted)]">
-            Il reste <strong className="text-[var(--gold)]">{trialHours} heure{trialHours !== 1 ? 's' : ''}</strong> à votre essai gratuit.
+        <div 
+          className="relative z-[200] border-b flex items-center justify-center backdrop-blur-md bg-gradient-to-r from-[rgba(201,168,76,0.15)] to-[rgba(226,200,120,0.1)]"
+          style={{ borderColor: 'var(--color-border-gold)', padding: 'var(--space-3) var(--space-5)', gap: 'var(--space-4)' }}
+        >
+          <Zap size={13} style={{ color: 'var(--color-primary)' }} className="shrink-0" />
+          <span className="text-[12px]" style={{ color: 'var(--color-text-secondary)' }}>
+            Il reste <strong style={{ color: 'var(--color-primary)' }}>{trialHours} heure{trialHours !== 1 ? 's' : ''}</strong> à votre essai gratuit.
           </span>
           <button 
             onClick={() => useAppStore.getState().setCurrentModule('pricing' as any)} 
-            className="bg-[var(--gold)] text-[#0A0A0F] border-none px-3 py-1 text-[11px] font-bold cursor-pointer hover:opacity-90"
+            className="fp-btn-primary"
+            style={{ padding: 'var(--space-2) var(--space-4)', fontSize: 'var(--text-xs)', height: 'auto', minHeight: 'unset' }}
           >
             S'abonner
           </button>
@@ -390,11 +385,18 @@ function AppLayout() {
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
       {/* Sidebar Placeholder */}
-      <div style={{ width: isCollapsed ? '68px' : '228px', flexShrink: 0, position: 'relative', transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1)', marginLeft: '16px' }}>
+      <div style={{ width: isCollapsed ? '68px' : '228px', flexShrink: 0, position: 'relative', transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} isCollapsed={isCollapsed} onToggleCollapse={() => setIsCollapsed(!isCollapsed)} />
         <style>{`
           @media (min-width: 769px) {
-            .app-sidebar { transform: translateX(0) !important; box-shadow: none !important; }
+            .app-sidebar { 
+              transform: translateX(0) !important; 
+              box-shadow: none !important; 
+              position: absolute !important;
+              top: 0 !important;
+              left: 0 !important;
+              height: 100% !important;
+            }
           }
         `}</style>
       </div>
@@ -402,9 +404,10 @@ function AppLayout() {
       {/* Main */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0, marginLeft: 0 }}>
 
+
         {/* Header */}
         <header className="fp-header" style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)', backdropFilter: 'blur(12px)' }}>
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex items-center min-w-0" style={{ gap: 'var(--space-3)' }}>
             <button 
               onClick={() => setSidebarOpen(true)} 
               className="mobile-only w-[30px] h-[30px] bg-[var(--surface-2)] border border-[var(--border)] flex items-center justify-center cursor-pointer shrink-0 transition-colors duration-150 hover:border-[var(--border-hover)]"
@@ -412,7 +415,7 @@ function AppLayout() {
               <Menu className="w-3.5 h-3.5 text-[var(--foreground-muted)]" />
             </button>
             {/* Breadcrumb */}
-            <div className="flex items-center gap-1.5 text-[13px]">
+            <div className="flex items-center text-[13px]" style={{ gap: 'var(--space-2)' }}>
               <span className="text-[var(--foreground-subtle)] font-medium">FacturaPro</span>
               <ChevronRight size={11} className="text-[var(--foreground-subtle)]" />
               <span className="text-[var(--foreground)] font-bold" style={{ fontFamily: 'var(--font-display)' }}>{active?.label}</span>
@@ -420,52 +423,53 @@ function AppLayout() {
           </div>
 
           {/* Header right */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
             {/* Notification bell */}
             <Popover>
               <PopoverTrigger 
                   style={{
-                  width: '32px', height: '32px',
-                  background: 'var(--surface-2)', border: '1px solid var(--border)',
+                  width: 'var(--space-8)', height: 'var(--space-8)',
+                  background: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', position: 'relative', transition: 'all 0.2s', borderRadius: 0
+                  cursor: 'pointer', position: 'relative', transition: 'all 0.2s', borderRadius: 'var(--radius-md)'
                 }}
-                  className="hover:border-[var(--border-hover)] hover:bg-[var(--surface-hover)]"
+                  className="hover:border-[var(--color-border-focus)] hover:bg-[var(--color-bg-page)]"
                 >
-                  <Bell style={{ width: '14px', height: '14px', color: 'var(--foreground-muted)' }}/>
-                  <div style={{ position: 'absolute', top: '7px', right: '7px', width: '6px', height: '6px', borderRadius: 0, background: 'var(--gold)', border: '1.5px solid var(--surface-2)' }}/>
+                  <Bell style={{ width: 'var(--space-5)', height: 'var(--space-5)', color: 'var(--color-text-secondary)' }}/>
+                  <div style={{ position: 'absolute', top: 'var(--space-2)', right: 'var(--space-2)', width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-primary)', border: '2px solid var(--color-bg-card)' }}/>
               </PopoverTrigger>
-              <PopoverContent className="w-[380px] p-0 mt-2 rounded-none shadow-[0_32px_96px_rgba(0,0,0,0.18)] border border-[var(--border)] overflow-hidden bg-[var(--surface)]" align="end" sideOffset={12}>
-                <div className="px-6 py-5 border-b border-[var(--border)] bg-[var(--surface)] flex justify-between items-center">
-                  <h4 className="font-bold text-[14px] text-[var(--foreground)] tracking-tight">Notifications</h4>
-                  <span className="text-[10px] text-[var(--gold)] font-bold tracking-wide uppercase bg-[var(--gold-dim)] px-2.5 py-1 rounded-none border border-[var(--border-gold)]">3 Nouvelles</span>
+              <PopoverContent className="w-[var(--space-96)] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] border border-[var(--color-border-default)] overflow-hidden" style={{ background: 'var(--color-bg-card)', marginTop: 'var(--space-2)', padding: 0 }} align="end" sideOffset={12}>
+                <div style={{ padding: 'var(--space-4) var(--space-5)', borderBottom: '1px solid var(--color-border-subtle)', background: 'var(--color-bg-card)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h4 style={{ fontWeight: 'var(--font-weight-semibold)', fontSize: 'var(--text-base)', color: 'var(--color-text-primary)', margin: 0 }}>Notifications</h4>
+                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-primary)', fontWeight: 'var(--font-weight-bold)', letterSpacing: '0.05em', textTransform: 'uppercase', background: 'var(--color-primary-subtle)', padding: 'var(--space-1) var(--space-2)', borderRadius: 'var(--radius-sm)' }}>1 Nouvelle</span>
                 </div>
-                <div className="flex flex-col max-h-[350px] overflow-y-auto custom-scrollbar bg-[var(--background)]">
-                  <div className="px-6 py-4 border-b border-[var(--border)] bg-white cursor-pointer hover:bg-[var(--surface-1)] transition-colors relative">
-                    <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[var(--gold)]" />
-                    <div className="flex justify-between items-start mb-1.5">
-                      <p className="text-[13px] font-semibold text-[var(--foreground)]">Paiement reçu</p>
-                      <span className="text-[10px] text-[var(--foreground-subtle)] font-medium">Il y a 10 min</span>
+                <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '350px', overflowY: 'auto', background: 'var(--color-bg-page)' }}>
+                  {/* Non-lue : fond primary-subtle + barre gauche (toujours ensemble) */}
+                  <div style={{ padding: 'var(--space-4) var(--space-5)', borderBottom: '1px solid var(--color-border-subtle)', background: 'var(--color-primary-subtle)', cursor: 'pointer', position: 'relative', paddingLeft: 'calc(var(--space-5) + 3px)', borderLeft: '3px solid var(--color-primary)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-1)' }}>
+                      <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)', margin: 0 }}>Paiement reçu</p>
+                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', fontWeight: 'var(--font-weight-medium)' }}>Il y a 10 min</span>
                     </div>
-                    <p className="text-[12px] text-[var(--foreground-muted)] line-clamp-2 leading-relaxed">Le client <strong className="text-[var(--foreground)]">Acme Corp</strong> a réglé la facture <span className="text-[var(--gold)] font-mono text-[11px]">#FAC-2026-001</span> de 1 200,00 $.</p>
+                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', margin: 0, lineHeight: '16px' }}>Le client <strong style={{ color: 'var(--color-text-primary)' }}>Acme Corp</strong> a réglé la facture <span style={{ color: 'var(--color-primary)', fontFamily: 'monospace', fontSize: '11px' }}>#FAC-2026-001</span> de 1 200,00 $.</p>
                   </div>
-                  <div className="px-6 py-4 border-b border-[var(--border)] bg-[var(--surface-2)] cursor-pointer hover:bg-[var(--surface-1)] transition-colors">
-                    <div className="flex justify-between items-start mb-1.5">
-                      <p className="text-[13px] font-semibold text-[var(--foreground)] opacity-80">Rappel automatique</p>
-                      <span className="text-[10px] text-[var(--foreground-subtle)] font-medium">Il y a 2h</span>
+                  {/* Lue : fond transparent, pas de barre */}
+                  <div style={{ padding: 'var(--space-4) var(--space-5)', borderBottom: '1px solid var(--color-border-subtle)', background: 'transparent', cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-1)' }}>
+                      <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-secondary)', margin: 0 }}>Rappel automatique</p>
+                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', fontWeight: 'var(--font-weight-medium)' }}>Il y a 2h</span>
                     </div>
-                    <p className="text-[12px] text-[var(--foreground-muted)] line-clamp-2 leading-relaxed">Le devis <span className="font-mono text-[11px]">#DEV-2026-014</span> est en attente d'approbation depuis 7 jours.</p>
+                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', margin: 0, lineHeight: '16px' }}>Le devis <span style={{ fontFamily: 'monospace', fontSize: '11px' }}>#DEV-2026-014</span> est en attente d’approbation depuis 7 jours.</p>
                   </div>
-                  <div className="px-6 py-4 bg-[var(--surface-2)] cursor-pointer hover:bg-[var(--surface-1)] transition-colors">
-                    <div className="flex justify-between items-start mb-1.5">
-                      <p className="text-[13px] font-semibold text-[var(--foreground)] opacity-80">Bienvenue sur FacturaPro</p>
-                      <span className="text-[10px] text-[var(--foreground-subtle)] font-medium">Hier</span>
+                  <div style={{ padding: 'var(--space-4) var(--space-5)', background: 'transparent', cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-1)' }}>
+                      <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-secondary)', margin: 0 }}>Bienvenue sur FacturaPro</p>
+                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', fontWeight: 'var(--font-weight-medium)' }}>Hier</span>
                     </div>
-                    <p className="text-[12px] text-[var(--foreground-muted)] line-clamp-2 leading-relaxed">Votre compte a été configuré avec succès. Explorez votre tableau de bord.</p>
+                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', margin: 0, lineHeight: '16px' }}>Votre compte a été configuré avec succès. Explorez votre tableau de bord.</p>
                   </div>
                 </div>
-                <div className="p-3 bg-[var(--surface-2)] border-t border-[var(--border)] text-center">
-                  <button className="text-[11px] font-bold text-[var(--foreground-subtle)] uppercase tracking-widest hover:text-[var(--foreground)] transition-colors w-full py-2" onClick={() => toast.success("Toutes les notifications marquées comme lues.")}>Marquer tout comme lu</button>
+                <div style={{ padding: 'var(--space-3) var(--space-5)', background: 'var(--color-bg-modal-footer)', borderTop: '1px solid var(--color-border-subtle)', textAlign: 'center' }}>
+                  <button style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', background: 'transparent', border: 'none', cursor: 'pointer', width: '100%', padding: 'var(--space-2)' }} onClick={() => toast.success("Toutes les notifications marquées comme lues.")}>Marquer tout comme lu</button>
                 </div>
               </PopoverContent>
             </Popover>
@@ -474,39 +478,41 @@ function AppLayout() {
             <Popover>
               <PopoverTrigger 
                   style={{
-                  width: '32px', height: '32px',
-                  background: 'var(--gold-dim)', border: '1px solid var(--border-gold)',
+                  width: 'var(--space-8)', height: 'var(--space-8)',
+                  background: 'var(--color-primary-subtle)', border: '1px solid var(--color-primary)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', transition: 'all 0.2s', borderRadius: 0,
-                  fontSize: '11px', fontWeight: 800, color: 'var(--gold)',
+                  cursor: 'pointer', transition: 'all 0.2s', borderRadius: 'var(--radius-md)',
+                  fontSize: 'var(--text-md)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-primary)',
                 }}
-                  className="hover:bg-[var(--gold)] hover:text-white"
+                  className="hover:bg-[var(--color-primary)] hover:text-white"
                 >
                   {initials}
               </PopoverTrigger>
-              <PopoverContent className="w-[280px] p-0 mt-2 rounded-none shadow-[0_32px_96px_rgba(0,0,0,0.18)] border border-[var(--border)] overflow-hidden bg-[var(--surface)]" align="end" sideOffset={12}>
-                <div className="p-5 border-b border-[var(--border)] bg-[var(--surface)]">
-                  <p className="text-[14px] font-bold text-[var(--foreground)] tracking-tight truncate">{user?.company || user?.name || 'Utilisateur'}</p>
-                  <p className="text-[12px] text-[var(--foreground-muted)] truncate mt-0.5">{user?.email || 'email@example.com'}</p>
+              <PopoverContent className="rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] border overflow-hidden" style={{ width: '280px', borderColor: 'var(--color-border-default)', background: 'var(--color-bg-card)', marginTop: 'var(--space-2)', padding: 0 }} align="end" sideOffset={12}>
+                <div style={{ padding: 'var(--space-4) var(--space-5)', borderBottom: '1px solid var(--color-border-subtle)', background: 'var(--color-bg-card)' }}>
+                  <p style={{ fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>{user?.company || user?.name || 'Utilisateur'}</p>
+                  <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: 'var(--space-1)', margin: 0 }}>{user?.email || 'email@example.com'}</p>
                 </div>
-                <div className="p-2 flex flex-col gap-1 bg-[var(--surface-2)]">
+                <div style={{ display: 'flex', flexDirection: 'column', padding: 'var(--space-2)', gap: 'var(--space-1)', background: 'var(--color-bg-page)' }}>
                   <button 
                     onClick={() => { useAppStore.getState().setCurrentModule('settings' as any); document.dispatchEvent(new MouseEvent('click')); }}
-                    className="flex items-center gap-3 px-4 py-2.5 text-[13px] font-semibold text-[var(--foreground)] rounded-none hover:bg-white transition-colors w-full text-left shadow-sm"
+                    className="hover:bg-[var(--color-bg-card)]"
+                    style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-3) var(--space-4)', fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)', background: 'transparent', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', borderRadius: 'var(--radius-sm)' }}
                   >
-                    <SettingsIcon size={16} className="text-[var(--foreground-muted)]" /> Paramètres du compte
+                    <SettingsIcon size={16} style={{ color: 'var(--color-text-secondary)' }} /> Paramètres du compte
                   </button>
                   <button 
                     onClick={() => { useAppStore.getState().setCurrentModule('catalog' as any); document.dispatchEvent(new MouseEvent('click')); }}
-                    className="flex items-center gap-3 px-4 py-2.5 text-[13px] font-semibold text-[var(--foreground)] rounded-none hover:bg-white transition-colors w-full text-left shadow-sm"
+                    className="hover:bg-[var(--color-bg-card)]"
+                    style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-3) var(--space-4)', fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)', background: 'transparent', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', borderRadius: 'var(--radius-sm)' }}
                   >
-                    <LayoutList size={16} className="text-[var(--foreground-muted)]" /> Mon Catalogue
+                    <LayoutList size={16} style={{ color: 'var(--color-text-secondary)' }} /> Mon Catalogue
                   </button>
                 </div>
-                <div className="p-2 border-t border-[var(--border)] bg-[var(--surface-1)]">
+                <div style={{ padding: 'var(--space-2)', borderTop: '1px solid var(--color-border-subtle)', background: 'var(--color-bg-card)' }}>
                   <button 
                     onClick={handleLogout}
-                    className="flex items-center gap-3 px-4 py-2.5 text-[13px] font-semibold text-red-600 rounded-none hover:bg-red-50 hover:text-red-700 transition-colors w-full text-left"
+                    style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-3) var(--space-4)', fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-danger)', background: 'rgba(211, 47, 47, 0.05)', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', borderRadius: 'var(--radius-sm)' }}
                   >
                     <LogOut size={16} /> Déconnexion
                   </button>
@@ -543,12 +549,12 @@ function AppLayout() {
 function PremiumOverlay({ featureName }: { featureName: string }) {
   const { setCurrentModule } = useAppStore();
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', textAlign: 'center', padding: '20px' }}>
-      <div style={{ width: '60px', height: '60px', background: 'var(--gold-dim)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', textAlign: 'center', padding: 'var(--space-5)' }}>
+      <div style={{ width: 64, height: 64, background: 'var(--gold-dim)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'var(--space-5)' }}>
         <Zap size={28} style={{ color: 'var(--gold)' }} />
       </div>
-      <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--foreground)', marginBottom: '10px' }}>Bientôt disponible</h2>
-      <p style={{ color: 'var(--foreground-subtle)', maxWidth: '400px', lineHeight: 1.5, marginBottom: '24px' }}>
+      <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--foreground)', marginBottom: 'var(--space-3)' }}>Bientôt disponible</h2>
+      <p style={{ color: 'var(--foreground-subtle)', maxWidth: '400px', lineHeight: 1.5, marginBottom: 'var(--space-5)' }}>
         La fonctionnalité <strong style={{ color: 'var(--foreground)' }}>{featureName}</strong> est en cours de développement. 
         Elle sera très bientôt disponible pour enrichir votre expérience sur FacturaPro.
       </p>

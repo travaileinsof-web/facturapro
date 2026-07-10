@@ -107,8 +107,8 @@ function CompanyForm({
           </div>
           <div>
             <label style={labelStyle}>Couleur principale</label>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <input type="color" value={form.primaryColor || '#0f172a'} onChange={e => set('primaryColor', e.target.value)} style={{ width: '42px', height: '38px', padding: '2px', border: '1px solid var(--border)', background: 'var(--surface-2)', cursor: 'pointer' }} />
+            <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
+              <input type="color" value={form.primaryColor || '#0f172a'} onChange={e => set('primaryColor', e.target.value)} style={{ width: '42px', height: '38px', padding: 'var(--space-1)', border: '1px solid var(--border)', background: 'var(--surface-2)', cursor: 'pointer' }} />
               <input style={{ ...inputStyle, flex: 1, fontFamily: 'var(--font-mono)' }} value={form.primaryColor || ''} onChange={e => set('primaryColor', e.target.value)} placeholder="#0f172a" />
             </div>
           </div>
@@ -120,20 +120,20 @@ function CompanyForm({
         <button
           type="button"
           onClick={() => setShowSmtp(!showSmtp)}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '10px 14px', background: 'var(--gold-dim)', border: '1px solid var(--border-gold)', color: 'var(--gold)', cursor: 'pointer', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: 'var(--space-3)', background: 'var(--gold-dim)', border: '1px solid var(--border-gold)', color: 'var(--gold)', cursor: 'pointer', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}
         >
-          <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
             <Mail size={13} /> Configuration Email SMTP {form.smtpPassSet ? '(configuré ✓)' : ''}
           </span>
           {showSmtp ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
         </button>
 
         {showSmtp && (
-          <div style={{ padding: '24px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderTop: 'none', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <p style={{ fontSize: '12px', color: 'var(--foreground-muted)', lineHeight: 1.6, padding: '12px 16px', background: 'rgba(0,0,0,0.03)', borderLeft: '2px solid var(--gold)' }}>
+          <div style={{ padding: 'var(--space-5)', background: 'var(--surface-2)', border: '1px solid var(--border)', borderTop: 'none', display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
+            <p style={{ fontSize: '12px', color: 'var(--foreground-muted)', lineHeight: 1.6, padding: 'var(--space-3) var(--space-4)', background: 'rgba(0,0,0,0.03)', borderLeft: '2px solid var(--gold)' }}>
               Configurez un serveur SMTP spécifique pour cette entreprise. Les factures et relances seront envoyées depuis cet email.
             </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-5)' }}>
               <div>
                 <label style={labelStyle}>Hôte SMTP</label>
                 <input style={inputStyle} value={form.smtpHost || ''} onChange={e => set('smtpHost', e.target.value)} placeholder="smtp.gmail.com" />
@@ -164,7 +164,7 @@ function CompanyForm({
       </div>
 
       {/* Actions */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '16px', paddingTop: '24px', borderTop: '1px solid var(--border)', marginTop: '8px' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-4)', paddingTop: 'var(--space-5)', borderTop: '1px solid var(--border)', marginTop: 'var(--space-2)' }}>
         <button type="button" onClick={onCancel} className="fp-btn-ghost">
           Annuler
         </button>
@@ -215,32 +215,32 @@ export function Companies() {
   };
 
   return (
-    <div style={{ maxWidth: '860px', margin: '0 auto', paddingBottom: '40px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div style={{ maxWidth: '860px', margin: '0 auto', paddingBottom: 'var(--space-8)', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: '1px solid var(--border)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-4) 0', borderBottom: '1px solid var(--border)' }}>
         <div>
           <p style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 700, color: 'var(--foreground)' }}>Mes Entreprises</p>
           <p style={{ fontSize: '12px', color: 'var(--foreground-muted)', marginTop: '4px' }}>
             Gérez plusieurs entités. Chaque entreprise a ses propres informations et config email SMTP.
           </p>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 'var(--space-1)' }}>
           <button
             disabled
             className="fp-btn-primary"
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.5, cursor: 'not-allowed' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', opacity: 0.5, cursor: 'not-allowed' }}
           >
             <Plus size={14} /> Nouvelle entreprise
           </button>
-          <span style={{ fontSize: '10px', background: 'var(--gold-dim)', color: 'var(--gold)', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>Bientôt disponible</span>
+          <span style={{ fontSize: '10px', background: 'var(--gold-dim)', color: 'var(--gold)', padding: 'var(--space-1) var(--space-2)', borderRadius: '4px', fontWeight: 600 }}>Bientôt disponible</span>
         </div>
       </div>
 
       {/* Create form */}
       {creating && (
-        <div style={{ border: '1px solid var(--border-gold)', background: 'var(--gold-dim)', padding: '20px' }}>
-          <p style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--gold)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ border: '1px solid var(--border-gold)', background: 'var(--gold-dim)', padding: 'var(--space-5)' }}>
+          <p style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--gold)', marginBottom: 'var(--space-4)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
             <Plus size={12} /> Nouvelle entreprise
           </p>
           <CompanyForm isNew onSave={createCompany} onCancel={() => setCreating(false)} />
@@ -251,7 +251,7 @@ export function Companies() {
       {(companies as any[]).map((company: any) => (
         <div key={company.id} style={{ border: `1px solid ${company.isDefault ? 'var(--border-gold)' : 'var(--border)'}`, background: company.isDefault ? 'var(--gold-dim)' : 'var(--surface)' }}>
           {/* Company header row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 18px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-3) var(--space-4)' }}>
             <div style={{ width: '36px', height: '36px', background: company.isDefault ? 'var(--gold)' : 'var(--surface-2)', border: `1px solid ${company.isDefault ? 'var(--gold)' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               {company.isDefault
                 ? <Star size={15} style={{ color: '#fff' }} />
@@ -259,15 +259,15 @@ export function Companies() {
               }
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
                 <p style={{ fontWeight: 700, fontSize: '14px', color: 'var(--foreground)' }}>{company.name}</p>
                 {company.isDefault && (
-                  <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', background: 'var(--gold)', color: '#fff', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 700, padding: 'var(--space-1) var(--space-2)', background: 'var(--gold)', color: '#fff', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
                     Principal
                   </span>
                 )}
                 {company.smtpPassSet && (
-                  <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 8px', background: 'rgba(16,185,129,0.1)', color: 'var(--emerald)', border: '1px solid rgba(16,185,129,0.2)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 600, padding: 'var(--space-1) var(--space-2)', background: 'rgba(16,185,129,0.1)', color: 'var(--emerald)', border: '1px solid rgba(16,185,129,0.2)', display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
                     <Mail size={9} /> SMTP configuré
                   </span>
                 )}
@@ -283,21 +283,21 @@ export function Companies() {
                 <button
                   onClick={() => setDefault(company.id)}
                   title="Définir comme principale"
-                  style={{ padding: '6px 10px', fontSize: '11px', fontWeight: 600, background: 'var(--surface)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+                  style={{ padding: 'var(--space-1) var(--space-2)', fontSize: '11px', fontWeight: 600, background: 'var(--surface)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
                 >
                   <Check size={11} /> Définir principale
                 </button>
               )}
               <button
                 onClick={() => setExpanded(expanded === company.id ? null : company.id)}
-                style={{ padding: '6px 10px', fontSize: '11px', fontWeight: 600, background: 'var(--surface)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+                style={{ padding: 'var(--space-1) var(--space-2)', fontSize: '11px', fontWeight: 600, background: 'var(--surface)', border: '1px solid var(--border-hover)', color: 'var(--foreground)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
               >
                 <Settings2 size={11} /> Modifier
               </button>
               {!company.isDefault && (
                 <button
                   onClick={() => deleteCompany(company.id, company.name)}
-                  style={{ padding: '6px 10px', fontSize: '11px', fontWeight: 600, background: 'transparent', border: '1px solid rgba(220,38,38,0.3)', color: 'var(--destructive)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+                  style={{ padding: 'var(--space-1) var(--space-2)', fontSize: '11px', fontWeight: 600, background: 'transparent', border: '1px solid rgba(220,38,38,0.3)', color: 'var(--destructive)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
                 >
                   <Trash2 size={11} />
                 </button>
@@ -307,7 +307,7 @@ export function Companies() {
 
           {/* Edit form expanded */}
           {expanded === company.id && (
-            <div style={{ padding: '20px', borderTop: '1px solid var(--border)', background: 'var(--surface)' }}>
+            <div style={{ padding: 'var(--space-5)', borderTop: '1px solid var(--border)', background: 'var(--surface)' }}>
               <CompanyForm
                 initial={company}
                 onSave={(data) => saveCompany(company.id, data)}
@@ -319,7 +319,7 @@ export function Companies() {
       ))}
 
       {companies.length === 0 && !creating && (
-        <div style={{ padding: '40px', textAlign: 'center', border: '1px dashed var(--border)', background: 'var(--surface-2)' }}>
+        <div style={{ padding: 'var(--space-8)', textAlign: 'center', border: '1px dashed var(--border)', background: 'var(--surface-2)' }}>
           <Building2 size={32} style={{ color: 'var(--foreground-subtle)', margin: '0 auto 12px' }} />
           <p style={{ fontSize: '13px', color: 'var(--foreground-muted)' }}>Aucune entreprise configurée.</p>
           <button onClick={() => setCreating(true)} className="fp-btn-primary" style={{ marginTop: '16px' }}>
@@ -329,7 +329,7 @@ export function Companies() {
       )}
 
       {/* Info block */}
-      <div style={{ padding: '12px 16px', background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'flex', gap: '10px' }}>
+      <div style={{ padding: 'var(--space-3) var(--space-4)', background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'flex', gap: 'var(--space-2)' }}>
         <div style={{ flexShrink: 0, marginTop: '1px' }}>
           <Mail size={13} style={{ color: 'var(--gold)' }} />
         </div>

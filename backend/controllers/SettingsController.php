@@ -26,6 +26,10 @@ class SettingsController {
         if ($method === 'GET') {
             $mappedAccount = [];
             foreach ($safeAccount as $key => $value) {
+                if ($key === 'smtppass') {
+                    $mappedAccount['smtpPassSet'] = !empty($value);
+                    continue;
+                }
                 if (isset($camelMap[$key])) {
                     $mappedAccount[$camelMap[$key]] = $value;
                 } else {
@@ -51,11 +55,16 @@ class SettingsController {
                 $params[] = $newToken;
             }
 
-            foreach (['companyName', 'slogan', 'address', 'phone', 'website', 'taxId', 'bankName', 'bankAccount', 'logo', 'stamp', 'signature', 'primaryColor', 'secondaryColor', 'accentColor', 'whatsappMessage', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpPass', 'smtpEncryption', 'currency'] as $field) {
+            foreach (['companyName', 'slogan', 'address', 'phone', 'website', 'taxId', 'bankName', 'bankAccount', 'logo', 'stamp', 'signature', 'primaryColor', 'secondaryColor', 'accentColor', 'whatsappMessage', 'smtpHost', 'smtpPort', 'smtpUser', 'smtpEncryption', 'currency'] as $field) {
                 if (array_key_exists($field, $body)) {
                     $updates[] = "$field = ?";
                     $params[] = $body[$field];
                 }
+            }
+            
+            if (!empty($body['smtpPass'])) {
+                $updates[] = "smtpPass = ?";
+                $params[] = $body['smtpPass'];
             }
             
             if (count($updates) > 0) {
@@ -75,6 +84,10 @@ class SettingsController {
             
             $mappedUpdatedAccount = [];
             foreach ($updatedAccount as $key => $value) {
+                if ($key === 'smtppass') {
+                    $mappedUpdatedAccount['smtpPassSet'] = !empty($value);
+                    continue;
+                }
                 if (isset($camelMap[$key])) {
                     $mappedUpdatedAccount[$camelMap[$key]] = $value;
                 } else {
