@@ -201,10 +201,10 @@ class PaymentController {
             return ['error' => 'Payload JSON invalide', 'status' => 400];
         }
 
-        $eventType = $data['eventType'] ?? '';
-        $paymentData = $data['data'] ?? [];
-        $metadata = $data['metadata'] ?? [];
-        $reference = $metadata['reference'] ?? $paymentData['merchantPaymentReference'] ?? '';
+        $eventType = $data['eventType'] ?? $data['event'] ?? $data['type'] ?? $data['status'] ?? '';
+        $paymentData = $data['data'] ?? $data;
+        $metadata = $data['metadata'] ?? $paymentData['metadata'] ?? [];
+        $reference = $metadata['reference'] ?? $paymentData['merchantPaymentReference'] ?? $paymentData['reference'] ?? '';
 
         // Log Webhook
         try {
