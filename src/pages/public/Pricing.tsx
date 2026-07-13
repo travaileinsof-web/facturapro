@@ -100,7 +100,7 @@ export function Pricing() {
         <PublicNavbar />
 
         {/* ── En-tête ──────────────────────────────────────────────────────── */}
-      <div style={{ paddingTop: '160px', paddingBottom: '80px', textAlign: 'center', padding: '160px 32px 80px' }}>
+      <div style={{ textAlign: 'center', padding: '120px 20px 60px' }}>
         <Reveal delay={0}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid rgba(212, 175, 55, 0.3)', paddingBottom: '8px', marginBottom: '24px' }}>
             <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-gold)' }} />
@@ -123,14 +123,14 @@ export function Pricing() {
         </Reveal>
       </div>
 
-      <div style={{ padding: '0 32px 120px' }}>
+      <div style={{ padding: '0 20px 80px' }}>
         <div style={{ maxWidth: '520px', margin: '0 auto' }}>
 
           {/* ── Carte Tarif ──────────────────────────────────────────────── */}
           <Reveal delay={0.3}>
             <div style={{
               background: 'var(--color-surface)', borderRadius: '2px', border: '1px solid rgba(212, 175, 55, 0.4)',
-              padding: '56px 48px', position: 'relative', marginBottom: '48px', overflow: 'hidden',
+              padding: '40px 24px', position: 'relative', marginBottom: '48px', overflow: 'hidden',
               boxShadow: '0 20px 40px rgba(0, 0, 0, 0.2)', transition: 'all 0.4s ease'
             }}
               onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.transform = 'translateY(-4px)'; el.style.boxShadow = '0 30px 60px rgba(0, 0, 0, 0.3), 0 0 40px rgba(212, 175, 55, 0.1)'; }}

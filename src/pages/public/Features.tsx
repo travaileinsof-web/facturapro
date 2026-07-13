@@ -103,7 +103,7 @@ function FeatureSection({ id, emoji, badge, title, lead, children, cta = true }:
   lead: string; children: React.ReactNode; cta?: boolean;
 }) {
   return (
-    <section id={id} aria-label={title} style={{ padding: '120px 32px', borderBottom: '1px solid var(--color-border)' }}>
+    <section id={id} aria-label={title} style={{ padding: '80px 20px', borderBottom: '1px solid var(--color-border)' }}>
       <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '80px', alignItems: 'center' }}>
           <Reveal delay={0}>
@@ -182,8 +182,8 @@ export function Features() {
         <PublicNavbar />
 
         {/* ── En-tête ──────────────────────────────────────────────────────── */}
-      <div style={{ paddingTop: '160px', paddingBottom: '100px', borderBottom: '1px solid var(--color-border)' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 32px', textAlign: 'center' }}>
+      <div style={{ padding: '120px 20px 80px', borderBottom: '1px solid var(--color-border)' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', textAlign: 'center' }}>
           <Reveal delay={0}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid rgba(212, 175, 55, 0.3)', paddingBottom: '8px', marginBottom: '24px' }}>
               <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-gold)' }} />
@@ -317,9 +317,9 @@ export function Features() {
       </FeatureSection>
 
       {/* ── FAQ Technique ────────────────────────────────────────────────── */}
-      <section aria-label="FAQ Technique" style={{ padding: '120px 32px', borderBottom: '1px solid var(--color-border)' }}>
+      <section aria-label="FAQ Technique" style={{ padding: '80px 20px', borderBottom: '1px solid var(--color-border)' }}>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-          <Reveal style={{ textAlign: 'center', marginBottom: '80px' }}>
+          <Reveal style={{ textAlign: 'center', marginBottom: '60px' }}>
             <div style={{ fontSize: '10px', fontWeight: 500, color: 'var(--color-gold)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '16px' }}>Technique</div>
             <h2 style={{ fontSize: 'clamp(26px, 3vw, 36px)', fontWeight: 400, color: 'var(--color-text)', letterSpacing: '-0.5px', fontFamily: '"Playfair Display", serif' }}>Questions fréquentes.</h2>
           </Reveal>
@@ -334,7 +334,7 @@ export function Features() {
       </section>
 
       {/* ── CTA Final ────────────────────────────────────────────────────── */}
-      <div style={{ textAlign: 'center', padding: '140px 32px', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ textAlign: 'center', padding: '100px 20px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(212, 175, 55, 0.05) 0%, transparent 70%)', zIndex: 0, pointerEvents: 'none' }} />
         <WavesShape style={{ bottom: '-10%', left: '0', width: '100%', height: '300px' }} opacity={0.15} />
         <GeometricShapes opacity={0.3} />

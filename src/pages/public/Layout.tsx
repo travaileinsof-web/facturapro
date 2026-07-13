@@ -92,7 +92,7 @@ export function PublicNavbar() {
 
         {/* Mobile menu drawer */}
         {menuOpen && (
-          <div className="pub-nav-mobile" style={{ borderTop: '1px solid #2A2421', background: '#141210', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <div className="pub-nav-mobile" style={{ borderTop: '1px solid #2A2421', background: '#141210', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: 'calc(100vh - 68px)', overflowY: 'auto' }}>
             {NAV_LINKS.map(link => (
               <Link key={link.to} to={link.to} style={{ padding: '12px 16px', borderRadius: '4px', textDecoration: 'none', fontSize: '14px', fontWeight: location.pathname === link.to ? 600 : 400, color: location.pathname === link.to ? '#B38E36' : '#A39B94', background: location.pathname === link.to ? 'rgba(179,142,54,0.05)' : 'transparent' }}>
                 {link.label}
@@ -111,8 +111,8 @@ export function PublicNavbar() {
 export function PublicFooter() {
   return (
     <footer style={{ background: '#141210', borderTop: '1px solid #2A2421', color: '#A39B94', paddingTop: '80px', paddingBottom: '40px' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '48px', marginBottom: '64px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '40px', marginBottom: '48px' }}>
           {/* Brand */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
@@ -184,7 +184,7 @@ export function PublicFooter() {
           </div>
         </div>
 
-        <div style={{ borderTop: '1px solid #2A2421', paddingTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+        <div style={{ borderTop: '1px solid #2A2421', paddingTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <span style={{ fontSize: '12px', color: '#78716C' }}>
             © {new Date().getFullYear()} FacturaPro — Par{' '}
             <a href="https://einsofdigit.com" target="_blank" rel="noreferrer" style={{ color: '#EFEBE3', textDecoration: 'none' }}>EINSOFT DIGIT</a>

@@ -172,11 +172,11 @@ export function Home() {
         <PublicNavbar />
 
         {/* ── HERO ────────────────────────────────────────────────────────── */}
-      <section aria-label="Présentation FacturaPro" style={{ paddingTop: '160px', paddingBottom: '120px', borderBottom: '1px solid var(--color-border)', position: 'relative', overflow: 'hidden' }}>
+      <section aria-label="Présentation FacturaPro" style={{ padding: '120px 20px 80px', borderBottom: '1px solid var(--color-border)', position: 'relative', overflow: 'hidden' }}>
         <GridPattern opacity={0.3} />
         <BlobShape style={{ top: '-10%', left: '-10%', width: '800px', height: '800px' }} />
         <GeometricShapes opacity={0.6} />
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px', position: 'relative', zIndex: 1 }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '80px', alignItems: 'center' }}>
             {/* Left */}
             <div>
@@ -258,14 +258,14 @@ export function Home() {
 
 
       {/* ── 4 SECTIONS H2 ─────────────────────────────────────────────────── */}
-      <section aria-label="Fonctionnalités principales" style={{ padding: '120px 32px', borderBottom: '1px solid var(--color-border)' }}>
+      <section aria-label="Fonctionnalités principales" style={{ padding: '80px 20px', borderBottom: '1px solid var(--color-border)' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <Reveal style={{ textAlign: 'center', marginBottom: '80px' }}>
+          <Reveal style={{ textAlign: 'center', marginBottom: '60px' }}>
             <div style={{ fontSize: '10px', fontWeight: 500, color: 'var(--color-gold)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '16px' }}>Fonctionnalités</div>
             <h2 style={{ fontSize: '28px', color: 'var(--color-text)', fontFamily: '"Playfair Display", serif', fontWeight: 400 }}>L'excellence opérationnelle.</h2>
           </Reveal>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(460px, 1fr))', gap: '32px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '32px' }}>
             <HomeSection id="factures-conformes" emoji="I." title="Facturez en 2 minutes" delay={0}>
               <p>Chaque facture FacturaPro inclut automatiquement les mentions obligatoires en Guinée : <strong>RCCM, NIF, adresse</strong> et <strong>TVA à 18%</strong>. Vos clients obtiennent un document PDF d'une qualité professionnelle, avec votre logo et votre signature numérique.</p>
               <ul style={{ marginTop: '24px', paddingLeft: '0', listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -322,9 +322,9 @@ export function Home() {
 
 
       {/* ── FAQ ───────────────────────────────────────────────────────────── */}
-      <section aria-label="Questions fréquentes" style={{ padding: '120px 32px', borderBottom: '1px solid var(--color-border)' }}>
+      <section aria-label="Questions fréquentes" style={{ padding: '80px 20px', borderBottom: '1px solid var(--color-border)' }}>
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-          <Reveal style={{ textAlign: 'center', marginBottom: '80px' }}>
+          <Reveal style={{ textAlign: 'center', marginBottom: '60px' }}>
             <div style={{ fontSize: '10px', fontWeight: 500, color: 'var(--color-gold)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '16px' }}>Support</div>
             <h2 style={{ fontSize: '28px', color: 'var(--color-text)', fontFamily: '"Playfair Display", serif', fontWeight: 400 }}>Questions fréquentes.</h2>
           </Reveal>
@@ -339,7 +339,7 @@ export function Home() {
       </section>
 
       {/* ── CTA FINAL ─────────────────────────────────────────────────────── */}
-      <section aria-label="Appel à l'action" style={{ padding: '140px 32px', position: 'relative', overflow: 'hidden' }}>
+      <section aria-label="Appel à l'action" style={{ padding: '100px 20px', position: 'relative', overflow: 'hidden' }}>
         {/* Glow effect */}
         <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(212, 175, 55, 0.05) 0%, transparent 70%)', zIndex: 0, pointerEvents: 'none' }} />
         <WavesShape style={{ bottom: '-10%', left: '0', width: '100%', height: '300px' }} opacity={0.15} />

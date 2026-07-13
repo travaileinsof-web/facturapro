@@ -68,7 +68,7 @@ export function Contact() {
         <PublicNavbar />
 
         {/* ── En-tête ──────────────────────────────────────────────────────── */}
-        <div style={{ paddingTop: '160px', paddingBottom: '80px', textAlign: 'center', padding: '160px 32px 80px', position: 'relative', zIndex: 1 }}>
+        <div style={{ textAlign: 'center', padding: '120px 20px 60px', position: 'relative', zIndex: 1 }}>
           <Reveal delay={0}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid rgba(212, 175, 55, 0.3)', paddingBottom: '8px', marginBottom: '24px' }}>
               <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-gold)' }} />
@@ -88,7 +88,7 @@ export function Contact() {
         </Reveal>
       </div>
 
-      <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 32px 120px', display: 'grid', gridTemplateColumns: 'minmax(280px, 1fr) 2fr', gap: '60px', alignItems: 'start' }}>
+      <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 20px 80px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '40px', alignItems: 'start' }}>
 
         {/* ── Panneau de contact ────────────────────────────────────────── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', position: 'relative', zIndex: 1 }}>
@@ -158,7 +158,7 @@ export function Contact() {
 
         {/* ── Formulaire ───────────────────────────────────────────────── */}
         <Reveal delay={0.6}>
-          <div style={{ background: 'var(--color-surface)', borderRadius: '2px', border: '1px solid var(--color-border)', padding: '48px' }}>
+          <div style={{ background: 'var(--color-surface)', borderRadius: '2px', border: '1px solid var(--color-border)', padding: '32px 20px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: 400, color: 'var(--color-text)', marginBottom: '8px', fontFamily: '"Playfair Display", serif' }}>Envoyer un message</h2>
             <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '32px', fontWeight: 300 }}>
               Remplissez le formulaire ci-dessous. Nous vous répondons sous 24h.

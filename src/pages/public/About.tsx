@@ -41,8 +41,8 @@ export function About() {
         <PublicNavbar />
 
         {/* ── En-tête ──────────────────────────────────────────────────────── */}
-      <div style={{ paddingTop: '160px', paddingBottom: '100px', borderBottom: '1px solid var(--color-border)' }}>
-        <div style={{ maxWidth: '800px', margin: '0 auto', padding: '0 32px', textAlign: 'center' }}>
+      <div style={{ padding: '120px 20px 80px', borderBottom: '1px solid var(--color-border)' }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
           <Reveal delay={0}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid rgba(212, 175, 55, 0.3)', paddingBottom: '8px', marginBottom: '24px' }}>
               <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-gold)' }} />
@@ -64,7 +64,7 @@ export function About() {
       </div>
 
       {/* ── Contenu principal ─────────────────────────────────────────────── */}
-      <div style={{ maxWidth: '860px', margin: '0 auto', padding: '120px 32px' }}>
+      <div style={{ maxWidth: '860px', margin: '0 auto', padding: '80px 20px' }}>
 
         {/* H2 — Notre mission */}
         <section aria-label="Notre mission" style={{ marginBottom: '100px', position: 'relative', zIndex: 1 }}>
@@ -142,7 +142,7 @@ export function About() {
 
         {/* CTA discret */}
         <Reveal delay={0.2}>
-          <div style={{ textAlign: 'center', padding: '80px 40px', background: 'var(--color-surface)', borderRadius: '2px', border: '1px solid var(--color-border)', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ textAlign: 'center', padding: '60px 24px', background: 'var(--color-surface)', borderRadius: '2px', border: '1px solid var(--color-border)', position: 'relative', overflow: 'hidden' }}>
             <WavesShape style={{ bottom: '0', left: '0', width: '100%', height: '200px' }} opacity={0.15} />
             <div style={{ position: 'relative', zIndex: 1 }}>
               <p style={{ fontSize: '15px', color: 'var(--color-text)', marginBottom: '32px', fontWeight: 300, letterSpacing: '0.5px' }}>
