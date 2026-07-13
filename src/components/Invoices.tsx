@@ -385,7 +385,7 @@ export function Invoices() {
         }
       />
 
-      <div className="fp-card overflow-hidden">
+      <div className="fp-card overflow-x-auto custom-scrollbar">
         <table className="fp-table">
           <thead>
             <tr>

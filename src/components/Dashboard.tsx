@@ -161,9 +161,9 @@ export function Dashboard() {
     );
   }
 
-  const encaisse  = stats?.encaisse  || 0;
-  const creances  = stats?.creances  || 0;
-  const potentiel = stats?.potentiel || 0;
+  const encaisse  = Number(String(stats?.encaisse || 0).replace(/\s/g, '')) || 0;
+  const creances  = Number(String(stats?.creances || 0).replace(/\s/g, '')) || 0;
+  const potentiel = Number(String(stats?.potentiel || 0).replace(/\s/g, '')) || 0;
   const total     = encaisse + creances + potentiel || 1;
   const encaisseRatio = Math.round((encaisse / total) * 100);
   const creancesRatio = Math.round((creances / total) * 100);

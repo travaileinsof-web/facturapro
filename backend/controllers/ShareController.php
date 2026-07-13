@@ -129,6 +129,8 @@ class ShareController {
                     $errorMsg = $mail->ErrorInfo;
                     if (stripos($errorMsg, 'Could not authenticate') !== false) {
                         $errorMsg = "Vos identifiants SMTP sont incorrects. Si vous utilisez Gmail, vous devez générer un 'Mot de passe d\'application' et l\'utiliser à la place de votre mot de passe habituel.";
+                    } elseif (stripos($errorMsg, 'Could not connect to SMTP host') !== false) {
+                        $errorMsg = "Impossible de se connecter au serveur SMTP. Vérifiez que l'hôte, le port et le type de chiffrement (TLS/SSL) sont corrects dans vos Paramètres.";
                     }
                     echo json_encode(["error" => $errorMsg]);
                 }

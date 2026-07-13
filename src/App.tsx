@@ -302,6 +302,15 @@ function AppLayout() {
       document.documentElement.style.setProperty('--primary', pc);
       document.documentElement.style.setProperty('--border-gold', `rgba(${rgb}, 0.25)`);
       document.documentElement.style.setProperty('--ring', pc);
+
+      // Support for Tailwind v4 mapping
+      document.documentElement.style.setProperty('--color-gold', pc);
+      document.documentElement.style.setProperty('--color-gold-light', pc);
+      document.documentElement.style.setProperty('--color-gold-dim', `rgba(${rgb}, 0.12)`);
+      document.documentElement.style.setProperty('--color-gold-glow', `rgba(${rgb}, 0.15)`);
+      document.documentElement.style.setProperty('--color-primary', pc);
+      document.documentElement.style.setProperty('--color-border-gold', `rgba(${rgb}, 0.25)`);
+      document.documentElement.style.setProperty('--color-ring', pc);
       
       if (sc) {
         const rgbSc = hexToRgb(sc);
@@ -309,12 +318,17 @@ function AppLayout() {
         document.documentElement.style.setProperty('--blue-dim', `rgba(${rgbSc}, 0.1)`);
         document.documentElement.style.setProperty('--color-blue-accent', sc);
         document.documentElement.style.setProperty('--secondary', sc);
+        
+        document.documentElement.style.setProperty('--color-secondary', sc);
+        document.documentElement.style.setProperty('--color-blue-dim', `rgba(${rgbSc}, 0.1)`);
       }
       
       if (ac) {
         document.documentElement.style.setProperty('--success', ac);
         document.documentElement.style.setProperty('--color-success', ac);
         document.documentElement.style.setProperty('--accent', ac);
+        
+        document.documentElement.style.setProperty('--color-accent', ac);
       }
     } else {
       document.documentElement.style.removeProperty('--gold');
@@ -324,11 +338,27 @@ function AppLayout() {
       document.documentElement.style.removeProperty('--primary');
       document.documentElement.style.removeProperty('--border-gold');
       document.documentElement.style.removeProperty('--ring');
+      
+      document.documentElement.style.removeProperty('--color-gold');
+      document.documentElement.style.removeProperty('--color-gold-light');
+      document.documentElement.style.removeProperty('--color-gold-dim');
+      document.documentElement.style.removeProperty('--color-gold-glow');
+      document.documentElement.style.removeProperty('--color-primary');
+      document.documentElement.style.removeProperty('--color-border-gold');
+      document.documentElement.style.removeProperty('--color-ring');
+
       document.documentElement.style.removeProperty('--blue-accent');
       document.documentElement.style.removeProperty('--blue-dim');
       document.documentElement.style.removeProperty('--color-blue-accent');
+      document.documentElement.style.removeProperty('--secondary');
+      
+      document.documentElement.style.removeProperty('--color-secondary');
+      document.documentElement.style.removeProperty('--color-blue-dim');
+
       document.documentElement.style.removeProperty('--success');
       document.documentElement.style.removeProperty('--color-success');
+      document.documentElement.style.removeProperty('--accent');
+      document.documentElement.style.removeProperty('--color-accent');
     }
     
   }, [user?.primaryColor, user?.secondaryColor, user?.accentColor]);
