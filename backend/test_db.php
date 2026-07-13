@@ -16,7 +16,7 @@ try {
         SELECT 
             TO_CHAR(createdAt, '$dateGroupFormat') as date, 
             SUM(CASE WHEN subscriptionPlan = 'free' THEN 1 ELSE 0 END) as freeAccounts,
-            SUM(CASE WHEN subscriptionPlan = 'premium' THEN 1 ELSE 0 END) as paidAccounts
+            SUM(CASE WHEN subscriptionPlan IN ('premium', 'annuel') THEN 1 ELSE 0 END) as paidAccounts
         FROM Account 
         WHERE createdAt >= NOW() - INTERVAL '$limitStr'
         GROUP BY TO_CHAR(createdAt, '$dateGroupFormat') ORDER BY date ASC

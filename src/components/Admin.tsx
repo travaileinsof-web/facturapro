@@ -554,8 +554,8 @@ function AdminAccounts({ accounts, onSelect }: { accounts: any[]; onSelect: (id:
       (a.firstName + ' ' + a.lastName)?.toLowerCase().includes(search.toLowerCase());
     const matchFilter =
       filter === 'all' ||
-      (filter === 'premium' && a.subscriptionPlan === 'premium' && a.subscriptionStatus === 'active') ||
-      (filter === 'free' && (a.subscriptionPlan !== 'premium' || a.subscriptionStatus !== 'active')) ||
+      (filter === 'premium' && (a.subscriptionPlan === 'premium' || a.subscriptionPlan === 'annuel') && a.subscriptionStatus === 'active') ||
+      (filter === 'free' && ((a.subscriptionPlan !== 'premium' && a.subscriptionPlan !== 'annuel') || a.subscriptionStatus !== 'active')) ||
       (filter === 'suspended' && a.isSuspended);
     return matchSearch && matchFilter;
   });
@@ -593,8 +593,8 @@ function AdminAccounts({ accounts, onSelect }: { accounts: any[]; onSelect: (id:
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           {filterBtn('all', 'Tous', accounts.length)}
-          {filterBtn('premium', 'Premium', accounts.filter(a => a.subscriptionPlan === 'premium' && a.subscriptionStatus === 'active').length)}
-          {filterBtn('free', 'Gratuit', accounts.filter(a => a.subscriptionPlan !== 'premium' || a.subscriptionStatus !== 'active').length)}
+          {filterBtn('premium', 'Premium', accounts.filter(a => (a.subscriptionPlan === 'premium' || a.subscriptionPlan === 'annuel') && a.subscriptionStatus === 'active').length)}
+          {filterBtn('free', 'Gratuit', accounts.filter(a => (a.subscriptionPlan !== 'premium' && a.subscriptionPlan !== 'annuel') || a.subscriptionStatus !== 'active').length)}
           {filterBtn('suspended', 'Suspendus', accounts.filter(a => a.isSuspended).length)}
         </div>
       </div>

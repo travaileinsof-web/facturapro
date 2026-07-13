@@ -90,14 +90,32 @@ export function Pricing() {
             <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 500 }}>{plan.period}</span>
           </div>
 
-          <button 
-            onClick={() => setShowModal(true)}
-            style={{ width: '100%', padding: 'var(--space-4)', background: plan.color, color: '#fff', border: 'none', borderRadius: 0, fontSize: '15px', fontWeight: 700, cursor: 'pointer', marginBottom: 'var(--space-6)', transition: 'opacity 0.2s', boxShadow: `0 4px 12px ${plan.color}30` }}
-            onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
-            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-          >
-            {plan.action}
-          </button>
+          {(() => {
+            const isSubscribed = user?.subscriptionStatus === 'active' && (user?.subscriptionPlan === 'annuel' || user?.subscriptionPlan === 'premium');
+            
+            if (isSubscribed) {
+              return (
+                <button 
+                  disabled
+                  style={{ width: '100%', padding: 'var(--space-4)', background: '#f1f5f9', color: '#64748b', border: '1px solid #cbd5e1', borderRadius: 0, fontSize: '15px', fontWeight: 700, cursor: 'not-allowed', marginBottom: 'var(--space-6)' }}
+                >
+                  <CheckCircle2 size={18} style={{ display: 'inline', verticalAlign: 'text-bottom', marginRight: '8px' }} />
+                  Abonnement Actif
+                </button>
+              );
+            }
+
+            return (
+              <button 
+                onClick={() => setShowModal(true)}
+                style={{ width: '100%', padding: 'var(--space-4)', background: plan.color, color: '#fff', border: 'none', borderRadius: 0, fontSize: '15px', fontWeight: 700, cursor: 'pointer', marginBottom: 'var(--space-6)', transition: 'opacity 0.2s', boxShadow: `0 4px 12px ${plan.color}30` }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+              >
+                {plan.action}
+              </button>
+            );
+          })()}
 
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
             {plan.features.map((feat, j) => (

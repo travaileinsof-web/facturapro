@@ -6,7 +6,7 @@ class SuperAdminController {
             $timeframe = $_GET['timeframe'] ?? '1y'; // 24h, 7d, 1m, 3m, 6m, 1y
 
             $totalAccounts = $pdo->query("SELECT COUNT(*) as c FROM Account")->fetch()['c'];
-            $premiumAccounts = $pdo->query("SELECT COUNT(*) as c FROM Account WHERE subscriptionPlan = 'premium' AND subscriptionStatus = 'active'")->fetch()['c'];
+            $premiumAccounts = $pdo->query("SELECT COUNT(*) as c FROM Account WHERE subscriptionPlan IN ('premium', 'annuel') AND subscriptionStatus = 'active'")->fetch()['c'];
             $freeAccounts = $pdo->query("SELECT COUNT(*) as c FROM Account WHERE subscriptionPlan = 'free' OR subscriptionStatus = 'trial'")->fetch()['c'];
             $suspendedAccounts = $pdo->query("SELECT COUNT(*) as c FROM Account WHERE isSuspended = 1")->fetch()['c'];
             $totalRevenue = $pdo->query("SELECT COALESCE(SUM(amount), 0) as r FROM SubscriptionPayment WHERE status = 'COMPLETED'")->fetch()['r'];
@@ -41,7 +41,7 @@ class SuperAdminController {
                 SELECT 
                     TO_CHAR(createdAt, '$dateGroupFormat') as date, 
                     SUM(CASE WHEN subscriptionPlan = 'free' THEN 1 ELSE 0 END) as freeAccounts,
-                    SUM(CASE WHEN subscriptionPlan = 'premium' THEN 1 ELSE 0 END) as paidAccounts
+                    SUM(CASE WHEN subscriptionPlan IN ('premium', 'annuel') THEN 1 ELSE 0 END) as paidAccounts
                 FROM Account 
                 WHERE createdAt >= NOW() - INTERVAL '$limitStr'
                 GROUP BY TO_CHAR(createdAt, '$dateGroupFormat') ORDER BY date ASC

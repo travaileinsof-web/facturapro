@@ -36,7 +36,7 @@ class Helper {
         $plan = $account['subscriptionPlan'] ?? 'free';
         $status = $account['subscriptionStatus'] ?? 'trial';
         
-        if ($plan === 'premium' && $status === 'active') {
+        if (($plan === 'premium' || $plan === 'annuel') && $status === 'active') {
             if (!empty($account['subscriptionExpiresAt']) && strtotime($account['subscriptionExpiresAt']) < time()) {
                 return 'expired';
             }

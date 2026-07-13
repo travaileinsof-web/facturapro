@@ -177,7 +177,7 @@ if ($resource === 'auth' && $id === 'me') {
         "company" => $currentAccount['companyName'], 
         "token" => $currentAccount['token'],
         "subscriptionPlan" => $currentAccount['subscriptionPlan'] ?? 'free',
-        "subscriptionStatus" => $currentAccount['subscriptionStatus'] ?? 'trial',
+        "subscriptionStatus" => Helper::computeSubscriptionStatus($currentAccount),
         "createdAt" => $currentAccount['createdAt'],
         "primaryColor" => $currentAccount['primaryColor'] ?? '#B38E36',
         "secondaryColor" => $currentAccount['secondaryColor'] ?? null,
@@ -191,14 +191,16 @@ if (!empty($currentAccount['isSuspended'])) {
     http_response_code(403); echo json_encode(["error" => "Votre compte a été suspendu par l'administration."]); exit;
 }
 
-$isTrial = $currentAccount['subscriptionStatus'] === 'trial' || empty($currentAccount['subscriptionStatus']);
-if ($isTrial && $method === 'POST' && in_array($resource, ['invoices', 'receipts'])) {
-    $createdAtStr = $currentAccount['createdAt'] ?? date('Y-m-d H:i:s');
-    $createdAt = strtotime($createdAtStr);
-    $days = (time() - $createdAt) / (60 * 60 * 24);
-    if ($days >= 1) {
+$computedStatus = Helper::computeSubscriptionStatus($currentAccount);
+if ($method === 'POST' && in_array($resource, ['invoices', 'receipts'])) {
+    if ($computedStatus === 'trial_expired') {
         http_response_code(403);
         echo json_encode(["error" => "Votre période d'essai est expirée. Veuillez vous abonner."]);
+        exit;
+    }
+    if ($computedStatus === 'expired') {
+        http_response_code(403);
+        echo json_encode(["error" => "Votre abonnement a expiré. Veuillez le renouveler pour continuer à facturer."]);
         exit;
     }
 }

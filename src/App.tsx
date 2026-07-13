@@ -73,7 +73,8 @@ function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boole
   const { currentModule, setCurrentModule, user, logout } = useAppStore();
   const navigate = useNavigate();
 
-  const isTrial = user?.subscriptionStatus === 'trial' || !user?.subscriptionStatus;
+  const isTrial = user?.subscriptionStatus === 'trial' || user?.subscriptionStatus === 'trial_expired' || !user?.subscriptionStatus;
+  const isExpired = user?.subscriptionStatus === 'expired';
   const trialHours = getTrialHoursRemaining(user?.createdAt);
   const initials = (user?.name || user?.company || 'U').charAt(0).toUpperCase();
 
@@ -149,7 +150,7 @@ function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boole
           {toolsItems.map((item, i) => {
             const Icon = item.icon;
             const active = currentModule === item.id;
-            const isPremium = ['chat', 'companies'].includes(item.id);
+            const isComingSoon = ['chat', 'companies'].includes(item.id);
             return (
               <button key={item.id} onClick={() => handleNav(item.id)}
                 className={`app-nav-item ${active ? 'active' : ''}`}
@@ -159,7 +160,7 @@ function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boole
                 {!isCollapsed && (
                   <span style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', textAlign: 'left' }}>
                     <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>{item.label}</span>
-                    {isPremium && <span style={{ background: 'var(--color-primary-subtle)', color: 'var(--color-primary)', border: '1px solid rgba(184,134,11,0.2)', padding: '2px 6px', fontSize: '9px', borderRadius: 'var(--radius-sm)', fontWeight: '800', letterSpacing: '0.5px' }}>PRO</span>}
+                    {isComingSoon && <span style={{ background: 'rgba(184,134,11,0.1)', color: 'var(--gold)', border: '1px solid rgba(184,134,11,0.3)', padding: '2px 6px', fontSize: '9px', borderRadius: 'var(--radius-sm)', fontWeight: '800', letterSpacing: '0.5px' }}>BIENTÔT</span>}
                   </span>
                 )}
               </button>
@@ -266,7 +267,8 @@ function AppLayout() {
   const [animKey, setAnimKey] = useState(0);
   const active = NAV.find(n => n.id === currentModule);
 
-  const isTrial    = user?.subscriptionStatus === 'trial' || !user?.subscriptionStatus;
+  const isTrial = user?.subscriptionStatus === 'trial' || user?.subscriptionStatus === 'trial_expired' || !user?.subscriptionStatus;
+  const isExpired = user?.subscriptionStatus === 'expired';
   const trialHours  = getTrialHoursRemaining(user?.createdAt);
   const initials   = (user?.name || user?.company || 'U').charAt(0).toUpperCase();
 
@@ -343,6 +345,32 @@ function AppLayout() {
             <h1 className="text-[28px] font-bold text-[var(--foreground)]" style={{ marginBottom: 'var(--space-4)' }}>Période d'essai terminée</h1>
             <p className="text-[16px] text-[var(--foreground-subtle)] leading-relaxed" style={{ marginBottom: 'var(--space-10)' }}>
               Votre essai gratuit de 24 heures est arrivé à expiration. Pour continuer à utiliser FacturaPro sans interruption, veuillez activer votre abonnement ci-dessous.
+            </p>
+            <div className="bg-[var(--surface-1)] border border-[var(--border)] rounded-3xl text-left shadow-[0_20px_40px_rgba(0,0,0,0.2)]" style={{ padding: 'var(--space-6)' }}>
+              <Pricing />
+            </div>
+            <button 
+              onClick={() => { sessionStorage.removeItem('token'); window.location.href = '/login'; }} 
+              className="bg-transparent border-none text-[var(--foreground-muted)] text-[14px] cursor-pointer underline hover:text-[var(--foreground)]"
+              style={{ marginTop: 'var(--space-8)' }}
+            >
+              Se déconnecter
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isExpired) {
+    return (
+      <div className="flex flex-col h-screen bg-[var(--background)] text-[var(--foreground)] overflow-y-auto">
+        <div className="flex-1 flex flex-col items-center justify-center" style={{ padding: 'var(--space-10) var(--space-5)' }}>
+          <div className="max-w-[600px] w-full text-center">
+            <Zap size={48} className="text-[var(--gold)] mx-auto" style={{ marginBottom: 'var(--space-6)' }} />
+            <h1 className="text-[28px] font-bold text-[var(--foreground)]" style={{ marginBottom: 'var(--space-4)' }}>Abonnement Expiré</h1>
+            <p className="text-[16px] text-[var(--foreground-subtle)] leading-relaxed" style={{ marginBottom: 'var(--space-10)' }}>
+              Votre abonnement annuel est arrivé à expiration. Pour continuer à utiliser FacturaPro sans interruption et garder l'accès à toutes vos données, veuillez le renouveler ci-dessous.
             </p>
             <div className="bg-[var(--surface-1)] border border-[var(--border)] rounded-3xl text-left shadow-[0_20px_40px_rgba(0,0,0,0.2)]" style={{ padding: 'var(--space-6)' }}>
               <Pricing />
@@ -534,8 +562,8 @@ function AppLayout() {
             {currentModule === 'receipts'  && <Receipts />}
             {currentModule === 'expenses'  && <Expenses />}
             {currentModule === 'reminders' && <Reminders />}
-            {currentModule === 'chat'      && (user?.subscriptionPlan === 'premium' ? <ChatIA /> : <PremiumOverlay featureName="Assistant IA (ARIA)" />)}
-            {currentModule === 'companies' && (user?.subscriptionPlan === 'premium' ? <Companies /> : <PremiumOverlay featureName="Multi-Entreprise" />)}
+            {currentModule === 'chat'      && <ComingSoonOverlay featureName="Assistant IA (ARIA)" />}
+            {currentModule === 'companies' && <ComingSoonOverlay featureName="Multi-Entreprise" />}
             {currentModule === 'settings'  && <Settings />}
             {currentModule === 'pricing'   && <Pricing />}
           </div>
@@ -546,7 +574,7 @@ function AppLayout() {
   );
 }
 
-function PremiumOverlay({ featureName }: { featureName: string }) {
+function ComingSoonOverlay({ featureName }: { featureName: string }) {
   const { setCurrentModule } = useAppStore();
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', textAlign: 'center', padding: 'var(--space-5)' }}>

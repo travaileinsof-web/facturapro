@@ -59,6 +59,12 @@ class PaymentController {
             return ['error' => 'Numéro de téléphone obligatoire', 'status' => 400];
         }
 
+        $plan = $currentAccount['subscriptionPlan'] ?? 'free';
+        $status = $currentAccount['subscriptionStatus'] ?? 'trial';
+        if (($plan === 'annuel' || $plan === 'premium') && $status === 'active') {
+            return ['error' => 'Abonnement déjà actif', 'status' => 400];
+        }
+
         $accountId = $currentAccount['id'];
         $amount = 1000; // 1000 GNF
         $reference = 'SUB-' . uniqid() . '-' . time();
@@ -195,8 +201,8 @@ class PaymentController {
                 $stmtCheck->execute([$reference]);
                 $paymentInfo = $stmtCheck->fetch(PDO::FETCH_ASSOC);
 
-                if ($paymentInfo && $paymentInfo['status'] !== 'SUCCESS') {
-                    $stmt = $this->pdo->prepare("UPDATE SubscriptionPayment SET status = 'SUCCESS', djomyTransactionId = ? WHERE reference = ?");
+                if ($paymentInfo && $paymentInfo['status'] !== 'COMPLETED') {
+                    $stmt = $this->pdo->prepare("UPDATE SubscriptionPayment SET status = 'COMPLETED', djomyTransactionId = ? WHERE reference = ?");
                     $stmt->execute([$paymentData['transactionId'] ?? null, $reference]);
 
                     $accountId = $paymentInfo['accountId'];
