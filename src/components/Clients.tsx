@@ -227,8 +227,7 @@ export function Clients() {
             desc={editingClient ? "Mettez à jour les informations du client." : "Renseignez les informations du client pour pouvoir facturer."} 
           />
           <form 
-            className="fp-form"
-            style={{ marginTop: 'var(--space-4)' }}
+            className="flex flex-col flex-1 min-h-0"
             onSubmit={handleSubmit(onSubmit)}>
             <DialogBody>
               {/* Grille 2 colonnes — gap: space-4 vertical, space-5 horizontal */}
