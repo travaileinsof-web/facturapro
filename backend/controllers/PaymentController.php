@@ -259,6 +259,17 @@ class PaymentController {
                             require_once __DIR__ . '/../core/SystemMailer.php';
                             SystemMailer::sendPaymentConfirmation($this->pdo, $acc['email'], $acc['firstName'] ?? 'Client', $amount, $receiptNumber);
                         }
+
+                        // Création de la notification In-App
+                        try {
+                            $notifId = uniqid('notif_');
+                            $title = 'Abonnement Premium activé';
+                            $message = 'Votre paiement a été reçu avec succès. Votre compte est désormais Premium pour une durée de 1 an.';
+                            $stmtNotif = $this->pdo->prepare("INSERT INTO Notification (id, accountId, title, message, type) VALUES (?, ?, ?, ?, 'success')");
+                            $stmtNotif->execute([$notifId, $accountId, $title, $message]);
+                        } catch (Exception $e) {
+                            // Ignorer l'erreur pour ne pas bloquer le processus
+                        }
                     }
                 }
             }

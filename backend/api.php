@@ -193,15 +193,15 @@ if (!empty($currentAccount['isSuspended'])) {
 }
 
 $computedStatus = Helper::computeSubscriptionStatus($currentAccount);
-if ($method === 'POST' && in_array($resource, ['invoices', 'receipts'])) {
+if (in_array($method, ['POST', 'PUT', 'DELETE'])) {
     if ($computedStatus === 'trial_expired') {
         http_response_code(403);
-        echo json_encode(["error" => "Votre période d'essai est expirée. Veuillez vous abonner."]);
+        echo json_encode(["error" => "Votre période d'essai est expirée. Veuillez vous abonner pour effectuer cette action."]);
         exit;
     }
     if ($computedStatus === 'expired') {
         http_response_code(403);
-        echo json_encode(["error" => "Votre abonnement a expiré. Veuillez le renouveler pour continuer à facturer."]);
+        echo json_encode(["error" => "Votre abonnement a expiré. Veuillez le renouveler pour effectuer cette action."]);
         exit;
     }
 }

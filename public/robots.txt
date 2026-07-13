@@ -1,0 +1,53 @@
+# FacturaPro — robots.txt
+# Logiciel de facturation pour PME en Guinée | facturapro.com
+
+# ── Crawlers classiques ──────────────────────────────────────────────────────
+User-agent: *
+Allow: /
+
+# ── Google (Search + AI Overviews) ──────────────────────────────────────────
+User-agent: Googlebot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+# ── Crawlers IA génératifs ───────────────────────────────────────────────────
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+# ── Bots de recherche secondaires ────────────────────────────────────────────
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+# ── Répertoires à exclure ────────────────────────────────────────────────────
+Disallow: /backend/
+Disallow: /node_modules/
+Disallow: /api/
+
+# ── Sitemap ──────────────────────────────────────────────────────────────────
+Sitemap: https://facturapro.com/sitemap.xml

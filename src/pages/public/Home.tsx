@@ -1,54 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PublicNavbar, PublicFooter } from './Layout';
+import { usePageSEO } from '../../hooks/usePageSEO';
+import { MotionReveal as Reveal } from '../../components/ui/MotionReveal';
+import { PageTransition } from '../../components/ui/PageTransition';
+import { BlobShape, GridPattern, GeometricShapes, WavesShape } from '../../components/ui/AbstractShapes';
 
-/* ── Custom Cursor ────────────────────────────────────────────────────────────── */
-function Cursor() {
-  const cur = useRef<HTMLDivElement>(null);
-  const ring = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const pos = { x: 0, y: 0 };
-    const ring_pos = { x: 0, y: 0 };
-    const move = (e: MouseEvent) => {
-      pos.x = e.clientX; pos.y = e.clientY;
-      if (cur.current) { cur.current.style.left = `${pos.x}px`; cur.current.style.top = `${pos.y}px`; }
-    };
-    let raf: number;
-    const follow = () => {
-      ring_pos.x += (pos.x - ring_pos.x) * 0.14;
-      ring_pos.y += (pos.y - ring_pos.y) * 0.14;
-      if (ring.current) { ring.current.style.left = `${ring_pos.x}px`; ring.current.style.top = `${ring_pos.y}px`; }
-      raf = requestAnimationFrame(follow);
-    };
-    follow();
-    window.addEventListener('mousemove', move);
-    return () => { window.removeEventListener('mousemove', move); cancelAnimationFrame(raf); };
-  }, []);
-  return (
-    <>
-      <div ref={cur} className="pub-cursor" />
-      <div ref={ring} className="pub-cursor-ring" />
-    </>
-  );
-}
-
-/* ── Scroll reveal wrapper ───────────────────────────────────────────────────── */
-function Reveal({ children, delay = 0, style = {} }: { children: React.ReactNode; delay?: number; style?: React.CSSProperties }) {
-  const [v, setV] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setV(true); obs.disconnect(); } }, { threshold: 0.08 });
-    if (ref.current) obs.observe(ref.current);
-    return () => obs.disconnect();
-  }, []);
-  return (
-    <div ref={ref} style={{ opacity: v ? 1 : 0, transform: v ? 'none' : 'translateY(20px)', transition: `opacity 0.65s ease ${delay}ms, transform 0.65s ease ${delay}ms`, ...style }}>
-      {children}
-    </div>
-  );
-}
-
-/* ── Animated counter ────────────────────────────────────────────────────────── */
+/* ── Animated counter ───────────────────────────────────────────────────── */
 function AnimNum({ to, suffix = '', prefix = '' }: { to: number; suffix?: string; prefix?: string }) {
   const [v, setV] = useState(0);
   const ref = useRef<HTMLSpanElement>(null);
@@ -71,297 +29,347 @@ function AnimNum({ to, suffix = '', prefix = '' }: { to: number; suffix?: string
   return <span ref={ref}>{prefix}{v.toLocaleString('fr-FR')}{suffix}</span>;
 }
 
-/* ── Feature item ──────────────────────────────────────────────────────────── */
-function Feature({ icon, title, desc, delay, color }: { icon: React.ReactNode; title: string; desc: string; delay: number; color: string }) {
+/* ── CTA Button ─────────────────────────────────────────────────────────── */
+function CtaButton({ label = 'Essayer gratuitement 24h', style = {} }: { label?: string; style?: React.CSSProperties }) {
   return (
-    <Reveal delay={delay} style={{ height: '100%' }}>
-      <div style={{ padding: '28px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '16px', height: '100%', transition: 'box-shadow 0.25s, border-color 0.25s, transform 0.25s' }}
-        onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.boxShadow = '0 12px 32px rgba(0,0,0,0.07)'; el.style.borderColor = '#bbf7d0'; el.style.transform = 'translateY(-3px)'; }}
-        onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.boxShadow = 'none'; el.style.borderColor = '#e2e8f0'; el.style.transform = 'none'; }}
+    <Link to="/register" style={{
+      display: 'inline-flex', alignItems: 'center', gap: '8px',
+      padding: '13px 28px', background: 'var(--color-gold)', color: '#1A1715',
+      borderRadius: '2px', textDecoration: 'none', fontSize: '13px',
+      fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase',
+      transition: 'all 0.3s ease', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', ...style
+    }}
+      onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = '#E6D5B8'; el.style.transform = 'translateY(-2px)'; el.style.boxShadow = '0 6px 20px rgba(212, 175, 55, 0.3)'; }}
+      onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'var(--color-gold)'; el.style.transform = 'none'; el.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)'; }}
+    >
+      {label}
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </Link>
+  );
+}
+
+/* ── Badge "Bientôt disponible" ──────────────────────────────────────────── */
+function ComingSoonBadge() {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: '5px',
+      background: 'rgba(212, 175, 55, 0.1)', border: '1px solid rgba(212, 175, 55, 0.2)',
+      color: 'var(--color-gold)', fontSize: '10px', fontWeight: 600,
+      padding: '3px 10px', borderRadius: '2px', letterSpacing: '1px',
+      textTransform: 'uppercase'
+    }}>
+      <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-gold)', display: 'inline-block' }} />
+      Bientôt disponible
+    </span>
+  );
+}
+
+/* ── Section H2 ─────────────────────────────────────────────────────────── */
+function HomeSection({ id, emoji, title, badge, children, delay = 0 }: {
+  id?: string; emoji: string; title: string; badge?: React.ReactNode; children: React.ReactNode; delay?: number;
+}) {
+  return (
+    <Reveal delay={delay / 1000} direction="up">
+      <div id={id} style={{
+        background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '2px',
+        padding: '40px', transition: 'all 0.4s ease', position: 'relative', overflow: 'hidden'
+      }}
+        onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = 'rgba(212, 175, 55, 0.4)'; el.style.transform = 'translateY(-2px)'; el.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)'; }}
+        onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = 'var(--color-border)'; el.style.transform = 'none'; el.style.boxShadow = 'none'; }}
       >
-        <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: `${color}15`, border: `1px solid ${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
-          {icon}
+        <div style={{ fontSize: '28px', marginBottom: '20px', opacity: 0.9 }}>{emoji}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: 500, color: 'var(--color-text)', letterSpacing: '0.5px', margin: 0 }}>{title}</h2>
+          {badge}
         </div>
-        <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', marginBottom: '10px', letterSpacing: '-0.3px' }}>{title}</h3>
-        <p style={{ fontSize: '14px', color: '#64748b', lineHeight: 1.7 }}>{desc}</p>
+        <div style={{ color: 'var(--color-text-muted)', fontSize: '14px', lineHeight: 1.8, fontWeight: 300 }}>{children}</div>
       </div>
     </Reveal>
   );
 }
 
-/* ── SVG Icons ───────────────────────────────────────────────────────────────── */
-const IconAI = ({ c }: { c: string }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.38-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.35-1-.99-1-1.73a2 2 0 0 1 2-2z"/>
-    <circle cx="7.5" cy="14.5" r="1.5" fill={c} stroke="none"/>
-    <circle cx="16.5" cy="14.5" r="1.5" fill={c} stroke="none"/>
-  </svg>
-);
-
-const IconInvoice = ({ c }: { c: string }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-    <polyline points="14 2 14 8 20 8"/>
-    <line x1="16" y1="13" x2="8" y2="13"/>
-    <line x1="16" y1="17" x2="8" y2="17"/>
-    <polyline points="10 9 9 9 8 9"/>
-  </svg>
-);
-
-const IconReceipt = ({ c }: { c: string }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="6 9 6 2 18 2 18 9"/>
-    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-    <rect x="6" y="14" width="12" height="8"/>
-  </svg>
-);
-
-const IconClients = ({ c }: { c: string }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-    <circle cx="9" cy="7" r="4"/>
-    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-  </svg>
-);
-
-const IconDashboard = ({ c }: { c: string }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="3" width="7" height="9" rx="1"/>
-    <rect x="15" y="3" width="7" height="5" rx="1"/>
-    <rect x="15" y="12" width="7" height="9" rx="1"/>
-    <rect x="2" y="16" width="7" height="5" rx="1"/>
-  </svg>
-);
-
-const IconCurrency = ({ c }: { c: string }) => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10"/>
-    <path d="M16 8h-6a2 2 0 0 0 0 4h4a2 2 0 0 1 0 4H8"/>
-    <line x1="12" y1="6" x2="12" y2="8"/>
-    <line x1="12" y1="16" x2="12" y2="18"/>
-  </svg>
-);
-
-/* ── Testimonial ─────────────────────────────────────────────────────────────── */
-function Testimonial({ quote, name, role, company, delay }: { quote: string; name: string; role: string; company: string; delay: number }) {
+/* ── FAQ Accordion ──────────────────────────────────────────────────────── */
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
   return (
-    <Reveal delay={delay}>
-      <div style={{ padding: '28px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px' }}>
-        <div style={{ display: 'flex', gap: '2px', marginBottom: '16px' }}>
-          {[1,2,3,4,5].map(i => <span key={i} style={{ color: '#f59e0b', fontSize: '14px' }}>★</span>)}
-        </div>
-        <p style={{ fontSize: '14.5px', color: '#334155', lineHeight: 1.75, marginBottom: '20px', fontStyle: 'italic' }}>"{quote}"</p>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #059669, #10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 800, color: '#fff', flexShrink: 0 }}>
-            {name.charAt(0)}
-          </div>
-          <div>
-            <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#0f172a' }}>{name}</div>
-            <div style={{ fontSize: '12px', color: '#94a3b8' }}>{role} · {company}</div>
-          </div>
+    <div style={{ borderBottom: '1px solid var(--color-border)', transition: 'border-color 0.3s' }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '24px 0', background: 'transparent', border: 'none', cursor: 'pointer',
+          fontSize: '15px', fontWeight: 500, color: 'var(--color-text)', textAlign: 'left', gap: '12px',
+          letterSpacing: '0.5px'
+        }}
+      >
+        {q}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-gold)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          style={{ flexShrink: 0, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.4s ease' }}>
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+      </button>
+      <div style={{
+        height: open ? 'auto' : 0, overflow: 'hidden', opacity: open ? 1 : 0,
+        transition: 'opacity 0.4s ease'
+      }}>
+        <div style={{ paddingBottom: '24px', fontSize: '14px', color: 'var(--color-text-muted)', lineHeight: 1.8, fontWeight: 300 }}>
+          {a}
         </div>
       </div>
-    </Reveal>
+    </div>
   );
 }
 
-/* ── Home Page ───────────────────────────────────────────────────────────────── */
+
+/* ── FAQ Schema.org JSON-LD ─────────────────────────────────────────────── */
+const HOME_FAQ_JSON = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Qu'est-ce que FacturaPro et à qui s'adresse-t-il ?",
+      "acceptedAnswer": { "@type": "Answer", "text": "FacturaPro est un logiciel de facturation conçu pour les PME en Guinée. Il permet de créer des factures conformes (RCCM, NIF, TVA 18%), de les envoyer par WhatsApp et de suivre les paiements. Il s'adresse aux commerçants, prestataires et entrepreneurs de Conakry, Kankan, Labé, Nzérékoré, Boké, Kindia et Mamou." }
+    },
+    {
+      "@type": "Question",
+      "name": "Quelles sont les mentions obligatoires sur une facture en Guinée ?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Une facture conforme en Guinée doit mentionner le RCCM (Registre du Commerce et du Crédit Mobilier), le NIF (Numéro d'Identification Fiscale) et l'adresse du vendeur. Pour certaines opérations, la mention de la retenue de 50% de TVA peut aussi être exigée. La TVA applicable est de 18% pour les entreprises assujetties." }
+    },
+    {
+      "@type": "Question",
+      "name": "Puis-je envoyer mes factures directement par WhatsApp ou Email depuis FacturaPro ?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Oui. FacturaPro génère vos factures en PDF et vous permet de les partager directement via WhatsApp et par Email en un clic. C'est la méthode préférée des entrepreneurs guinéens pour communiquer avec leurs clients." }
+    },
+    {
+      "@type": "Question",
+      "name": "Combien coûte FacturaPro et y a-t-il une période d'essai ?",
+      "acceptedAnswer": { "@type": "Answer", "text": "FacturaPro coûte 1 000 GNF par an, sans frais cachés. Vous bénéficiez d'un essai gratuit de 24h sans avoir besoin de carte bancaire pour tester toutes les fonctionnalités." }
+    },
+    {
+      "@type": "Question",
+      "name": "FacturaPro fonctionne-t-il sur téléphone mobile ?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Oui, FacturaPro est entièrement accessible depuis votre smartphone. Vous pouvez créer et envoyer des factures depuis votre téléphone à Conakry, Kankan, Labé, Nzérékoré ou partout en Guinée, sans installer d'application." }
+    }
+  ]
+};
+
+/* ── Home Page ──────────────────────────────────────────────────────────── */
 export function Home() {
-  return (
-    <div className="public-page" style={{ background: '#fff', minHeight: '100vh' }}>
-      <Cursor />
-      <PublicNavbar />
 
-      {/* ── HERO ─────────────────────────────────────────────────────────────── */}
-      <section style={{ paddingTop: '120px', paddingBottom: '100px', background: 'linear-gradient(160deg, #f8fafc 0%, #f0fdf4 100%)', borderBottom: '1px solid #e2e8f0' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px', alignItems: 'center' }}>
+  usePageSEO({
+    title: 'FacturaPro – Logiciel de facturation pour PME en Guinée | RCCM, NIF, WhatsApp',
+    description: 'Créez et envoyez vos factures conformes (RCCM, NIF, TVA 18%) par WhatsApp depuis votre téléphone. 1 000 GNF/an, essai gratuit 24h. Pour les PME de Conakry à Nzérékoré.',
+    canonical: 'https://facturapro.com/',
+  });
+
+  return (
+    <PageTransition>
+      <div className="public-page" style={{ background: 'var(--color-bg)', minHeight: '100vh', color: 'var(--color-text)' }}>
+        {/* FAQ Schema.org JSON-LD */}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(HOME_FAQ_JSON) }} />
+
+        <PublicNavbar />
+
+        {/* ── HERO ────────────────────────────────────────────────────────── */}
+      <section aria-label="Présentation FacturaPro" style={{ paddingTop: '160px', paddingBottom: '120px', borderBottom: '1px solid var(--color-border)', position: 'relative', overflow: 'hidden' }}>
+        <GridPattern opacity={0.3} />
+        <BlobShape style={{ top: '-10%', left: '-10%', width: '800px', height: '800px' }} />
+        <GeometricShapes opacity={0.6} />
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 32px', position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '80px', alignItems: 'center' }}>
             {/* Left */}
             <div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#f0fdf4', border: '1px solid #a7f3d0', borderRadius: '100px', padding: '6px 14px', marginBottom: '28px' }}>
-                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#059669', animation: 'fp-pulse-green 2s ease-in-out infinite' }} />
-                <span style={{ fontSize: '12.5px', color: '#059669', fontWeight: 600 }}>Plateforme ERP Nouvelle Génération</span>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid rgba(212, 175, 55, 0.3)', paddingBottom: '8px', marginBottom: '32px' }}>
+                <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-gold)' }} />
+                <span style={{ fontSize: '11px', color: 'var(--color-gold)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '1.5px' }}>Logiciel de facturation guinéen — essai gratuit 24h</span>
               </div>
 
-              <h1 style={{ fontSize: 'clamp(36px, 4.5vw, 58px)', fontWeight: 900, lineHeight: 1.08, letterSpacing: '-2px', color: '#0f172a', marginBottom: '22px' }}>
-                Gérez votre<br />
-                <span style={{ color: '#059669' }}>facturation</span><br />
-                avec précision.
+              {/* H1 SEO */}
+              <h1 style={{ fontSize: 'clamp(32px, 4.5vw, 48px)', fontWeight: 400, lineHeight: 1.15, letterSpacing: '-0.5px', color: 'var(--color-text)', marginBottom: '24px', fontFamily: '"Playfair Display", serif' }}>
+                Générez et envoyez vos{' '}
+                <span style={{ fontStyle: 'italic', color: 'var(--color-gold)' }}>factures conformes</span><br />
+                par WhatsApp.
               </h1>
 
-              <p style={{ fontSize: '17px', color: '#475569', lineHeight: 1.75, marginBottom: '36px', maxWidth: '460px' }}>
-                FacturaPro centralise vos factures, clients, reçus de paiement et intègre un assistant IA pour automatiser vos tâches quotidiennes.
+              {/* Paragraphe GEO */}
+              <p style={{ fontSize: '15px', color: 'var(--color-text-muted)', lineHeight: 1.8, marginBottom: '24px', fontWeight: 300, maxWidth: '480px' }}>
+                FacturaPro est le logiciel de facturation pensé pour les PME guinéennes : créez des factures conformes avec RCCM et NIF, envoyez-les par WhatsApp, suivez vos paiements et relancez vos clients, de Conakry à Nzérékoré.
               </p>
 
-              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '40px' }}>
-                <Link to="/register" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '13px 26px', background: '#059669', color: '#fff', borderRadius: '9px', textDecoration: 'none', fontSize: '15px', fontWeight: 600, boxShadow: '0 2px 12px rgba(5,150,105,0.25)', transition: 'all 0.15s' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#047857'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#059669'; (e.currentTarget as HTMLElement).style.transform = 'none'; }}
-                >
-                  Démarrer gratuitement
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </Link>
-                <Link to="/fonctionnalites" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '13px 26px', background: '#fff', color: '#334155', border: '1px solid #e2e8f0', borderRadius: '9px', textDecoration: 'none', fontSize: '15px', fontWeight: 500, transition: 'all 0.15s' }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#059669'; (e.currentTarget as HTMLElement).style.color = '#059669'; }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#e2e8f0'; (e.currentTarget as HTMLElement).style.color = '#334155'; }}
-                >
-                  Voir les fonctionnalités
-                </Link>
-              </div>
+              <p style={{ fontSize: '14px', color: 'var(--color-text-muted)', lineHeight: 1.8, marginBottom: '40px', fontWeight: 300 }}>
+                Utilisé à <strong>Conakry, Kankan, Labé, Nzérékoré</strong> — 1 000 GNF/an, essai gratuit 24h.
+              </p>
 
-              {/* Trust indicators */}
-              <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-                {[['500+', 'Entreprises actives'], ['10 000+', 'Factures émises'], ['4.9/5', 'Note utilisateurs']].map(([v, l]) => (
-                  <div key={l} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '16px', fontWeight: 800, color: '#059669' }}>{v}</span>
-                    <span style={{ fontSize: '12.5px', color: '#94a3b8' }}>{l}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Right — Dashboard screenshot mockup */}
-            <div style={{ animation: 'fp-float 5s ease-in-out infinite' }}>
-              <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 20px 60px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-                {/* Window chrome */}
-                <div style={{ height: '40px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', padding: '0 16px', gap: '8px' }}>
-                  {['#ff5f56','#ffbd2e','#27c93f'].map(c => <div key={c} style={{ width: '10px', height: '10px', borderRadius: '50%', background: c }} />)}
-                  <div style={{ flex: 1, height: '14px', background: '#e2e8f0', borderRadius: '4px', margin: '0 16px' }} />
-                </div>
-                {/* Content */}
-                <div style={{ padding: '20px' }}>
-                  {/* Stats */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '10px', marginBottom: '16px' }}>
-                    {[['CA Mensuel', '4 250 000 GNF', '#059669'], ['Factures', '32 émises', '#3b82f6'], ['Impayés', '820 000 GNF', '#f59e0b']].map(([l,v,c]) => (
-                      <div key={l} style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '14px 12px' }}>
-                        <div style={{ fontSize: '10px', color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{l}</div>
-                        <div style={{ fontSize: '13px', fontWeight: 700, color: c }}>{v}</div>
-                      </div>
-                    ))}
-                  </div>
-                  {/* Table (simplified) */}
-                  <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', overflow: 'hidden' }}>
-                    <div style={{ padding: '10px 14px', borderBottom: '1px solid #e2e8f0', display: 'grid', gridTemplateColumns: '1fr 100px 80px', gap: '12px' }}>
-                      {['Client', 'Montant', 'Statut'].map(h => <div key={h} style={{ fontSize: '10px', fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</div>)}
-                    </div>
-                    {[['SARL Kadi Invest', '850 000 GNF', 'Payée', '#059669'], ['BNS Group', '1 200 000 GNF', 'En attente', '#f59e0b'], ['MinDev Guinée', '450 000 GNF', 'Payée', '#059669']].map(([c,m,s,sc], i) => (
-                      <div key={i} style={{ padding: '10px 14px', borderBottom: i < 2 ? '1px solid #f1f5f9' : 'none', display: 'grid', gridTemplateColumns: '1fr 100px 80px', gap: '12px', alignItems: 'center' }}>
-                        <span style={{ fontSize: '12px', fontWeight: 500, color: '#334155' }}>{c}</span>
-                        <span style={{ fontSize: '11px', color: '#64748b' }}>{m}</span>
-                        <span style={{ fontSize: '10px', fontWeight: 600, color: sc, background: `${sc}14`, borderRadius: '5px', padding: '2px 8px', textAlign: 'center' }}>{s}</span>
-                      </div>
-                    ))}
-                  </div>
-                  {/* ARIA bar */}
-                  <div style={{ marginTop: '12px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#059669', animation: 'fp-pulse-green 2s ease-in-out infinite' }} />
-                    <span style={{ fontSize: '12px', color: '#059669', fontFamily: 'JetBrains Mono, monospace' }}>ARIA : "Facture créée — BNS Group, 1 200 000 GNF"</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── STATS ─────────────────────────────────────── */}
-      <section style={{ padding: '64px 32px', background: '#fff', borderBottom: '1px solid #e2e8f0' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '32px' }}>
-            {[{ v: 500, suf: '+', label: 'Entreprises actives', desc: 'font leur confiance' },
-              { v: 10000, suf: '+', label: 'Factures générées', desc: 'chaque mois' },
-              { v: 99, suf: '%', label: 'Satisfaction', desc: 'client garantie' },
-              { v: 24, suf: 'h/24', label: 'Support', desc: 'réactif disponible' }].map((s, i) => (
-              <Reveal key={i} delay={i * 80}>
-                <div style={{ textAlign: 'center', padding: '24px 16px' }}>
-                  <div style={{ fontSize: 'clamp(32px,4vw,48px)', fontWeight: 900, color: '#059669', letterSpacing: '-2px', marginBottom: '6px' }}>
-                    <AnimNum to={s.v} suffix={s.suf} />
-                  </div>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a', marginBottom: '3px' }}>{s.label}</div>
-                  <div style={{ fontSize: '13px', color: '#94a3b8' }}>{s.desc}</div>
+              <Reveal delay={200}>
+                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '48px' }}>
+                  <CtaButton />
+                  <Link to="/fonctionnalites" style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '8px',
+                    padding: '13px 24px', background: 'transparent', color: 'var(--color-text)',
+                    border: '1px solid var(--color-border)', borderRadius: '2px',
+                    textDecoration: 'none', fontSize: '13px', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', transition: 'all 0.3s ease'
+                  }}
+                    onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = 'rgba(212, 175, 55, 0.4)'; el.style.color = 'var(--color-gold)'; }}
+                    onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = 'var(--color-border)'; el.style.color = 'var(--color-text)'; }}
+                  >
+                    Découvrir
+                  </Link>
                 </div>
               </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* ── FEATURES PREVIEW ──────────────────────────── */}
-      <section style={{ padding: '96px 32px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <Reveal style={{ textAlign: 'center', marginBottom: '56px' }}>
-            <div style={{ display: 'inline-block', padding: '5px 14px', background: '#f0fdf4', border: '1px solid #a7f3d0', borderRadius: '100px', fontSize: '12px', fontWeight: 600, color: '#059669', marginBottom: '16px' }}>Fonctionnalités clés</div>
-            <h2 style={{ fontSize: 'clamp(28px,4vw,42px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-1.5px', marginBottom: '14px' }}>Tout ce dont votre entreprise a besoin</h2>
-            <p style={{ fontSize: '16px', color: '#64748b', maxWidth: '480px', margin: '0 auto', lineHeight: 1.7 }}>
-              FacturaPro réunit en un seul outil les fonctions essentielles pour piloter votre activité.
-            </p>
-          </Reveal>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-            <Feature delay={0}   color="#059669" icon={<IconAI c="#059669" />}       title="Assistant IA ARIA"    desc="Dictez vos instructions en français et laissez ARIA créer vos factures et reçus automatiquement." />
-            <Feature delay={80}  color="#3b82f6" icon={<IconInvoice c="#3b82f6" />}  title="Factures Proforma"    desc="Documents professionnels avec votre logo, signature, et numérotation automatique séquentielle." />
-            <Feature delay={160} color="#8b5cf6" icon={<IconReceipt c="#8b5cf6" />}  title="Reçus de Paiement"   desc="Enregistrez chaque encaissement et suivez les soldes restants par client en temps réel." />
-            <Feature delay={240} color="#f59e0b" icon={<IconClients c="#f59e0b" />}  title="Gestion Clients"     desc="Fiches client complètes avec historique de facturation, contacts et notes personnalisées." />
-            <Feature delay={320} color="#0ea5e9" icon={<IconDashboard c="#0ea5e9" />} title="Tableau de Bord"     desc="Visualisez votre chiffre d'affaires, vos impayés et vos statistiques en un coup d'œil." />
-            <Feature delay={400} color="#ec4899" icon={<IconCurrency c="#ec4899" />} title="Multi-devises"       desc="GNF, FCFA, USD, EUR — paramétrez librement la devise de votre choix pour chaque document." />
-          </div>
-          <Reveal style={{ textAlign: 'center', marginTop: '40px' }}>
-            <Link to="/fonctionnalites" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#059669', borderRadius: '9px', textDecoration: 'none', fontSize: '14px', fontWeight: 600, transition: 'all 0.15s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#dcfce7'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#f0fdf4'; }}
-            >
-              Voir toutes les fonctionnalités
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </Link>
-          </Reveal>
-        </div>
-      </section>
 
-      {/* ── TESTIMONIALS ─────────────────────────────── */}
-      <section style={{ padding: '96px 32px', background: '#fff', borderBottom: '1px solid #e2e8f0' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <Reveal style={{ textAlign: 'center', marginBottom: '52px' }}>
-            <div style={{ display: 'inline-block', padding: '5px 14px', background: '#fefce8', border: '1px solid #fde68a', borderRadius: '100px', fontSize: '12px', fontWeight: 600, color: '#d97706', marginBottom: '16px' }}>Témoignages</div>
-            <h2 style={{ fontSize: 'clamp(26px,3.5vw,38px)', fontWeight: 800, color: '#0f172a', letterSpacing: '-1px' }}>Ce que disent nos utilisateurs</h2>
-          </Reveal>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
-            <Testimonial delay={0} quote="FacturaPro a transformé notre gestion financière. Les factures PDF sont d'une qualité que je n'avais jamais vue avec un outil local." name="Mariama Bah" role="Directrice" company="SARL Bah & Associés" />
-            <Testimonial delay={80} quote="L'assistant ARIA est impressionnant. Je tape une phrase et la facture est créée. C'est un gain de temps considérable." name="Ibrahim Diallo" role="Gérant" company="IDA Commerce" />
-            <Testimonial delay={160} quote="Interface propre, rapide, et le support EINSOFT répond toujours dans l'heure. Je recommande à chaque entrepreneur guinéen." name="Fatoumata Camara" role="PDG" company="FTC Consulting" />
-          </div>
-        </div>
-      </section>
-
-      {/* ── CTA SECTION ──────────────────────────────── */}
-      <section style={{ padding: '96px 32px', background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)' }}>
-        <div style={{ maxWidth: '700px', margin: '0 auto', textAlign: 'center' }}>
-          <Reveal>
-            <h2 style={{ fontSize: 'clamp(28px,4vw,44px)', fontWeight: 900, color: '#fff', letterSpacing: '-1.5px', marginBottom: '16px' }}>
-              Prêt à professionnaliser votre facturation ?
-            </h2>
-            <p style={{ fontSize: '17px', color: 'rgba(255,255,255,0.8)', marginBottom: '36px', lineHeight: 1.7 }}>
-              Rejoignez 500+ entreprises qui font déjà confiance à FacturaPro. Démarrez aujourd'hui.
-            </p>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Link to="/register" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '14px 32px', background: '#fff', color: '#059669', borderRadius: '9px', textDecoration: 'none', fontSize: '15px', fontWeight: 700, boxShadow: '0 4px 20px rgba(0,0,0,0.15)', transition: 'all 0.15s' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 30px rgba(0,0,0,0.2)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 20px rgba(0,0,0,0.15)'; }}
-              >
-                Commencer maintenant
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-              </Link>
-              <Link to="/tarifs" style={{ display: 'inline-flex', alignItems: 'center', padding: '14px 32px', background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '9px', textDecoration: 'none', fontSize: '15px', fontWeight: 600, transition: 'all 0.15s' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.25)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.15)'; }}
-              >
-                Voir les tarifs
-              </Link>
             </div>
+
+            {/* Right — Dashboard mockup (Minimalist) */}
+            <div style={{ animation: 'fp-float 6s ease-in-out infinite' }}>
+              <div style={{ background: 'var(--color-surface)', borderRadius: '2px', border: '1px solid var(--color-border)', overflow: 'hidden' }}>
+                <div style={{ padding: '24px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '16px', marginBottom: '24px' }}>
+                    {[['CA Mensuel', '4 250 000 GNF'], ['Factures', '32 émises'], ['Impayés', '820 000 GNF']].map(([l,v]) => (
+                      <div key={l} style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '12px' }}>
+                        <div style={{ fontSize: '9px', color: 'var(--color-text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '1px' }}>{l}</div>
+                        <div style={{ fontSize: '14px', fontWeight: 400, color: 'var(--color-text)', fontFamily: '"Playfair Display", serif' }}>{v}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ border: '1px solid var(--color-border)', borderRadius: '2px' }}>
+                    <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border)', display: 'grid', gridTemplateColumns: '1fr 100px 80px', gap: '16px' }}>
+                      {['Client', 'Montant', 'Statut'].map(h => <div key={h} style={{ fontSize: '9px', fontWeight: 500, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>{h}</div>)}
+                    </div>
+                    {[['SARL Kadi Invest', '850 000 GNF', 'Payée', 'var(--color-gold)'], ['BNS Group', '1 200 000 GNF', 'En attente', 'var(--color-text-muted)'], ['MinDev Nzérékoré', '450 000 GNF', 'Payée', 'var(--color-gold)']].map(([c,m,s,sc], i) => (
+                      <div key={i} style={{ padding: '12px 16px', borderBottom: i < 2 ? '1px solid var(--color-border)' : 'none', display: 'grid', gridTemplateColumns: '1fr 100px 80px', gap: '16px', alignItems: 'center' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 300, color: 'var(--color-text)' }}>{c}</span>
+                        <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>{m}</span>
+                        <span style={{ fontSize: '10px', color: sc, letterSpacing: '0.5px' }}>{s}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ marginTop: '16px', border: '1px solid rgba(212, 175, 55, 0.2)', background: 'rgba(212, 175, 55, 0.03)', borderRadius: '2px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-gold)' }} />
+                    <span style={{ fontSize: '11px', color: 'var(--color-gold)', fontFamily: 'monospace', letterSpacing: '0.5px' }}>ARIA : Facture envoyée — BNS Group</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      {/* ── 4 SECTIONS H2 ─────────────────────────────────────────────────── */}
+      <section aria-label="Fonctionnalités principales" style={{ padding: '120px 32px', borderBottom: '1px solid var(--color-border)' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <Reveal style={{ textAlign: 'center', marginBottom: '80px' }}>
+            <div style={{ fontSize: '10px', fontWeight: 500, color: 'var(--color-gold)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '16px' }}>Fonctionnalités</div>
+            <h2 style={{ fontSize: '28px', color: 'var(--color-text)', fontFamily: '"Playfair Display", serif', fontWeight: 400 }}>L'excellence opérationnelle.</h2>
+          </Reveal>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(460px, 1fr))', gap: '32px' }}>
+            <HomeSection id="factures-conformes" emoji="I." title="Facturez en 2 minutes" delay={0}>
+              <p>Chaque facture FacturaPro inclut automatiquement les mentions obligatoires en Guinée : <strong>RCCM, NIF, adresse</strong> et <strong>TVA à 18%</strong>. Vos clients obtiennent un document PDF d'une qualité professionnelle, avec votre logo et votre signature numérique.</p>
+              <ul style={{ marginTop: '24px', paddingLeft: '0', listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {['Mentions RCCM + NIF', 'TVA 18% automatique', 'PDF haute qualité'].map(item => (
+                  <li key={item} style={{ display: 'flex', gap: '12px', alignItems: 'center', fontSize: '13px' }}>
+                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-gold)' }} /> {item}
+                  </li>
+                ))}
+              </ul>
+            </HomeSection>
+
+            <HomeSection id="envoi-whatsapp" emoji="II." title="WhatsApp et Email" delay={80}>
+              <p>Partagez vos factures PDF directement depuis FacturaPro vers WhatsApp de votre client ou par Email en un seul clic. La méthode de communication préférée des entreprises à <strong>Conakry, Kankan, Boké et Kindia</strong>.</p>
+              <ul style={{ marginTop: '24px', paddingLeft: '0', listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {['Partage en 1 clic', 'Compatible tous téléphones', 'Emails professionnels'].map(item => (
+                  <li key={item} style={{ display: 'flex', gap: '12px', alignItems: 'center', fontSize: '13px' }}>
+                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-gold)' }} /> {item}
+                  </li>
+                ))}
+              </ul>
+            </HomeSection>
+
+            <HomeSection id="suivi-paiements" emoji="III." title="Suivez vos paiements" delay={160}>
+              <p>FacturaPro affiche en temps réel le statut de chaque facture : payée, partiellement payée ou impayée. Relancez vos clients depuis l'outil, que vous soyez à <strong>Mamou, Labé ou Nzérékoré</strong>.</p>
+              <ul style={{ marginTop: '24px', paddingLeft: '0', listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {['Tableau de bord temps réel', 'Historique complet', 'Calcul des soldes'].map(item => (
+                  <li key={item} style={{ display: 'flex', gap: '12px', alignItems: 'center', fontSize: '13px' }}>
+                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-gold)' }} /> {item}
+                  </li>
+                ))}
+              </ul>
+            </HomeSection>
+
+            <HomeSection id="encaissement" emoji="IV." title="Innovations à venir" badge={<ComingSoonBadge />} delay={240}>
+              <p>Bientôt, FacturaPro s'enrichira de nouvelles fonctionnalités exclusives :</p>
+              <ul style={{ marginTop: '24px', paddingLeft: '0', listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+                {['Intégration Intelligence Artificielle', 'Relances automatiques', 'Gestion multi-entreprises', 'Liens de paiement directs (Mobile Money)'].map(item => (
+                  <li key={item} style={{ display: 'flex', gap: '12px', alignItems: 'center', fontSize: '13px' }}>
+                    <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: 'var(--color-gold)' }} /> {item}
+                  </li>
+                ))}
+              </ul>
+              <div style={{ borderLeft: '1px solid var(--color-gold)', paddingLeft: '16px', fontSize: '12px', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+                Fonctionnalités en cours de développement.
+              </div>
+            </HomeSection>
+          </div>
+
+          <Reveal style={{ textAlign: 'center', marginTop: '64px' }}>
+            <CtaButton />
+          </Reveal>
+        </div>
+      </section>
+
+
+      {/* ── FAQ ───────────────────────────────────────────────────────────── */}
+      <section aria-label="Questions fréquentes" style={{ padding: '120px 32px', borderBottom: '1px solid var(--color-border)' }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+          <Reveal style={{ textAlign: 'center', marginBottom: '80px' }}>
+            <div style={{ fontSize: '10px', fontWeight: 500, color: 'var(--color-gold)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '16px' }}>Support</div>
+            <h2 style={{ fontSize: '28px', color: 'var(--color-text)', fontFamily: '"Playfair Display", serif', fontWeight: 400 }}>Questions fréquentes.</h2>
+          </Reveal>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <Reveal delay={0}><FaqItem q="Qu'est-ce que FacturaPro et à qui s'adresse-t-il ?" a="FacturaPro est un logiciel de facturation conçu spécifiquement pour les PME en Guinée. Il permet de créer des factures conformes (RCCM, NIF, TVA 18%) et de les envoyer par WhatsApp ou Email, depuis votre téléphone, à Conakry, Kankan, Labé, Nzérékoré, Boké, Kindia ou Mamou." /></Reveal>
+            <Reveal delay={100}><FaqItem q="Quelles sont les mentions obligatoires sur une facture en Guinée ?" a="Une facture conforme en Guinée doit obligatoirement mentionner le RCCM (Registre du Commerce), le NIF (Numéro d'Identification Fiscale) et l'adresse du vendeur. La TVA est de 18% pour les entreprises assujetties (chiffre d'affaires annuel ≥ 1 milliard GNF). FacturaPro intègre automatiquement ces mentions." /></Reveal>
+            <Reveal delay={200}><FaqItem q="Combien coûte FacturaPro ?" a="1 000 GNF par an, tout inclus. Vous disposez d'un essai gratuit de 24h pour tester toutes les fonctionnalités sans carte bancaire. C'est le tarif le plus simple du marché pour une PME guinéenne." /></Reveal>
+            <Reveal delay={300}><FaqItem q="Puis-je envoyer mes factures par WhatsApp et Email depuis FacturaPro ?" a="Oui, c'est l'une des fonctionnalités principales. Vous générez votre facture PDF et vous pouvez l'envoyer directement sur WhatsApp à votre client ou par Email, sans passer par un autre outil." /></Reveal>
+            <Reveal delay={400}><FaqItem q="FacturaPro fonctionne-t-il sur téléphone mobile ?" a="Oui. FacturaPro fonctionne directement depuis votre navigateur sur smartphone. Pas besoin d'installer une application — créez et envoyez vos factures depuis votre téléphone, où que vous soyez en Guinée." /></Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA FINAL ─────────────────────────────────────────────────────── */}
+      <section aria-label="Appel à l'action" style={{ padding: '140px 32px', position: 'relative', overflow: 'hidden' }}>
+        {/* Glow effect */}
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(212, 175, 55, 0.05) 0%, transparent 70%)', zIndex: 0, pointerEvents: 'none' }} />
+        <WavesShape style={{ bottom: '-10%', left: '0', width: '100%', height: '300px' }} opacity={0.15} />
+        <GeometricShapes opacity={0.3} />
+        
+        <div style={{ maxWidth: '700px', margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
+          <Reveal>
+            <h2 style={{ fontSize: 'clamp(32px,4vw,48px)', fontWeight: 400, color: 'var(--color-text)', fontFamily: '"Playfair Display", serif', marginBottom: '24px' }}>
+              Prêt à facturer comme un pro en Guinée ?
+            </h2>
+            <p style={{ fontSize: '15px', color: 'var(--color-text-muted)', marginBottom: '48px', lineHeight: 1.8, fontWeight: 300 }}>
+              Rejoignez 500+ PME guinéennes qui font confiance à FacturaPro. <br/>RCCM, NIF, TVA 18% — conformes dès le premier jour.
+            </p>
+            <Reveal delay={200}>
+              <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <CtaButton />
+                <Link to="/tarifs" style={{ display: 'inline-flex', alignItems: 'center', padding: '13px 28px', background: 'transparent', color: 'var(--color-text)', border: '1px solid var(--color-border)', borderRadius: '2px', textDecoration: 'none', fontSize: '13px', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase', transition: 'all 0.3s ease' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(212, 175, 55, 0.4)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-gold)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text)'; }}
+                >
+                  Tarifs (1 000 GNF/an)
+                </Link>
+              </div>
+            </Reveal>
           </Reveal>
         </div>
       </section>
 
       <PublicFooter />
-    </div>
+      </div>
+    </PageTransition>
   );
 }

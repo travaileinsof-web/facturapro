@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppStore } from '../lib/store';
+import { PageTransition } from '../components/ui/PageTransition';
+import { BlobShape, GridPattern, GeometricShapes, WavesShape } from '../components/ui/AbstractShapes';
+import { MotionReveal as Reveal } from '../components/ui/MotionReveal';
 
 export function Auth({ mode }: { mode: 'login' | 'register' }) {
   const [tab, setTab] = useState<'login' | 'register'>(mode);
@@ -59,43 +62,46 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
 
   const field = (label: string, type: string, ph: string, val: string, onChange: (v: string) => void, extra?: any) => (
     <div {...extra}>
-      <label style={{ display: 'block', fontSize: '13px', color: '#334155', fontWeight: 600, marginBottom: '6px' }}>{label}</label>
+      <label style={{ display: 'block', fontSize: '12px', color: 'var(--color-text)', fontWeight: 500, marginBottom: '6px', letterSpacing: '0.5px' }}>{label}</label>
       <input
         type={type} placeholder={ph} value={val} required
         onChange={e => onChange(e.target.value)}
-        style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px', color: '#0f172a', outline: 'none' }}
-        onFocus={e => { e.target.style.borderColor = '#059669'; e.target.style.boxShadow = '0 0 0 3px rgba(5,150,105,0.1)'; }}
-        onBlur={e => { e.target.style.borderColor = '#cbd5e1'; e.target.style.boxShadow = 'none'; }}
+        style={{ width: '100%', padding: '12px 16px', borderRadius: '2px', border: '1px solid var(--color-border)', fontSize: '13px', color: 'var(--color-text)', outline: 'none', background: 'var(--color-surface)', fontWeight: 300, transition: 'all 0.3s ease' }}
+        onFocus={e => { e.target.style.borderColor = 'var(--color-gold)'; e.target.style.boxShadow = '0 0 0 3px rgba(212, 175, 55, 0.1)'; }}
+        onBlur={e => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
       />
     </div>
   );
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+    <PageTransition>
+    <div style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', position: 'relative', overflow: 'hidden' }}>
+      <GridPattern opacity={0.3} />
+      <BlobShape style={{ top: '-10%', right: '-10%', width: '800px', height: '800px' }} />
+      <WavesShape style={{ bottom: '-10%', left: '0', width: '100%', height: '300px' }} opacity={0.1} />
+      <GeometricShapes opacity={0.4} />
       
       {/* Brand logo */}
-      <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', marginBottom: '32px' }}>
-        <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'linear-gradient(135deg, #059669, #10b981)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-            <line x1="16" y1="13" x2="8" y2="13"/>
-            <line x1="16" y1="17" x2="8" y2="17"/>
-          </svg>
-        </div>
-        <span style={{ fontWeight: 800, fontSize: '18px', color: '#0f172a', letterSpacing: '-0.3px' }}>FacturaPro</span>
-      </Link>
+      <Reveal delay={0}>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', marginBottom: '32px', position: 'relative', zIndex: 1 }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '2px', background: 'var(--color-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: '20px', fontWeight: 700, color: '#1A1715', fontFamily: '"Playfair Display", serif' }}>F</span>
+          </div>
+          <span style={{ fontWeight: 600, fontSize: '20px', color: 'var(--color-text)', letterSpacing: '0.5px' }}>FacturaPro</span>
+        </Link>
+      </Reveal>
 
-      <div style={{ width: '100%', maxWidth: '420px', background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 10px 30px rgba(0,0,0,0.02)', padding: '32px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px', marginBottom: '6px', textAlign: 'center' }}>
-          {tab === 'login' ? 'Bon retour' : 'Créez votre compte'}
-        </h1>
-        <p style={{ fontSize: '14px', color: '#64748b', textAlign: 'center', marginBottom: '32px' }}>
-          {tab === 'login' ? 'Entrez vos identifiants pour accéder à votre espace' : 'Démarrez avec FacturaPro en quelques secondes'}
-        </p>
+      <Reveal delay={0.1} style={{ width: '100%', maxWidth: '420px', position: 'relative', zIndex: 1 }}>
+        <div style={{ background: 'var(--color-surface)', borderRadius: '2px', border: '1px solid var(--color-border)', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', padding: '40px' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 400, color: 'var(--color-text)', letterSpacing: '-0.5px', marginBottom: '8px', textAlign: 'center', fontFamily: '"Playfair Display", serif' }}>
+            {tab === 'login' ? 'Bon retour' : 'Créez votre compte'}
+          </h1>
+          <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', textAlign: 'center', marginBottom: '32px', fontWeight: 300 }}>
+            {tab === 'login' ? 'Entrez vos identifiants pour accéder à votre espace' : 'Démarrez avec FacturaPro en quelques secondes'}
+          </p>
 
         {error && (
-          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '12px', marginBottom: '20px', fontSize: '13.5px', color: '#ef4444', fontWeight: 500, textAlign: 'center' }}>
+          <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '2px', padding: '12px', marginBottom: '24px', fontSize: '13px', color: '#ef4444', fontWeight: 300, textAlign: 'center' }}>
             {error}
           </div>
         )}
@@ -106,18 +112,18 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
             {field('Adresse email ou Identifiant', 'text', 'vous@entreprise.com', loginData.email, v => setLoginData(p => ({ ...p, email: v })))}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <label style={{ fontSize: '13px', color: '#334155', fontWeight: 600 }}>Mot de passe</label>
-                <button type="button" style={{ background: 'none', border: 'none', color: '#059669', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer' }}>Mot de passe oublié ?</button>
+                <label style={{ fontSize: '12px', color: 'var(--color-text)', fontWeight: 500, letterSpacing: '0.5px' }}>Mot de passe</label>
+                <button type="button" style={{ background: 'none', border: 'none', color: 'var(--color-gold)', fontSize: '12px', fontWeight: 300, cursor: 'pointer', outline: 'none' }}>Mot de passe oublié ?</button>
               </div>
               <input type="password" placeholder="••••••••" value={loginData.password} required onChange={e => setLoginData(p => ({ ...p, password: e.target.value }))}
-                style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px', color: '#0f172a', outline: 'none' }}
-                onFocus={e => { e.target.style.borderColor = '#059669'; e.target.style.boxShadow = '0 0 0 3px rgba(5,150,105,0.1)'; }}
-                onBlur={e => { e.target.style.borderColor = '#cbd5e1'; e.target.style.boxShadow = 'none'; }}
+                style={{ width: '100%', padding: '12px 16px', borderRadius: '2px', border: '1px solid var(--color-border)', fontSize: '13px', color: 'var(--color-text)', outline: 'none', background: 'var(--color-surface)', fontWeight: 300, transition: 'all 0.3s ease' }}
+                onFocus={e => { e.target.style.borderColor = 'var(--color-gold)'; e.target.style.boxShadow = '0 0 0 3px rgba(212, 175, 55, 0.1)'; }}
+                onBlur={e => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
               />
             </div>
-            <button type="submit" disabled={loading} style={{ width: '100%', marginTop: '8px', padding: '12px', background: '#059669', color: '#fff', fontSize: '15px', fontWeight: 600, borderRadius: '8px', border: 'none', cursor: loading ? 'wait' : 'pointer', transition: 'background 0.15s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#047857' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#059669' }}
+            <button type="submit" disabled={loading} style={{ width: '100%', marginTop: '8px', padding: '14px', background: 'var(--color-gold)', color: '#1A1715', fontSize: '13px', fontWeight: 600, borderRadius: '2px', border: 'none', cursor: loading ? 'wait' : 'pointer', transition: 'all 0.3s ease', textTransform: 'uppercase', letterSpacing: '0.5px' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#E6D5B8'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-gold)'; (e.currentTarget as HTMLElement).style.transform = 'none'; }}
             >
               {loading ? 'Connexion en cours...' : 'Se connecter'}
             </button>
@@ -140,22 +146,24 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
               {field('Mot de passe', 'password', '••••••••', regData.password, v => setRegData(p => ({ ...p, password: v })))}
               {field('Confirmez', 'password', '••••••••', regData.confirm, v => setRegData(p => ({ ...p, confirm: v })))}
             </div>
-            <button type="submit" disabled={loading} style={{ width: '100%', marginTop: '8px', padding: '12px', background: '#059669', color: '#fff', fontSize: '15px', fontWeight: 600, borderRadius: '8px', border: 'none', cursor: loading ? 'wait' : 'pointer', transition: 'background 0.15s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#047857' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '#059669' }}
+            <button type="submit" disabled={loading} style={{ width: '100%', marginTop: '8px', padding: '14px', background: 'var(--color-gold)', color: '#1A1715', fontSize: '13px', fontWeight: 600, borderRadius: '2px', border: 'none', cursor: loading ? 'wait' : 'pointer', transition: 'all 0.3s ease', textTransform: 'uppercase', letterSpacing: '0.5px' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#E6D5B8'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--color-gold)'; (e.currentTarget as HTMLElement).style.transform = 'none'; }}
             >
               {loading ? 'Création en cours...' : 'Créer mon compte'}
             </button>
           </form>
         )}
 
-        <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '14px', color: '#64748b' }}>
+        <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '13px', color: 'var(--color-text-muted)', fontWeight: 300 }}>
           {tab === 'login' ? "Vous n'avez pas de compte ? " : "Vous avez déjà un compte ? "}
-          <button onClick={() => { setTab(tab === 'login' ? 'register' : 'login'); setError(''); }} style={{ background: 'none', border: 'none', color: '#059669', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>
+          <button onClick={() => { setTab(tab === 'login' ? 'register' : 'login'); setError(''); }} style={{ background: 'none', border: 'none', color: 'var(--color-gold)', fontSize: '13px', fontWeight: 500, cursor: 'pointer', outline: 'none', letterSpacing: '0.5px' }}>
             {tab === 'login' ? "S'inscrire" : 'Se connecter'}
           </button>
         </div>
-      </div>
+        </div>
+      </Reveal>
     </div>
+    </PageTransition>
   );
 }

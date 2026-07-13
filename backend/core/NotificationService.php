@@ -1,17 +1,10 @@
 <?php
-require_once __DIR__ . '/Database.php';
-require_once __DIR__ . '/Utils.php';
 
 class NotificationService {
-    private static function getDb() {
-        return Database::getInstance()->getConnection();
-    }
-
-    public static function createNotification($accountId, $title, $message, $type = 'info') {
+    public static function createNotification($pdo, $accountId, $title, $message, $type = 'info') {
         try {
-            $db = self::getDb();
-            $id = Utils::generateId('notif');
-            $stmt = $db->prepare("
+            $id = uniqid('notif_');
+            $stmt = $pdo->prepare("
                 INSERT INTO Notification (id, accountId, title, message, type)
                 VALUES (?, ?, ?, ?, ?)
             ");
@@ -23,12 +16,11 @@ class NotificationService {
         }
     }
 
-    public static function getUnreadNotifications($accountId) {
+    public static function getUnreadNotifications($pdo, $accountId) {
         try {
-            $db = self::getDb();
-            $stmt = $db->prepare("
+            $stmt = $pdo->prepare("
                 SELECT * FROM Notification 
-                WHERE accountId = ? AND isRead = FALSE 
+                WHERE accountId = ? AND isRead = 0 
                 ORDER BY createdAt DESC
             ");
             $stmt->execute([$accountId]);
@@ -39,10 +31,9 @@ class NotificationService {
         }
     }
 
-    public static function getAllNotifications($accountId) {
+    public static function getAllNotifications($pdo, $accountId) {
         try {
-            $db = self::getDb();
-            $stmt = $db->prepare("
+            $stmt = $pdo->prepare("
                 SELECT * FROM Notification 
                 WHERE accountId = ? 
                 ORDER BY createdAt DESC 
@@ -56,11 +47,10 @@ class NotificationService {
         }
     }
 
-    public static function markAsRead($id, $accountId) {
+    public static function markAsRead($pdo, $id, $accountId) {
         try {
-            $db = self::getDb();
-            $stmt = $db->prepare("
-                UPDATE Notification SET isRead = TRUE 
+            $stmt = $pdo->prepare("
+                UPDATE Notification SET isRead = 1 
                 WHERE id = ? AND accountId = ?
             ");
             $stmt->execute([$id, $accountId]);
@@ -71,11 +61,10 @@ class NotificationService {
         }
     }
 
-    public static function markAllAsRead($accountId) {
+    public static function markAllAsRead($pdo, $accountId) {
         try {
-            $db = self::getDb();
-            $stmt = $db->prepare("
-                UPDATE Notification SET isRead = TRUE 
+            $stmt = $pdo->prepare("
+                UPDATE Notification SET isRead = 1 
                 WHERE accountId = ?
             ");
             $stmt->execute([$accountId]);

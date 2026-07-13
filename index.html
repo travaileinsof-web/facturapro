@@ -4,20 +4,64 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="google" content="notranslate">
+
+    <!-- ── SEO Principal ──────────────────────────────────────────────── -->
+    <title>FacturaPro – Logiciel de facturation pour PME en Guinée | RCCM, NIF, WhatsApp</title>
+    <meta name="description" content="Créez et envoyez vos factures conformes (RCCM, NIF, TVA 18%) par WhatsApp depuis votre téléphone. 1 000 GNF/an, essai gratuit 24h. Pour les PME de Conakry à Nzérékoré.">
+    <meta name="keywords" content="logiciel facturation Guinée, facturation PME Conakry, facture RCCM NIF, WhatsApp facture, logiciel facturation guinéen, TVA 18% Guinée, FacturaPro">
+    <link rel="canonical" href="https://facturapro.com/">
+
+    <!-- ── Crawlers IA — Autorisation explicite ───────────────────────── -->
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+
+    <!-- ── Open Graph ─────────────────────────────────────────────────── -->
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="fr_GN">
+    <meta property="og:site_name" content="FacturaPro">
+    <meta property="og:title" content="FacturaPro – Logiciel de facturation pour PME en Guinée | RCCM, NIF, WhatsApp">
+    <meta property="og:description" content="Créez et envoyez vos factures conformes (RCCM, NIF, TVA 18%) par WhatsApp depuis votre téléphone. 1 000 GNF/an, essai gratuit 24h.">
+    <meta property="og:url" content="https://facturapro.com/">
+
+    <!-- ── Twitter/X Card ─────────────────────────────────────────────── -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="FacturaPro – Logiciel de facturation pour PME en Guinée">
+    <meta name="twitter:description" content="Créez et envoyez vos factures conformes par WhatsApp. RCCM, NIF, TVA 18%. 1 000 GNF/an, essai gratuit 24h.">
+
+    <!-- ── Schema.org Organisation ────────────────────────────────────── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "FacturaPro",
+      "applicationCategory": "BusinessApplication",
+      "description": "Logiciel de facturation pour PME en Guinée. Créez des factures conformes (RCCM, NIF, TVA 18%) et envoyez-les par WhatsApp.",
+      "operatingSystem": "Web, Android, iOS",
+      "offers": {
+        "@type": "Offer",
+        "price": "1000",
+        "priceCurrency": "GNF",
+        "description": "Abonnement annuel — essai gratuit 24h"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "EINSOFT DIGIT",
+        "url": "https://einsofdigit.com",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Conakry",
+          "addressCountry": "GN"
+        }
+      },
+      "url": "https://facturapro.com"
+    }
+    </script>
+
+    <!-- ── Polices ─────────────────────────────────────────────────────── -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <title>FacturaPro SaaS</title>
   </head>
   <body>
-    <script>
-      window.addEventListener('error', function(e) {
-        var div = document.createElement('div');
-        div.style.background = 'red'; div.style.color = 'white'; div.style.padding = '20px'; div.style.position = 'fixed'; div.style.top = '0'; div.style.left = '0'; div.style.zIndex = '999999';
-        div.innerHTML = '<h2>Global Error:</h2><pre>' + e.error?.stack + '\n\n' + e.message + '</pre>';
-        document.body.appendChild(div);
-      });
-    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -89,13 +89,13 @@ function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boole
       {open && (
         <div onClick={onClose} style={{
           position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.7)',
-          zIndex: 98, backdropFilter: 'blur(4px)',
+          background: 'rgba(0,0,0,0.5)',
+          zIndex: 98, backdropFilter: 'blur(2px)',
         }} className="sidebar-hide" />
       )}
 
       <aside className={`app-sidebar ${open ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''} border-r-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)]`}
-        style={{ transform: open ? 'translateX(0)' : undefined }}>
+        style={{ transform: open ? 'translateX(0)' : undefined, zIndex: 100 }}>
 
         {/* ── Logo ── */}
         <div className="shrink-0 relative" style={{ padding: 'var(--space-5)' }}>
@@ -419,7 +419,7 @@ function AppLayout() {
   // Desktop: sidebar always visible (240px margin)
   const isDesktop = typeof window !== 'undefined' && window.innerWidth > 768;
 
-  if (isTrial && trialHours <= 0) {
+  if (isTrial && (trialHours <= 0 || user?.subscriptionStatus === 'trial_expired')) {
     return (
       <div className="flex flex-col h-screen bg-[var(--background)] text-[var(--foreground)] overflow-y-auto">
         <div className="flex-1 flex flex-col items-center justify-center" style={{ padding: 'var(--space-10) var(--space-5)' }}>

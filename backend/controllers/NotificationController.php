@@ -6,11 +6,11 @@ class NotificationController {
     public static function handle($pdo, $method, $id, $accountId, $body) {
         if ($method === 'GET') {
             if ($id === 'unread') {
-                $notifications = NotificationService::getUnreadNotifications($accountId);
+                $notifications = NotificationService::getUnreadNotifications($pdo, $accountId);
                 echo json_encode($notifications);
                 return;
             } else {
-                $notifications = NotificationService::getAllNotifications($accountId);
+                $notifications = NotificationService::getAllNotifications($pdo, $accountId);
                 echo json_encode($notifications);
                 return;
             }
@@ -18,7 +18,7 @@ class NotificationController {
         
         if ($method === 'POST' || $method === 'PUT') {
             if ($id === 'read-all') {
-                $success = NotificationService::markAllAsRead($accountId);
+                $success = NotificationService::markAllAsRead($pdo, $accountId);
                 if ($success) {
                     echo json_encode(["success" => true]);
                 } else {
@@ -28,8 +28,7 @@ class NotificationController {
                 return;
             } elseif ($id) {
                 // ex: /api/notifications/:id/read
-                // But typically $id is just the id. Let's assume POST to /api/notifications/:id means mark as read.
-                $success = NotificationService::markAsRead($id, $accountId);
+                $success = NotificationService::markAsRead($pdo, $id, $accountId);
                 if ($success) {
                     echo json_encode(["success" => true]);
                 } else {
