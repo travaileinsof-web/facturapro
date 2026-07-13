@@ -48,6 +48,7 @@ require_once __DIR__ . '/controllers/ExpenseController.php';
 require_once __DIR__ . '/controllers/DocumentController.php';
 require_once __DIR__ . '/controllers/StatsController.php';
 require_once __DIR__ . '/controllers/ChatController.php';
+require_once __DIR__ . '/controllers/NotificationController.php';
 require_once __DIR__ . '/controllers/ShareController.php';
 require_once __DIR__ . '/controllers/UploadController.php';
 require_once __DIR__ . '/controllers/CompanyController.php';

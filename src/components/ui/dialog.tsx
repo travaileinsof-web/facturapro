@@ -8,9 +8,9 @@ import { XIcon } from "lucide-react"
 export type ModalSize = 'sm' | 'md' | 'lg'
 
 const MODAL_SIZE_MAP: Record<ModalSize, string> = {
-  sm: 'w-full max-w-[var(--modal-width-sm)]',   /* 480px — Catalog */
-  md: 'w-full max-w-[var(--modal-width-md)]',   /* 720px — Client, Receipt */
-  lg: 'w-full max-w-[var(--modal-width-lg)]',   /* 960px — Invoice */
+  sm: 'w-[calc(100vw-2rem)] sm:w-full max-w-[var(--modal-width-sm)]',   /* 480px — Catalog */
+  md: 'w-[calc(100vw-2rem)] sm:w-full max-w-[var(--modal-width-md)]',   /* 720px — Client, Receipt */
+  lg: 'w-[calc(100vw-2rem)] lg:w-full max-w-[var(--modal-width-lg)]',   /* 960px — Invoice */
 }
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {

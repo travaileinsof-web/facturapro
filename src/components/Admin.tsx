@@ -419,7 +419,7 @@ function AdminDashboard({ stats }: { stats: any; accounts: any[] }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '24px' }}>
         {kpis.map((k, i) => (
           <div key={i} className="fp-kpi-card" style={{ opacity: 0, animation: `fp-fade-up 0.5s ease ${i * 0.05}s forwards` }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }} title={k.desc}>
@@ -801,7 +801,7 @@ function AdminAccountDetails({ accountId, token, onBack }: { accountId: string; 
       </div>
 
       {/* Statistiques rapides */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 250px), 1fr))', gap: '24px' }}>
         {[
           { label: 'Base Clients', value: data.totalClients || 0, color: 'var(--blue-accent)' },
           { label: 'Factures Générées', value: data.totalInvoices || 0, color: 'var(--foreground-subtle)' },

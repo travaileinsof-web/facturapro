@@ -42,6 +42,9 @@ class Router {
             case 'stats':
                 StatsController::handle($pdo, $method, $accountId);
                 break;
+            case 'notifications':
+                NotificationController::handle($pdo, $method, $id, $accountId, $body);
+                break;
             case 'chat':
                 ChatController::handle($pdo, $method, $accountId, $body, $currentAccount);
                 break;

@@ -153,7 +153,7 @@ export function Dashboard() {
             <div key={i} className="fp-skeleton" style={{ height: '110px', borderRadius: 'var(--radius-xl)' }}/>
           ))}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 'var(--space-6)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: 'var(--space-6)' }}>
           <div className="fp-skeleton" style={{ height: '260px' }}/>
           <div className="fp-skeleton" style={{ height: '260px' }}/>
         </div>
@@ -259,7 +259,7 @@ export function Dashboard() {
         </div>
       </div>
       {/* ── Recent lists ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 'var(--space-4)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: 'var(--space-4)' }}>
         {/* Recent invoices */}
         <div className="fp-card" style={{ opacity: 0, animation: 'fp-fade-up 0.5s ease 0.35s forwards' }}>
           <div style={{ padding: 'var(--space-4) var(--space-5)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

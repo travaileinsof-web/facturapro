@@ -133,7 +133,7 @@ export function Clients() {
               placeholder="Rechercher un client..." 
               value={search} 
               onChange={e => setSearch(e.target.value)} 
-              className="w-[250px]"
+              className="w-full sm:w-[250px]"
             />
             <button onClick={openNew} className="fp-btn-primary" style={{ whiteSpace: 'nowrap', padding: '0 var(--space-4)' }}>
               <Plus size={16} className="mr-2" /> Nouveau Client

@@ -354,9 +354,9 @@ export function Invoices() {
         icon={<FileTextIcon size={20} />}
         actions={
           <>
-            <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <select 
-                className="fp-input w-auto min-w-[220px]"
+                className="fp-input w-full sm:w-auto min-w-[220px]"
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
               >
@@ -366,7 +366,7 @@ export function Invoices() {
                 <option value="devis">Devis uniquement</option>
               </select>
               <select 
-                className="fp-input w-auto min-w-[180px]"
+                className="fp-input w-full sm:w-auto min-w-[180px]"
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
               >

@@ -452,7 +452,7 @@ export function Landing() {
               </p>
             </div>
           </Reveal>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(290px,1fr))', gap: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%, 290px),1fr))', gap: '14px' }}>
             <FeatureCard delay={0} icon={icons.bot} title="Assistant ARIA" desc="Créez des factures et reçus par commande en langue naturelle. ARIA connaît vos clients et votre catalogue en temps réel." />
             <FeatureCard delay={80} icon={icons.doc} title="Factures Professionnelles" desc="Modèles PDF d'une précision vectorielle. Votre logo, signature et couleurs intégrés automatiquement." />
             <FeatureCard delay={160} icon={icons.receipt} title="Gestion des Paiements" desc="Suivez chaque franc encaissé. Reçus de paiement avec mise à jour automatique des soldes et statuts." />

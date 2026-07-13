@@ -10,15 +10,14 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, description, icon, actions, badge }: PageHeaderProps) {
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      paddingBottom: 'var(--space-6)',
-      marginBottom: 'var(--space-6)',
-      borderBottom: '1px solid var(--border)',
-      position: 'relative',
-    }}>
+    <div className="flex flex-col md:flex-row md:justify-between md:items-start"
+      style={{
+        gap: 'var(--space-4)',
+        paddingBottom: 'var(--space-6)',
+        marginBottom: 'var(--space-6)',
+        borderBottom: '1px solid var(--border)',
+        position: 'relative',
+      }}>
       {/* Gold accent line */}
       <div style={{
         position: 'absolute',
@@ -85,7 +84,7 @@ export function PageHeader({ title, description, icon, actions, badge }: PageHea
       </div>
 
       {actions && (
-        <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center', flexShrink: 0, marginLeft: 'var(--space-5)' }}>
+        <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center w-full md:w-auto mt-4 md:mt-0" style={{ flexShrink: 0 }}>
           {actions}
         </div>
       )}

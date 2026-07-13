@@ -238,6 +238,59 @@ function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [prevModule, setPrevModule] = useState(currentModule);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+
+  const fetchNotifications = async () => {
+    if (!user?.token) return;
+    try {
+      const res = await fetch('/api/v1/notifications', {
+        headers: { 'Authorization': `Bearer ${user.token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data || []);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    if (!user?.token) return;
+    try {
+      const res = await fetch('/api/v1/notifications/read-all', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${user.token}` }
+      });
+      if (res.ok) {
+        toast.success("Toutes les notifications marquées comme lues.");
+        fetchNotifications();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const markAsRead = async (id: string) => {
+    if (!user?.token) return;
+    try {
+      const res = await fetch(`/api/v1/notifications/${id}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${user.token}` }
+      });
+      if (res.ok) fetchNotifications();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000); // 1 minute
+    return () => clearInterval(interval);
+  }, [user?.token]);
 
   useEffect(() => {
     // 1) Sync latest user data from backend (especially for subscription updates after payment)
@@ -443,7 +496,7 @@ function AppLayout() {
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
       {/* Sidebar Placeholder */}
-      <div style={{ width: isCollapsed ? '68px' : '228px', flexShrink: 0, position: 'relative', transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
+      <div className="sidebar-placeholder" style={{ width: isCollapsed ? '68px' : '228px', flexShrink: 0, position: 'relative', transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} isCollapsed={isCollapsed} onToggleCollapse={() => setIsCollapsed(!isCollapsed)} />
         <style>{`
           @media (min-width: 769px) {
@@ -483,7 +536,7 @@ function AppLayout() {
           {/* Header right */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
             {/* Notification bell */}
-            <Popover>
+            <Popover open={notifOpen} onOpenChange={setNotifOpen}>
               <PopoverTrigger 
                   style={{
                   width: 'var(--space-8)', height: 'var(--space-8)',
@@ -494,46 +547,44 @@ function AppLayout() {
                   className="hover:border-[var(--color-border-focus)] hover:bg-[var(--color-bg-page)]"
                 >
                   <Bell style={{ width: 'var(--space-5)', height: 'var(--space-5)', color: 'var(--color-text-secondary)' }}/>
-                  <div style={{ position: 'absolute', top: 'var(--space-2)', right: 'var(--space-2)', width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-primary)', border: '2px solid var(--color-bg-card)' }}/>
+                  {notifications.filter(n => !n.isRead).length > 0 && (
+                    <div style={{ position: 'absolute', top: 'var(--space-2)', right: 'var(--space-2)', width: '8px', height: '8px', borderRadius: '50%', background: 'var(--color-primary)', border: '2px solid var(--color-bg-card)' }}/>
+                  )}
               </PopoverTrigger>
               <PopoverContent className="w-[var(--space-96)] rounded-[var(--radius-lg)] shadow-[var(--shadow-lg)] border border-[var(--color-border-default)] overflow-hidden" style={{ background: 'var(--color-bg-card)', marginTop: 'var(--space-2)', padding: 0 }} align="end" sideOffset={12}>
                 <div style={{ padding: 'var(--space-4) var(--space-5)', borderBottom: '1px solid var(--color-border-subtle)', background: 'var(--color-bg-card)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h4 style={{ fontWeight: 'var(--font-weight-semibold)', fontSize: 'var(--text-base)', color: 'var(--color-text-primary)', margin: 0 }}>Notifications</h4>
-                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-primary)', fontWeight: 'var(--font-weight-bold)', letterSpacing: '0.05em', textTransform: 'uppercase', background: 'var(--color-primary-subtle)', padding: 'var(--space-1) var(--space-2)', borderRadius: 'var(--radius-sm)' }}>1 Nouvelle</span>
+                  {notifications.filter(n => !n.isRead).length > 0 && (
+                    <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-primary)', fontWeight: 'var(--font-weight-bold)', letterSpacing: '0.05em', textTransform: 'uppercase', background: 'var(--color-primary-subtle)', padding: 'var(--space-1) var(--space-2)', borderRadius: 'var(--radius-sm)' }}>
+                      {notifications.filter(n => !n.isRead).length} Nouvelle(s)
+                    </span>
+                  )}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '350px', overflowY: 'auto', background: 'var(--color-bg-page)' }}>
-                  {/* Non-lue : fond primary-subtle + barre gauche (toujours ensemble) */}
-                  <div style={{ padding: 'var(--space-4) var(--space-5)', borderBottom: '1px solid var(--color-border-subtle)', background: 'var(--color-primary-subtle)', cursor: 'pointer', position: 'relative', paddingLeft: 'calc(var(--space-5) + 3px)', borderLeft: '3px solid var(--color-primary)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-1)' }}>
-                      <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)', margin: 0 }}>Paiement reçu</p>
-                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', fontWeight: 'var(--font-weight-medium)' }}>Il y a 10 min</span>
+                  {notifications.length === 0 ? (
+                    <div style={{ padding: 'var(--space-5)', textAlign: 'center', color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }}>Aucune notification.</div>
+                  ) : notifications.map(notif => (
+                    <div key={notif.id} onClick={() => { markAsRead(notif.id); setNotifOpen(false); }} style={{ padding: 'var(--space-4) var(--space-5)', borderBottom: '1px solid var(--color-border-subtle)', background: notif.isRead ? 'transparent' : 'var(--color-primary-subtle)', cursor: 'pointer', position: 'relative', paddingLeft: notif.isRead ? 'var(--space-5)' : 'calc(var(--space-5) + 3px)', borderLeft: notif.isRead ? 'none' : '3px solid var(--color-primary)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-1)' }}>
+                        <p style={{ fontSize: 'var(--text-sm)', fontWeight: notif.isRead ? 'var(--font-weight-medium)' : 'var(--font-weight-semibold)', color: notif.isRead ? 'var(--color-text-secondary)' : 'var(--color-text-primary)', margin: 0 }}>{notif.title}</p>
+                        <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', fontWeight: 'var(--font-weight-medium)' }}>
+                          {new Date(notif.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', margin: 0, lineHeight: '16px' }} dangerouslySetInnerHTML={{ __html: notif.message }} />
                     </div>
-                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', margin: 0, lineHeight: '16px' }}>Le client <strong style={{ color: 'var(--color-text-primary)' }}>Acme Corp</strong> a réglé la facture <span style={{ color: 'var(--color-primary)', fontFamily: 'monospace', fontSize: '11px' }}>#FAC-2026-001</span> de 1 200,00 $.</p>
-                  </div>
-                  {/* Lue : fond transparent, pas de barre */}
-                  <div style={{ padding: 'var(--space-4) var(--space-5)', borderBottom: '1px solid var(--color-border-subtle)', background: 'transparent', cursor: 'pointer' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-1)' }}>
-                      <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-secondary)', margin: 0 }}>Rappel automatique</p>
-                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', fontWeight: 'var(--font-weight-medium)' }}>Il y a 2h</span>
-                    </div>
-                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', margin: 0, lineHeight: '16px' }}>Le devis <span style={{ fontFamily: 'monospace', fontSize: '11px' }}>#DEV-2026-014</span> est en attente d’approbation depuis 7 jours.</p>
-                  </div>
-                  <div style={{ padding: 'var(--space-4) var(--space-5)', background: 'transparent', cursor: 'pointer' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-1)' }}>
-                      <p style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)', color: 'var(--color-text-secondary)', margin: 0 }}>Bienvenue sur FacturaPro</p>
-                      <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', fontWeight: 'var(--font-weight-medium)' }}>Hier</span>
-                    </div>
-                    <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', margin: 0, lineHeight: '16px' }}>Votre compte a été configuré avec succès. Explorez votre tableau de bord.</p>
-                  </div>
+                  ))}
                 </div>
-                <div style={{ padding: 'var(--space-3) var(--space-5)', background: 'var(--color-bg-modal-footer)', borderTop: '1px solid var(--color-border-subtle)', textAlign: 'center' }}>
-                  <button style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', background: 'transparent', border: 'none', cursor: 'pointer', width: '100%', padding: 'var(--space-2)' }} onClick={() => toast.success("Toutes les notifications marquées comme lues.")}>Marquer tout comme lu</button>
-                </div>
+                {notifications.filter(n => !n.isRead).length > 0 && (
+                  <div style={{ padding: 'var(--space-3) var(--space-5)', background: 'var(--color-bg-modal-footer)', borderTop: '1px solid var(--color-border-subtle)', textAlign: 'center' }}>
+                    <button style={{ fontSize: 'var(--text-xs)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', background: 'transparent', border: 'none', cursor: 'pointer', width: '100%', padding: 'var(--space-2)' }} onClick={() => { markAllAsRead(); setNotifOpen(false); }}>Marquer tout comme lu</button>
+                  </div>
+                )}
               </PopoverContent>
             </Popover>
 
             {/* User Dropdown */}
-            <Popover>
+            <Popover open={profileOpen} onOpenChange={setProfileOpen}>
               <PopoverTrigger 
                   style={{
                   width: 'var(--space-8)', height: 'var(--space-8)',
@@ -553,14 +604,14 @@ function AppLayout() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', padding: 'var(--space-2)', gap: 'var(--space-1)', background: 'var(--color-bg-page)' }}>
                   <button 
-                    onClick={() => { useAppStore.getState().setCurrentModule('settings' as any); document.dispatchEvent(new MouseEvent('click')); }}
+                    onClick={() => { setProfileOpen(false); useAppStore.getState().setCurrentModule('settings' as any); }}
                     className="hover:bg-[var(--color-bg-card)]"
                     style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-3) var(--space-4)', fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)', background: 'transparent', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', borderRadius: 'var(--radius-sm)' }}
                   >
                     <SettingsIcon size={16} style={{ color: 'var(--color-text-secondary)' }} /> Paramètres du compte
                   </button>
                   <button 
-                    onClick={() => { useAppStore.getState().setCurrentModule('catalog' as any); document.dispatchEvent(new MouseEvent('click')); }}
+                    onClick={() => { setProfileOpen(false); useAppStore.getState().setCurrentModule('catalog' as any); }}
                     className="hover:bg-[var(--color-bg-card)]"
                     style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-3) var(--space-4)', fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)', background: 'transparent', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', borderRadius: 'var(--radius-sm)' }}
                   >
@@ -569,7 +620,7 @@ function AppLayout() {
                 </div>
                 <div style={{ padding: 'var(--space-2)', borderTop: '1px solid var(--color-border-subtle)', background: 'var(--color-bg-card)' }}>
                   <button 
-                    onClick={handleLogout}
+                    onClick={() => { setProfileOpen(false); handleLogout(); }}
                     style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-3) var(--space-4)', fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-bold)', color: 'var(--color-danger)', background: 'rgba(211, 47, 47, 0.05)', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left', borderRadius: 'var(--radius-sm)' }}
                   >
                     <LogOut size={16} /> Déconnexion
