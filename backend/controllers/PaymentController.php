@@ -133,6 +133,9 @@ class PaymentController {
     }
 
     public function handleWebhook($request) {
+        // Lire le payload brut en premier
+        $rawPayload = file_get_contents('php://input');
+        
         // Obtenir tous les en-têtes
         if (function_exists('getallheaders')) {
             $headers = getallheaders();
@@ -145,34 +148,51 @@ class PaymentController {
             }
         }
 
+        // --- DEBUG LOG START ---
+        try {
+            $stmtLog = $this->pdo->prepare("INSERT INTO WebhookLog (event_type, reference, payload) VALUES (?, ?, ?)");
+            $stmtLog->execute(['debug_webhook', 'all_headers', $rawPayload . ' | HEADERS: ' . json_encode($headers)]);
+        } catch (Exception $e) { }
+        // --- DEBUG LOG END ---
+
         // Trouver X-Webhook-Signature
         $signatureHeader = '';
         foreach ($headers as $key => $value) {
-            if (strtolower($key) === 'x-webhook-signature') {
+            if (strtolower($key) === 'x-webhook-signature' || strtolower($key) === 'djamo-signature' || strtolower($key) === 'x-djamo-signature') {
                 $signatureHeader = $value;
                 break;
             }
         }
 
         if (empty($signatureHeader)) {
+            // Pour le débug, on va quand même continuer ou loguer l'erreur
+            try {
+                $stmtLog = $this->pdo->prepare("INSERT INTO WebhookLog (event_type, reference, payload) VALUES (?, ?, ?)");
+                $stmtLog->execute(['error', 'missing_signature', 'Headers: ' . json_encode($headers)]);
+            } catch (Exception $e) { }
             return ['error' => 'Signature manquante', 'status' => 401];
         }
 
         // Format attendu: v1:signature
         $parts = explode(':', $signatureHeader);
         if (count($parts) !== 2 || $parts[0] !== 'v1') {
+            try {
+                $stmtLog = $this->pdo->prepare("INSERT INTO WebhookLog (event_type, reference, payload) VALUES (?, ?, ?)");
+                $stmtLog->execute(['error', 'invalid_signature_format', 'Header: ' . $signatureHeader]);
+            } catch (Exception $e) { }
             return ['error' => 'Format de signature invalide', 'status' => 401];
         }
         $providedSignature = $parts[1];
-
-        // Lire le payload brut
-        $rawPayload = file_get_contents('php://input');
         
         // Calcul de la signature avec le secret
         $calculatedSignature = hash_hmac('sha256', $rawPayload, DJOMY_CLIENT_SECRET);
         
         // Comparer
         if (!hash_equals($calculatedSignature, $providedSignature)) {
+            try {
+                $stmtLog = $this->pdo->prepare("INSERT INTO WebhookLog (event_type, reference, payload) VALUES (?, ?, ?)");
+                $stmtLog->execute(['error', 'signature_mismatch', 'Calculated: ' . $calculatedSignature . ' Provided: ' . $providedSignature]);
+            } catch (Exception $e) { }
             return ['error' => 'Signature invalide', 'status' => 403];
         }
 
