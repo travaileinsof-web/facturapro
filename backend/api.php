@@ -119,7 +119,7 @@ if ($resource === 'admin_auth') {
     exit;
 }
 
-if ($resource === 'v1' && $id === 'webhooks' && $subAction === 'djomy') {
+if (($resource === 'v1' && $id === 'webhooks' && $subAction === 'djomy') || ($resource === 'webhooks' && $id === 'djomy')) {
     $controller = new PaymentController($pdo);
     $response = $controller->handleWebhook(['body' => $body]);
     echo json_encode($response);
