@@ -17,6 +17,7 @@ interface User {
   secondaryColor?: string;
   accentColor?: string;
   role?: string;
+  smtpHost?: string;
 }
 
 interface AppState {
@@ -37,6 +38,8 @@ interface AppState {
   refreshCatalog: number;
   refreshReminders: number;
   triggerRefresh: (module: 'clients' | 'invoices' | 'receipts' | 'stats' | 'expenses' | 'catalog' | 'reminders') => void;
+  tourRunning: boolean;
+  setTourRunning: (run: boolean) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -55,6 +58,8 @@ export const useAppStore = create<AppState>()(
       refreshExpenses: 0,
       refreshCatalog: 0,
       refreshReminders: 0,
+      tourRunning: false,
+      setTourRunning: (run) => set({ tourRunning: run }),
       triggerRefresh: (module) => set((state) => ({
         [`refresh${module.charAt(0).toUpperCase() + module.slice(1)}`]: (state[`refresh${module.charAt(0).toUpperCase() + module.slice(1)}` as keyof AppState] as number) + 1
       }))

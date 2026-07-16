@@ -93,8 +93,10 @@ class PaymentController {
             'payerNumber' => $payerNumber,
             'description' => 'Abonnement Annuel FacturaPro',
             'merchantPaymentReference' => $reference,
-            'returnUrl' => rtrim($origin, '/') . '/dashboard?payment=success',
+            'returnUrl' => rtrim($origin, '/') . '/dashboard?payment=success&ref=' . $reference,
             'cancelUrl' => rtrim($origin, '/') . '/dashboard?payment=cancel',
+            'webhookUrl' => 'https://facturapro.com/api/v1/webhooks/djomy',
+            'callbackUrl' => 'https://facturapro.com/api/v1/webhooks/djomy',
             'metadata' => [
                 'reference' => $reference,
                 'accountId' => $accountId
@@ -158,7 +160,8 @@ class PaymentController {
         // Trouver X-Webhook-Signature
         $signatureHeader = '';
         foreach ($headers as $key => $value) {
-            if (strtolower($key) === 'x-webhook-signature' || strtolower($key) === 'djamo-signature' || strtolower($key) === 'x-djamo-signature') {
+            $lowerKey = strtolower($key);
+            if (in_array($lowerKey, ['x-webhook-signature', 'djamo-signature', 'x-djamo-signature', 'djomy-signature', 'x-djomy-signature'])) {
                 $signatureHeader = $value;
                 break;
             }
@@ -173,16 +176,12 @@ class PaymentController {
             return ['error' => 'Signature manquante', 'status' => 401];
         }
 
-        // Format attendu: v1:signature
-        $parts = explode(':', $signatureHeader);
-        if (count($parts) !== 2 || $parts[0] !== 'v1') {
-            try {
-                $stmtLog = $this->pdo->prepare("INSERT INTO WebhookLog (event_type, reference, payload) VALUES (?, ?, ?)");
-                $stmtLog->execute(['error', 'invalid_signature_format', 'Header: ' . $signatureHeader]);
-            } catch (Exception $e) { }
-            return ['error' => 'Format de signature invalide', 'status' => 401];
+        // Format attendu: v1:signature ou juste signature
+        if (strpos($signatureHeader, 'v1:') === 0) {
+            $providedSignature = substr($signatureHeader, 3);
+        } else {
+            $providedSignature = $signatureHeader;
         }
-        $providedSignature = $parts[1];
         
         // Calcul de la signature avec le secret
         $calculatedSignature = hash_hmac('sha256', $rawPayload, DJOMY_CLIENT_SECRET);
@@ -214,7 +213,9 @@ class PaymentController {
             // Ignorer l'erreur de log pour ne pas bloquer le traitement
         }
         
-        if ($eventType === 'payment.success') {
+        $isSuccess = in_array(strtolower($eventType), ['payment.success', 'transaction.success', 'success', 'completed', 'successful']);
+        
+        if ($isSuccess) {
             if ($reference) {
                 // Vérifier l'idempotence
                 $stmtCheck = $this->pdo->prepare("SELECT status, amount, accountId FROM SubscriptionPayment WHERE reference = ?");
@@ -222,6 +223,18 @@ class PaymentController {
                 $paymentInfo = $stmtCheck->fetch(PDO::FETCH_ASSOC);
 
                 if ($paymentInfo && $paymentInfo['status'] !== 'COMPLETED') {
+                    $expectedAmount = (float) $paymentInfo['amount'];
+                    $paidAmount = (float) ($paymentData['amount'] ?? 0);
+                    
+                    if ($paidAmount < $expectedAmount && $paidAmount > 0) {
+                        try {
+                            $stmtLog = $this->pdo->prepare("INSERT INTO WebhookLog (event_type, reference, payload) VALUES (?, ?, ?)");
+                            $stmtLog->execute(['error', 'amount_mismatch', "Expected: $expectedAmount, Paid: $paidAmount, Payload: $rawPayload"]);
+                            $this->pdo->prepare("UPDATE SubscriptionPayment SET status = 'FAILED' WHERE reference = ?")->execute([$reference]);
+                        } catch (Exception $e) { }
+                        return ['error' => 'Montant paye insuffisant', 'status' => 400];
+                    }
+
                     $stmt = $this->pdo->prepare("UPDATE SubscriptionPayment SET status = 'COMPLETED', djomyTransactionId = ? WHERE reference = ?");
                     $stmt->execute([$paymentData['transactionId'] ?? null, $reference]);
 
@@ -230,7 +243,17 @@ class PaymentController {
 
                     if ($accountId) {
                         // Mettre à jour l'abonnement
-                        $expiresAt = date('Y-m-d H:i:s', strtotime('+1 year'));
+                        $stmtCheckExp = $this->pdo->prepare("SELECT subscriptionExpiresAt FROM Account WHERE id = ?");
+                        $stmtCheckExp->execute([$accountId]);
+                        $currentExp = $stmtCheckExp->fetchColumn();
+                        
+                        if ($currentExp && strtotime($currentExp) > time()) {
+                            // S'il reste du temps, on ajoute 1 an à la date d'expiration actuelle
+                            $expiresAt = date('Y-m-d H:i:s', strtotime('+1 year', strtotime($currentExp)));
+                        } else {
+                            $expiresAt = date('Y-m-d H:i:s', strtotime('+1 year'));
+                        }
+                        
                         $stmt = $this->pdo->prepare("UPDATE Account SET subscriptionPlan = 'annuel', subscriptionStatus = 'active', subscriptionExpiresAt = ?, lastPaymentDate = CURRENT_TIMESTAMP WHERE id = ?");
                         $stmt->execute([$expiresAt, $accountId]);
 
@@ -282,5 +305,31 @@ class PaymentController {
 
         // Toujours retourner 200 pour dire à Djomy qu'on a bien reçu le webhook
         return ['success' => true];
+    }
+
+    public function syncPayment($request) {
+        global $currentAccount;
+        if (!$currentAccount) return ['error' => 'Non autorisé', 'status' => 401];
+
+        $reference = $_GET['ref'] ?? '';
+        if (!$reference) return ['error' => 'Référence manquante', 'status' => 400];
+
+        $stmtCheck = $this->pdo->prepare("SELECT status, amount, accountId FROM SubscriptionPayment WHERE reference = ?");
+        $stmtCheck->execute([$reference]);
+        $paymentInfo = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+        if (!$paymentInfo) return ['error' => 'Paiement introuvable', 'status' => 404];
+        if ($paymentInfo['accountId'] !== $currentAccount['id']) return ['error' => 'Accès refusé', 'status' => 403];
+
+        if ($paymentInfo['status'] === 'COMPLETED') {
+            return ['success' => true, 'synced' => true];
+        }
+
+        // ATTENTION SECURITE : 
+        // On ne force PLUS le statut à COMPLETED manuellement ici. 
+        // Seul le Webhook officiel de Djomy (qui possède la signature de sécurité) a le droit de passer le statut à COMPLETED.
+        // Ce endpoint (syncPayment) sert uniquement au frontend pour "poller" (attendre) que le Webhook ait fait son travail.
+        
+        return ['success' => false, 'status' => 'PENDING', 'message' => 'En attente de confirmation par le serveur de paiement'];
     }
 }

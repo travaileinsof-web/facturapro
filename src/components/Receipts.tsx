@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogBody } from './ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from './ui/command';
-import { Check, ChevronsUpDown, Mail, MessageCircle, DownloadIcon, FileTextIcon, FilterIcon, PlusIcon, PrinterIcon, Receipt } from 'lucide-react';
+import { Check, ChevronsUpDown, Mail, MessageCircle, DownloadIcon, FileTextIcon, FilterIcon, PlusIcon, PrinterIcon, Receipt, Plus, FolderOpen } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useForm } from 'react-hook-form';
 import { PageHeader } from './ui/PageHeader';
@@ -224,12 +224,14 @@ export function Receipts() {
         throw new Error(shareData.error || "Erreur de lien PDF");
       } else {
         finalMsg = `${baseMsg}\n\n📄 Voici votre document : ${shareData.url}`;
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const encodedMsg = encodeURIComponent(finalMsg);
+        const waUrl = isMobile 
+          ? `whatsapp://send?text=${encodedMsg}` + (phone ? `&phone=${phone}` : '') 
+          : (phone ? `https://api.whatsapp.com/send?phone=${phone}&text=${encodedMsg}` : `https://api.whatsapp.com/send?text=${encodedMsg}`);
+        window.open(waUrl, '_blank');
         toast.success("Redirection vers WhatsApp...", { id: toastId });
       }
-      
-      const encodedMsg = encodeURIComponent(finalMsg);
-      const waUrl = phone ? `https://wa.me/${phone}?text=${encodedMsg}` : `https://wa.me/?text=${encodedMsg}`;
-      window.open(waUrl, '_blank');
     } catch (err: any) {
       toast.error(err.message || "Erreur", { id: toastId });
     }
@@ -289,9 +291,17 @@ export function Receipts() {
               <tr><td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-6)', color: 'var(--foreground-muted)' }}>Chargement...</td></tr>
             ) : receipts?.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-8)' }}>
-                  <div style={{ fontSize: '24px', opacity: 0.5, marginBottom: 'var(--space-2)' }}>🧾</div>
-                  <div style={{ fontWeight: 500, color: 'var(--foreground)' }}>Aucun reçu enregistré</div>
+                <td colSpan={7} style={{ textAlign: 'center', padding: 'var(--space-12) var(--space-4)' }}>
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <FolderOpen size={48} style={{ color: 'var(--color-primary)', opacity: 0.2, marginBottom: 'var(--space-4)' }} />
+                    <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, color: 'var(--foreground)', marginBottom: 'var(--space-2)' }}>Aucun reçu enregistré</h3>
+                    <p style={{ fontSize: 'var(--text-sm)', color: 'var(--foreground-muted)', maxWidth: '400px', marginBottom: 'var(--space-5)' }}>
+                      Les reçus permettent d'attester le paiement partiel ou total d'une facture par vos clients.
+                    </p>
+                    <button onClick={openNew} className="fp-btn-primary">
+                      <Plus size={16} className="mr-2" /> Créer un reçu
+                    </button>
+                  </div>
                 </td>
               </tr>
             ) : (

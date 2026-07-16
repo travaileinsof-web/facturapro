@@ -6,7 +6,7 @@ import { Textarea } from './ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogBody } from './ui/dialog';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { PlusIcon, PackageIcon } from 'lucide-react';
+import { PlusIcon, PackageIcon, Plus, FolderOpen } from 'lucide-react';
 import { PageHeader } from './ui/PageHeader';
 import { Field } from './ui/Field';
 
@@ -92,10 +92,17 @@ export function Catalog() {
               <tr><td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-8)', color: 'var(--color-text-secondary)' }}>Chargement...</td></tr>
             ) : !items || items.length === 0 ? (
               <tr>
-                <td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-8)' }}>
-                  <PackageIcon size={32} style={{ margin: '0 auto var(--space-3)', color: 'var(--color-border-default)' }} />
-                  <div style={{ fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 'var(--space-2)' }}>Catalogue vide</div>
-                  <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }}>Ajoutez vos services pour les retrouver rapidement à la facturation.</p>
+                <td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-12) var(--space-4)' }}>
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <FolderOpen size={48} style={{ color: 'var(--color-primary)', opacity: 0.2, marginBottom: 'var(--space-4)' }} />
+                    <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, color: 'var(--foreground)', marginBottom: 'var(--space-2)' }}>Votre catalogue est vide</h3>
+                    <p style={{ fontSize: 'var(--text-sm)', color: 'var(--foreground-muted)', maxWidth: '400px', marginBottom: 'var(--space-5)' }}>
+                      Enregistrez vos produits et services ici pour gagner du temps lors de la création de vos factures et devis.
+                    </p>
+                    <button onClick={openNew} className="fp-btn-primary">
+                      <Plus size={16} className="mr-2" /> Ajouter un produit ou service
+                    </button>
+                  </div>
                 </td>
               </tr>
             ) : (

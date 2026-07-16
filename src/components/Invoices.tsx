@@ -12,6 +12,7 @@ import { ConfirmDialog } from './ui/ConfirmDialog';
 import { Pagination } from './ui/pagination';
 import { Field } from './ui/Field';
 import { DatePicker } from './ui/DatePicker';
+import { Tooltip } from './ui/tooltip';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 
@@ -160,7 +161,9 @@ export function Invoices() {
     const method = editingInvoice ? 'PUT' : 'POST';
     setIsModalOpen(false); // UI reacts instantly
 
-    const promise = apiFetch(url, { method, body: JSON.stringify(payload) }).then(async (res) => {
+    try {
+      const loadingToastId = toast.loading('Enregistrement en cours...');
+      const res = await apiFetch(url, { method, body: JSON.stringify(payload) });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || "Erreur lors de l'enregistrement de la facture.");
@@ -169,14 +172,21 @@ export function Invoices() {
       triggerRefresh('reminders');
       triggerRefresh('stats');
       refetch();
-      return true;
-    });
-
-    toast.promise(promise, {
-      loading: 'Enregistrement en cours...',
-      success: editingInvoice ? 'Facture mise à jour' : 'Facture créée',
-      error: (err) => err.message
-    });
+      
+      toast.dismiss(loadingToastId);
+      toast.success(editingInvoice ? 'Facture mise à jour' : 'Facture créée', {
+        duration: 5000,
+        action: {
+          label: 'Envoyer au client',
+          onClick: () => {
+             // In a full flow, this would open the send modal
+             toast.success('Fonctionnalité d\'envoi simulée', { duration: 2000 });
+          }
+        }
+      });
+    } catch (err: any) {
+      toast.error(err.message);
+    }
   };
 
   const confirmDeleteInvoice = async () => {
@@ -281,7 +291,10 @@ export function Invoices() {
       }
       
       const encodedMsg = encodeURIComponent(finalMsg);
-      const waUrl = phone ? `https://wa.me/${phone}?text=${encodedMsg}` : `https://wa.me/?text=${encodedMsg}`;
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const waUrl = isMobile 
+        ? `whatsapp://send?text=${encodedMsg}` + (phone ? `&phone=${phone}` : '') 
+        : (phone ? `https://api.whatsapp.com/send?phone=${phone}&text=${encodedMsg}` : `https://api.whatsapp.com/send?text=${encodedMsg}`);
       window.open(waUrl, '_blank');
     } catch (err: any) {
       toast.error(err.message || "Erreur", { id: toastId });
@@ -361,9 +374,9 @@ export function Invoices() {
                 onChange={(e) => setFilterType(e.target.value)}
               >
                 <option value="tous">Tous les documents</option>
-                <option value="facture">Factures uniquement</option>
-                <option value="proforma">Pro Formas uniquement</option>
-                <option value="devis">Devis uniquement</option>
+                <option value="facture">Factures (Paiement exigé)</option>
+                <option value="proforma">Pro Formas (Brouillon avancé)</option>
+                <option value="devis">Devis (Proposition commerciale)</option>
               </select>
               <select 
                 className="fp-input w-full sm:w-auto min-w-[180px]"
@@ -403,7 +416,20 @@ export function Invoices() {
             {isLoading ? (
               <tr><td colSpan={8} className="text-center text-[var(--foreground-muted)]" style={{ padding: 'var(--space-10) 0' }}>Chargement...</td></tr>
             ) : filteredInvoices.length === 0 ? (
-              <tr><td colSpan={8} className="text-center text-[var(--foreground-muted)]" style={{ padding: 'var(--space-10) 0' }}>Aucune facture trouvée</td></tr>
+              <tr>
+                <td colSpan={8} style={{ textAlign: 'center', padding: 'var(--space-12) var(--space-4)' }}>
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <FileTextIcon size={48} style={{ color: 'var(--color-primary)', opacity: 0.2, marginBottom: 'var(--space-4)' }} />
+                    <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, color: 'var(--foreground)', marginBottom: 'var(--space-2)' }}>Aucun document trouvé</h3>
+                    <p style={{ fontSize: 'var(--text-sm)', color: 'var(--foreground-muted)', maxWidth: '400px', marginBottom: 'var(--space-5)' }}>
+                      Vous n'avez pas encore créé de facture, de devis ou de pro forma. C'est le moment de vous lancer !
+                    </p>
+                    <button onClick={openNew} className="fp-btn-primary">
+                      <Plus size={16} className="mr-2" /> Créer mon premier document
+                    </button>
+                  </div>
+                </td>
+              </tr>
             ) : paginatedInvoices.map((inv: any) => {
                const paid = (inv.receipts || []).reduce((sum: number, r: any) => sum + r.amount, 0);
                const reste = inv.total - paid;
@@ -411,8 +437,9 @@ export function Invoices() {
               <tr key={inv.id}>
                   <td className="font-semibold">
                   {inv.number}
-                  {inv.type === 'devis' && <span className="fp-badge fp-badge-neutral ml-2">Devis</span>}
-                  {inv.type === 'proforma' && <span className="fp-badge ml-2 bg-blue-500 text-white border-blue-600">Pro Forma</span>}
+                  {inv.type === 'devis' && <Tooltip content="Un document informatif proposant vos tarifs. Sans valeur comptable." position="top"><span className="fp-badge fp-badge-neutral ml-2 cursor-help">Devis</span></Tooltip>}
+                  {inv.type === 'proforma' && <Tooltip content="Un devis présenté sous forme de facture provisoire." position="top"><span className="fp-badge ml-2 bg-blue-500 text-white border-blue-600 cursor-help">Pro Forma</span></Tooltip>}
+                  {inv.type === 'facture' && <Tooltip content="Document officiel exigeant un paiement. A valeur comptable." position="top"><span className="fp-badge ml-2 bg-purple-100 text-purple-700 border border-purple-200 cursor-help">Facture</span></Tooltip>}
                 </td>
                 <td>{inv.client?.name}</td>
                 <td>{formatDate(inv.createdAt)}</td>

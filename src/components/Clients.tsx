@@ -11,7 +11,7 @@ import { Input } from './ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogBody } from './ui/dialog';
 import { useForm } from 'react-hook-form';
-import { DownloadIcon, FileTextIcon, FilterIcon, MoreVerticalIcon, PlusIcon, PrinterIcon, ArrowUpRight, ArrowDownLeft, Building, Mail, Phone, MapPin, UserPlus, Edit } from 'lucide-react';
+import { DownloadIcon, FileTextIcon, FilterIcon, MoreVerticalIcon, PlusIcon, PrinterIcon, ArrowUpRight, ArrowDownLeft, Building, Mail, Phone, MapPin, UserPlus, Edit, FolderOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from './ui/PageHeader';
 import { Plus } from 'lucide-react';
@@ -74,8 +74,11 @@ export function Clients() {
   const onSubmit = async (data: any) => {
     const url = editingClient ? `/api/clients/${editingClient.id}` : '/api/clients';
     const method = editingClient ? 'PUT' : 'POST';
+    const isNew = !editingClient;
     
-    const promise = apiFetch(url, { method, body: JSON.stringify(data) }).then(async (res) => {
+    try {
+      const loadingToastId = toast.loading(isNew ? 'Création en cours...' : 'Mise à jour...');
+      const res = await apiFetch(url, { method, body: JSON.stringify(data) });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || 'Erreur lors de la sauvegarde');
@@ -84,14 +87,20 @@ export function Clients() {
       triggerRefresh('stats');
       refetch();
       setIsModalOpen(false);
-      return true;
-    });
-
-    toast.promise(promise, {
-      loading: editingClient ? 'Mise à jour...' : 'Création en cours...',
-      success: editingClient ? 'Client mis à jour' : 'Client créé',
-      error: (err) => err.message
-    });
+      
+      toast.dismiss(loadingToastId);
+      toast.success(isNew ? 'Client enregistré avec succès !' : 'Client mis à jour', {
+        duration: 5000,
+        ...(isNew && {
+          action: {
+            label: 'Créer une facture',
+            onClick: () => useAppStore.getState().setCurrentModule('invoices' as any)
+          }
+        })
+      });
+    } catch (err: any) {
+      toast.error(err.message);
+    }
   };
 
   const confirmDeleteClient = async () => {
@@ -183,7 +192,20 @@ export function Clients() {
                 </tr>
               ))
             ) : clients?.length === 0 ? (
-              <tr><td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-8)', color: '#64748b' }}>Aucun client trouvé</td></tr>
+              <tr>
+                <td colSpan={6} style={{ textAlign: 'center', padding: 'var(--space-12) var(--space-4)' }}>
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <FolderOpen size={48} style={{ color: 'var(--color-primary)', opacity: 0.2, marginBottom: 'var(--space-4)' }} />
+                    <h3 style={{ fontSize: 'var(--text-lg)', fontWeight: 600, color: 'var(--foreground)', marginBottom: 'var(--space-2)' }}>Aucun client pour l'instant</h3>
+                    <p style={{ fontSize: 'var(--text-sm)', color: 'var(--foreground-muted)', maxWidth: '400px', marginBottom: 'var(--space-5)' }}>
+                      Vous n'avez enregistré aucun client. Pour pouvoir générer une facture ou un devis, vous devez d'abord ajouter les coordonnées de votre client.
+                    </p>
+                    <button onClick={openNew} className="fp-btn-primary">
+                      <Plus size={16} className="mr-2" /> Ajouter mon premier client
+                    </button>
+                  </div>
+                </td>
+              </tr>
             ) : paginatedClients?.map((client: Client) => {
                return (
               <tr key={client.id}>

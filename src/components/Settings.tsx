@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useAppStore, apiFetch } from '../lib/store';
 import { Input } from './ui/input';
 import { toast } from 'sonner';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Eye, EyeOff, Upload, Loader2, Save, Building2, CreditCard, Lock, Mail, Zap, Palette, ChevronDown, Banknote, FileText } from 'lucide-react';
 import { PageHeader } from './ui/PageHeader';
 import { cn } from '../lib/utils';
@@ -94,6 +94,7 @@ export function Settings() {
   const [showPassword, setShowPassword] = useState(false);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  const setTourRunning = useAppStore(state => state.setTourRunning);
 
   const { data: settings, refetch } = useQuery({
     queryKey: ['settings'],
@@ -131,33 +132,31 @@ export function Settings() {
       refetch();
 
       if (currentCurrency !== newCurrency) {
-        const confirmConvert = window.confirm(`Vous avez changé votre devise de ${currentCurrency} vers ${newCurrency}.\n\nVoulez-vous convertir les montants existants (factures, reçus, catalogue) au taux de change actuel ?`);
-        if (confirmConvert) {
-          try {
-            const r = await fetch(`https://api.exchangerate-api.com/v4/latest/${currentCurrency}`);
-            const d = await r.json();
-            const rate = d.rates[newCurrency];
-            if (rate) {
-              const convertRes = await apiFetch('/api/settings/convert-currency', {
-                method: 'POST',
-                body: JSON.stringify({ rate, oldCurrency: currentCurrency, newCurrency })
-              });
-              if (convertRes.ok) {
-                toast.success('Conversion rétroactive réussie !');
-                useAppStore.getState().triggerRefresh('invoices');
-                useAppStore.getState().triggerRefresh('receipts');
-                useAppStore.getState().triggerRefresh('catalog');
-                useAppStore.getState().triggerRefresh('expenses');
-              } else {
-                toast.error('Erreur lors de la conversion rétroactive.');
-              }
+        toast.info(`Conversion des montants de ${currentCurrency} vers ${newCurrency} en cours...`);
+        try {
+          const r = await fetch(`https://api.exchangerate-api.com/v4/latest/${currentCurrency}`);
+          const d = await r.json();
+          const rate = d.rates[newCurrency];
+          if (rate) {
+            const convertRes = await apiFetch('/api/settings/convert-currency', {
+              method: 'POST',
+              body: JSON.stringify({ rate, oldCurrency: currentCurrency, newCurrency })
+            });
+            if (convertRes.ok) {
+              toast.success('Conversion des anciens montants réussie !');
+              useAppStore.getState().triggerRefresh('invoices');
+              useAppStore.getState().triggerRefresh('receipts');
+              useAppStore.getState().triggerRefresh('catalog');
+              useAppStore.getState().triggerRefresh('expenses');
             } else {
-              toast.error('Taux de change introuvable pour cette paire.');
+              toast.error('Erreur lors de la conversion.');
             }
-          } catch (e) {
-            console.error(e);
-            toast.error('Erreur réseau lors de la récupération du taux.');
+          } else {
+            toast.error('Taux de change introuvable pour cette paire.');
           }
+        } catch (e) {
+          console.error(e);
+          toast.error('Erreur réseau lors de la récupération du taux.');
         }
       }
     } else {
@@ -325,9 +324,26 @@ export function Settings() {
           </div>
           
           <div style={{ background: 'var(--color-bg-page)', border: '1px solid var(--color-border-default)', borderRadius: 'var(--radius-md)', marginTop: 'var(--space-6)', padding: 'var(--space-4)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }} onClick={() => setTutorialOpen(!tutorialOpen)}>
-              <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: 'var(--space-1)', margin: 0 }}><Zap size={14}/> Aide à la configuration (Tutoriel)</h4>
-              <ChevronDown size={16} className={cn("transition-transform duration-200", tutorialOpen ? "rotate-180" : "")} style={{ color: 'var(--color-text-secondary)' }}/>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
+              <div onClick={() => setTutorialOpen(!tutorialOpen)} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)', flex: 1 }}>
+                <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: 'var(--space-1)', margin: 0 }}><Zap size={14}/> Aide à la configuration (Tutoriel)</h4>
+                <ChevronDown size={16} className={cn("transition-transform duration-200", tutorialOpen ? "rotate-180" : "")} style={{ color: 'var(--color-text-secondary)' }}/>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTourRunning(true)}
+                style={{
+                  fontSize: 'var(--text-xs)',
+                  padding: '4px 12px',
+                  background: 'var(--color-primary-subtle)',
+                  color: 'var(--color-primary-hover)',
+                  border: '1px solid var(--color-primary)',
+                  borderRadius: 'var(--radius-sm)',
+                  cursor: 'pointer'
+                }}
+              >
+                Relancer la visite guidée
+              </button>
             </div>
             {tutorialOpen && (
               <div className="mt-4 text-xs text-[var(--foreground-muted)] leading-relaxed">

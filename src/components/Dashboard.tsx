@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import { Users, FileText, Banknote, Clock, TrendingUp, TrendingDown, ArrowRight, Minus, CheckCircle, XCircle, LayoutDashboard } from 'lucide-react';
+import { Users, FileText, Banknote, Clock, TrendingUp, TrendingDown, ArrowRight, Minus, CheckCircle, XCircle, LayoutDashboard, Settings as SettingsIcon, Package, PlusCircle, CheckCircle2, ChevronRight } from 'lucide-react';
 import { formatCurrency, formatDate, useAppStore, apiFetch } from '../lib/store';
 import { PageHeader } from './ui/PageHeader';
 import { useSearchParams } from 'react-router-dom';
@@ -122,6 +122,74 @@ function EmptyList({ label }: { label: string }) {
   );
 }
 
+/* ── Onboarding Widget ───────────────────────────────────────────── */
+function OnboardingWidget({ stats, user, setCurrentModule }: { stats: any, user: any, setCurrentModule: any }) {
+  if (!stats) return null;
+  
+  const hasSettings = user?.smtpHost && user?.primaryColor;
+  const hasClient = (stats.totalClients || 0) > 0;
+  const hasCatalog = (stats.totalCatalogItems || 0) > 0;
+  const hasInvoice = (stats.totalInvoices || 0) > 0;
+  
+  const steps = [
+    { id: 'settings', title: 'Configurer les paramètres', desc: 'SMTP et identité visuelle', done: hasSettings, icon: SettingsIcon },
+    { id: 'clients', title: 'Ajouter un client', desc: 'Votre premier contact', done: hasClient, icon: Users },
+    { id: 'catalog', title: 'Créer un article', desc: 'Produit ou service', done: hasCatalog, icon: Package },
+    { id: 'invoices', title: 'Première facture', desc: 'Générer une facture', done: hasInvoice, icon: FileText },
+  ];
+  
+  const progress = steps.filter(s => s.done).length;
+  const isComplete = progress === steps.length;
+  
+  if (isComplete) return null;
+  
+  return (
+    <div className="fp-card" style={{ marginBottom: 'var(--space-6)', overflow: 'hidden' }}>
+      <div style={{ padding: 'var(--space-5)', borderBottom: '1px solid var(--color-border)' }}>
+        <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-3)' }}>
+          <h3 className="font-semibold" style={{ fontSize: 'var(--text-lg)', color: 'var(--color-primary)' }}>Configuration du compte</h3>
+          <div className="text-sm font-semibold" style={{ color: 'var(--color-primary)' }}>
+            {Math.round((progress / steps.length) * 100)}% complété
+          </div>
+        </div>
+        <div style={{ width: '100%', height: '4px', background: 'var(--color-primary-subtle)', borderRadius: '2px', overflow: 'hidden' }}>
+          <div style={{ width: `${(progress / steps.length) * 100}%`, height: '100%', background: 'var(--color-primary)', transition: 'width 0.5s ease-out', boxShadow: '0 0 8px var(--color-primary)' }} />
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x" style={{ borderColor: 'var(--color-border)' }}>
+        {steps.map((step, i) => {
+          const Icon = step.icon;
+          return (
+            <div 
+              key={step.id} 
+              onClick={() => setCurrentModule(step.id)}
+              className="flex flex-col relative group cursor-pointer hover:bg-[var(--color-bg-page)] transition-colors"
+              style={{ padding: 'var(--space-4)', opacity: step.done ? 0.6 : 1 }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div 
+                  className="flex items-center justify-center rounded-full"
+                  style={{ width: '32px', height: '32px', background: step.done ? 'var(--color-success)' : 'var(--color-primary-subtle)', color: step.done ? 'white' : 'var(--color-primary)' }}
+                >
+                  {step.done ? <CheckCircle2 size={16} /> : <Icon size={16} />}
+                </div>
+                {!step.done && <ChevronRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--color-primary)]" />}
+              </div>
+              <h4 className="font-semibold text-[var(--foreground)]" style={{ fontSize: 'var(--text-sm)', marginBottom: '4px' }}>
+                {i + 1}. {step.title}
+              </h4>
+              <p className="text-[var(--foreground-muted)] text-[var(--text-xs)] m-0">
+                {step.desc}
+              </p>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  );
+}
+
 /* ── Main Dashboard ──────────────────────────────────────────────── */
 export function Dashboard() {
   const refreshStats = useAppStore(state => state.refreshStats);
@@ -136,7 +204,7 @@ export function Dashboard() {
   });
 
   const setCurrentModule = useAppStore(state => state.setCurrentModule);
-
+  const user = useAppStore(state => state.user);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const paymentStatus = searchParams.get('payment');
@@ -197,6 +265,8 @@ export function Dashboard() {
           <button onClick={() => setSearchParams({})} className="bg-transparent border-none cursor-pointer text-[var(--foreground-subtle)] hover:text-[var(--foreground)] transition-colors">✕</button>
         </div>
       )}
+
+      <OnboardingWidget stats={stats} user={user} setCurrentModule={setCurrentModule} />
 
       {/* ── KPI Grid ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style={{ gap: 'var(--space-5)', marginBottom: 'var(--space-6)' }}>

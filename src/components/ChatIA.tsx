@@ -97,7 +97,7 @@ export function ChatIA() {
              <div className="w-24 h-24 flex items-center justify-center bg-[var(--surface-2)] mb-8 shadow-sm">
                <Bot className="w-12 h-12 text-[var(--gold)]" />
              </div>
-             <h2 className="text-4xl font-extrabold text-[var(--foreground)] tracking-tight mb-4 font-display">Je suis ARIA</h2>
+             <h2 className="text-4xl font-extrabold text-[var(--foreground)] tracking-tight mb-4 font-display">Je suis l'Assistant IA</h2>
              <p className="text-[var(--foreground-muted)] text-base leading-relaxed">
                 Votre assistant intelligent propulsé par Gemini. <br/>
                 Demandez-moi d'analyser vos chiffres, de créer une facture ou de rechercher un document.

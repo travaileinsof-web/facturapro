@@ -56,7 +56,11 @@ export function Contact() {
     (e.target as HTMLFormElement).reset();
   };
 
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Bonjour, j\'ai une question sur FacturaPro.')}`;
+  const encodedMsg = encodeURIComponent('Bonjour, j\'ai une question sur FacturaPro.');
+  const isMobile = typeof navigator !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const whatsappUrl = isMobile 
+    ? `whatsapp://send?text=${encodedMsg}` + (WHATSAPP_NUMBER ? `&phone=${WHATSAPP_NUMBER}` : '') 
+    : (WHATSAPP_NUMBER ? `https://api.whatsapp.com/send?phone=${WHATSAPP_NUMBER}&text=${encodedMsg}` : `https://api.whatsapp.com/send?text=${encodedMsg}`);
 
   return (
     <PageTransition>

@@ -23,6 +23,7 @@ import { Pricing }    from './components/Pricing';
 import { Popover, PopoverContent, PopoverTrigger } from './components/ui/popover';
 import { cn } from './lib/utils';
 import { toast } from 'sonner';
+import { TourTutorial } from './components/TourTutorial';
 
 const queryClient = new QueryClient();
 
@@ -34,7 +35,7 @@ const NAV = [
   { id: 'receipts',  label: 'Reçus',             icon: ReceiptIcon,      group: 'main' },
   { id: 'expenses',  label: 'Dépenses',          icon: Wallet,           group: 'main' },
   { id: 'reminders', label: 'Relances',          icon: AlertTriangle,    group: 'main' },
-  { id: 'chat',      label: 'Assistant ARIA',    icon: MessageSquare,    group: 'tools' },
+  { id: 'chat',      label: 'Assistant IA',      icon: MessageSquare,    group: 'tools' },
   { id: 'companies', label: 'Entreprises',       icon: Building2,        group: 'tools' },
   { id: 'pricing',   label: 'Abonnement',        icon: TrendingUp,       group: 'tools' },
   { id: 'settings',  label: 'Paramètres',        icon: SettingsIcon,     group: 'tools' },
@@ -136,7 +137,7 @@ function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boole
             const Icon = item.icon;
             const active = currentModule === item.id;
             return (
-              <button key={item.id} onClick={() => handleNav(item.id)}
+              <button key={item.id} id={`nav-${item.id}`} onClick={() => handleNav(item.id)}
                 className={`app-nav-item ${active ? 'active' : ''}`}
                 title={isCollapsed ? item.label : undefined}
                 style={{ opacity: 0, animation: `fp-fade-up 0.35s ease ${i * 0.035}s forwards`, justifyContent: isCollapsed ? 'center' : 'flex-start', padding: 'var(--space-2) var(--space-4)', gap: 'var(--space-3)', height: '44px', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-1)' }}>
@@ -152,7 +153,7 @@ function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boole
             const active = currentModule === item.id;
             const isComingSoon = ['chat', 'companies'].includes(item.id);
             return (
-              <button key={item.id} onClick={() => handleNav(item.id)}
+              <button key={item.id} id={`nav-${item.id}`} onClick={() => handleNav(item.id)}
                 className={`app-nav-item ${active ? 'active' : ''}`}
                 title={isCollapsed ? item.label : undefined}
                 style={{ opacity: 0, animation: `fp-fade-up 0.35s ease ${(mainItems.length + i) * 0.035}s forwards`, justifyContent: isCollapsed ? 'center' : 'flex-start', padding: 'var(--space-2) var(--space-4)', gap: 'var(--space-3)', height: '44px', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-1)' }}>
@@ -242,6 +243,32 @@ function AppLayout() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
 
+  const { tourRunning, setTourRunning } = useAppStore();
+  const [hasCheckedSmtp, setHasCheckedSmtp] = useState(false);
+
+  useEffect(() => {
+    if (user && !hasCheckedSmtp && user.role !== 'employee') {
+      if (!user.smtpHost) {
+        toast.info("Veuillez configurer votre serveur SMTP dans les paramètres.", { duration: 8000 });
+        const hasSeenTour = localStorage.getItem('fp_tour_completed');
+        if (!hasSeenTour) {
+          setTimeout(() => setTourRunning(true), 1000);
+        } else {
+          setTimeout(() => useAppStore.getState().setCurrentModule('settings' as any), 1000);
+        }
+      }
+      setHasCheckedSmtp(true);
+    }
+  }, [user, hasCheckedSmtp]);
+
+  const handleTourFinish = () => {
+    setTourRunning(false);
+    localStorage.setItem('fp_tour_completed', 'true');
+    if (user && !user.smtpHost) {
+      useAppStore.getState().setCurrentModule('settings' as any);
+    }
+  };
+
   const fetchNotifications = async () => {
     if (!user?.token) return;
     try {
@@ -249,7 +276,8 @@ function AppLayout() {
         headers: { 'Authorization': `Bearer ${user.token}` }
       });
       if (res.ok) {
-        const data = await res.json();
+        const text = await res.text();
+        const data = text ? JSON.parse(text) : [];
         setNotifications(data || []);
       }
     } catch (err) {
@@ -312,8 +340,42 @@ function AppLayout() {
     // 2) Check for successful payment redirect
     const params = new URLSearchParams(window.location.search);
     if (params.get('payment') === 'success') {
-      toast.success("Paiement validé ! Bienvenue dans la version Premium.");
-      window.history.replaceState({}, document.title, window.location.pathname);
+      const ref = params.get('ref');
+      const currentUser = useAppStore.getState().user;
+      
+      if (ref && currentUser?.token) {
+        let attempts = 0;
+        const checkSync = () => {
+          fetch(`/api/v1/payment/sync?ref=${ref}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${currentUser.token}` }
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.synced) {
+              toast.success("Paiement validé ! Bienvenue dans la version Premium.");
+              window.history.replaceState({}, document.title, window.location.pathname);
+              setTimeout(() => window.location.reload(), 1500);
+            } else if (attempts < 5) {
+              attempts++;
+              setTimeout(checkSync, 3000); // Réessayer dans 3 secondes
+            } else {
+              toast.info("Paiement en cours de traitement. Vous recevrez un email dès l'activation.");
+              window.history.replaceState({}, document.title, window.location.pathname);
+            }
+          })
+          .catch(() => {
+            if (attempts < 5) {
+              attempts++;
+              setTimeout(checkSync, 3000);
+            }
+          });
+        };
+        checkSync();
+      } else {
+        toast.success("Paiement validé ! Bienvenue dans la version Premium.");
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
     }
   }, []);
 
@@ -372,7 +434,7 @@ function AppLayout() {
         document.documentElement.style.setProperty('--color-blue-accent', sc);
         document.documentElement.style.setProperty('--secondary', sc);
         
-        document.documentElement.style.setProperty('--color-secondary', sc);
+        document.documentElement.style.setProperty('--color-secondary-override', sc);
         document.documentElement.style.setProperty('--color-blue-dim', `rgba(${rgbSc}, 0.1)`);
       }
       
@@ -381,7 +443,7 @@ function AppLayout() {
         document.documentElement.style.setProperty('--color-success', ac);
         document.documentElement.style.setProperty('--accent', ac);
         
-        document.documentElement.style.setProperty('--color-accent', ac);
+        document.documentElement.style.setProperty('--color-accent-override', ac);
       }
     } else {
       document.documentElement.style.removeProperty('--gold');
@@ -405,13 +467,13 @@ function AppLayout() {
       document.documentElement.style.removeProperty('--color-blue-accent');
       document.documentElement.style.removeProperty('--secondary');
       
-      document.documentElement.style.removeProperty('--color-secondary');
+      document.documentElement.style.removeProperty('--color-secondary-override');
       document.documentElement.style.removeProperty('--color-blue-dim');
 
       document.documentElement.style.removeProperty('--success');
       document.documentElement.style.removeProperty('--color-success');
       document.documentElement.style.removeProperty('--accent');
-      document.documentElement.style.removeProperty('--color-accent');
+      document.documentElement.style.removeProperty('--color-accent-override');
     }
     
   }, [user?.primaryColor, user?.secondaryColor, user?.accentColor]);
@@ -473,6 +535,7 @@ function AppLayout() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--background)', color: 'var(--foreground)', overflow: 'hidden' }}>
+      <TourTutorial run={tourRunning} onFinish={handleTourFinish} primaryColor={user?.primaryColor || '#B38E36'} />
       {/* Trial banner */}
       {isTrial && trialHours <= 24 && (
         <div 
@@ -632,7 +695,26 @@ function AppLayout() {
         </header>
 
         {/* Main content */}
-        <main style={{ flex: 1, overflow: 'auto', padding: 'clamp(24px, 4vw, 40px)' }}>
+        <main style={{ flex: 1, overflow: 'auto', padding: 'clamp(24px, 4vw, 40px)', position: 'relative' }}>
+          
+          {user && !user.smtpHost && currentModule !== 'settings' && user.role !== 'employee' && (
+            <div style={{ position: 'absolute', inset: 0, zIndex: 50, background: 'var(--color-bg-page)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-6)' }}>
+              <div style={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)', borderRadius: 'var(--radius-xl)', padding: 'var(--space-8)', maxWidth: '460px', textAlign: 'center', boxShadow: 'var(--shadow-xl)' }}>
+                <SettingsIcon size={48} style={{ color: 'var(--color-primary)', margin: '0 auto var(--space-4)' }} />
+                <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-weight-bold)', marginBottom: 'var(--space-2)', color: 'var(--color-text-primary)' }}>Configuration requise</h2>
+                <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-6)', lineHeight: 1.5 }}>
+                  Pour profiter pleinement de FacturaPro et envoyer vos documents, vous devez finaliser la configuration de votre serveur SMTP et de votre identité visuelle.
+                </p>
+                <button 
+                  onClick={() => useAppStore.getState().setCurrentModule('settings' as any)}
+                  className="fp-btn-primary"
+                  style={{ width: '100%', justifyContent: 'center' }}
+                >
+                  Aller aux paramètres
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Module container */}
           <div key={animKey} style={{ opacity: 0, animation: 'fp-fade-up 0.35s ease forwards' }}>
@@ -643,11 +725,21 @@ function AppLayout() {
             {currentModule === 'receipts'  && <Receipts />}
             {currentModule === 'expenses'  && <Expenses />}
             {currentModule === 'reminders' && <Reminders />}
-            {currentModule === 'chat'      && <ComingSoonOverlay featureName="Assistant IA (ARIA)" />}
+            {currentModule === 'chat'      && <ChatIA />}
             {currentModule === 'companies' && <ComingSoonOverlay featureName="Multi-Entreprise" />}
             {currentModule === 'settings'  && <Settings />}
             {currentModule === 'pricing'   && <Pricing />}
           </div>
+
+          {/* Floating Chat/Help Orb */}
+          <button
+            onClick={() => useAppStore.getState().setCurrentModule('chat' as any)}
+            className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-[var(--gold)] text-[#0A0A0F] shadow-[0_4px_24px_rgba(201,168,76,0.5)] flex items-center justify-center cursor-pointer border-none z-50 hover:scale-110 transition-transform duration-300"
+            title="Assistant IA & Aide"
+          >
+            <div className="absolute inset-0 rounded-full border-2 border-[var(--gold)] opacity-50 animate-ping" />
+            <MessageSquare size={24} />
+          </button>
         </main>
       </div>
       </div>

@@ -111,7 +111,7 @@ class SettingsController {
             $pdo->beginTransaction();
 
             // CatalogItem
-            $pdo->prepare("UPDATE CatalogItem SET price = price * ? WHERE accountId = ?")->execute([$rate, $accountId]);
+            $pdo->prepare("UPDATE CatalogItem SET unitPrice = unitPrice * ? WHERE accountId = ?")->execute([$rate, $accountId]);
             
             // ProformaInvoice (subtotal, taxAmount, discount, total)
             $pdo->prepare("UPDATE ProformaInvoice SET subtotal = subtotal * ?, taxAmount = taxAmount * ?, discount = discount * ?, total = total * ? WHERE accountId = ?")
@@ -136,9 +136,7 @@ class SettingsController {
                 }
             }
 
-            // Payment
-            $pdo->prepare("UPDATE Payment SET amount = amount * ? WHERE accountId = ?")->execute([$rate, $accountId]);
-                
+
             // Receipt
             $pdo->prepare("UPDATE Receipt SET amount = amount * ? WHERE accountId = ?")->execute([$rate, $accountId]);
             

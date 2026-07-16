@@ -52,9 +52,18 @@ class Router {
                 ShareController::handle($method, $body, $currentAccount);
                 break;
             case 'v1':
-                if ($id === 'payment' && $subAction === 'init') {
+                if ($id === 'payment') {
                     $controller = new PaymentController($pdo);
-                    $response = $controller->initPayment(['body' => $body]);
+                    if ($subAction === 'init') {
+                        $response = $controller->initPayment(['body' => $body]);
+                    } elseif ($subAction === 'sync') {
+                        $response = $controller->syncPayment(['body' => $body]);
+                    } else {
+                        http_response_code(404);
+                        echo json_encode(["error" => "Endpoint not found"]);
+                        exit;
+                    }
+                    
                     if (isset($response['status']) && is_numeric($response['status'])) {
                         http_response_code((int)$response['status']);
                     } elseif (isset($response['error'])) {

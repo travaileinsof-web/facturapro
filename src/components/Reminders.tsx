@@ -97,7 +97,10 @@ export function Reminders() {
         }
         
         const encodedMsg = encodeURIComponent(finalMsg);
-        const waUrl = phone ? `https://wa.me/${phone}?text=${encodedMsg}` : `https://wa.me/?text=${encodedMsg}`;
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const waUrl = isMobile 
+          ? `whatsapp://send?text=${encodedMsg}` + (phone ? `&phone=${phone}` : '') 
+          : (phone ? `https://api.whatsapp.com/send?phone=${phone}&text=${encodedMsg}` : `https://api.whatsapp.com/send?text=${encodedMsg}`);
         window.open(waUrl, '_blank');
         
       } else {

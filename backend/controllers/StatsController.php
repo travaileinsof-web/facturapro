@@ -4,6 +4,7 @@ class StatsController {
         if ($method === 'GET') {
             $totalClients = $pdo->prepare("SELECT COUNT(*) FROM Client WHERE accountId = ?"); $totalClients->execute([$accountId]); $totalClients = $totalClients->fetchColumn();
             $totalInvoices = $pdo->prepare("SELECT COUNT(*) FROM ProformaInvoice WHERE accountId = ?"); $totalInvoices->execute([$accountId]); $totalInvoices = $totalInvoices->fetchColumn();
+            $totalCatalogItems = $pdo->prepare("SELECT COUNT(*) FROM CatalogItem WHERE accountId = ?"); $totalCatalogItems->execute([$accountId]); $totalCatalogItems = $totalCatalogItems->fetchColumn();
             
             $encaisse = $pdo->prepare("SELECT SUM(amount) FROM Receipt WHERE accountId = ?"); $encaisse->execute([$accountId]); $encaisse = $encaisse->fetchColumn() ?: 0;
             $expenses = $pdo->prepare("SELECT SUM(amount) FROM Expense WHERE accountId = ?"); $expenses->execute([$accountId]); $expenses = $expenses->fetchColumn() ?: 0;
@@ -69,7 +70,7 @@ class StatsController {
             foreach($recentReceipts as &$rr) { $rr['client'] = ['name' => $rr['clientName']]; }
 
             echo json_encode([
-                "totalClients" => $totalClients, "totalInvoices" => $totalInvoices,
+                "totalClients" => $totalClients, "totalInvoices" => $totalInvoices, "totalCatalogItems" => $totalCatalogItems,
                 "encaisse" => $encaisse, "potentiel" => $potentiel, "creances" => $creances,
                 "totalExpenses" => $expenses, "netProfit" => $netProfit,
                 "encaisseTrend" => $encaisseTrend, "profitTrend" => $profitTrend,
