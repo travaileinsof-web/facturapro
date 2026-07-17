@@ -24,8 +24,21 @@ import { Popover, PopoverContent, PopoverTrigger } from './components/ui/popover
 import { cn } from './lib/utils';
 import { toast } from 'sonner';
 import { TourTutorial } from './components/TourTutorial';
+import { ChatbotWidget } from './components/ChatbotWidget';
+import DOMPurify from 'dompurify';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
+      // PERF: affiche les données en cache immédiatement (pas d'écran blanc entre navigations)
+      staleTime: 60 * 1000,        // Considérer les données fraîches pendant 60 secondes
+      gcTime: 5 * 60 * 1000,       // Garder en cache mémoire 5 minutes
+      refetchOnMount: 'always',    // Mais quand même rafraîchir en arrière-plan au montage
+    },
+  },
+});
 
 const NAV = [
   { id: 'dashboard', label: 'Tableau de bord', icon: LayoutDashboard,  group: 'main' },
@@ -231,6 +244,7 @@ function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boole
 function AppLayout() {
   const { currentModule, user, logout } = useAppStore();
   const navigate = useNavigate();
+  const [isChatbotOpen, setIsChatbotOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -247,19 +261,23 @@ function AppLayout() {
   const [hasCheckedSmtp, setHasCheckedSmtp] = useState(false);
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
     if (user && !hasCheckedSmtp && user.role !== 'employee') {
       if (!user.smtpHost) {
         toast.info("Veuillez configurer votre serveur SMTP dans les paramètres.", { duration: 8000 });
         const hasSeenTour = localStorage.getItem('fp_tour_completed');
         if (!hasSeenTour) {
-          setTimeout(() => setTourRunning(true), 1000);
+          timeoutId = setTimeout(() => setTourRunning(true), 1000);
         } else {
-          setTimeout(() => useAppStore.getState().setCurrentModule('settings' as any), 1000);
+          timeoutId = setTimeout(() => useAppStore.getState().setCurrentModule('settings' as any), 1000);
         }
       }
       setHasCheckedSmtp(true);
     }
-  }, [user, hasCheckedSmtp]);
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [user, hasCheckedSmtp, setTourRunning]);
 
   const handleTourFinish = () => {
     setTourRunning(false);
@@ -272,7 +290,7 @@ function AppLayout() {
   const fetchNotifications = async () => {
     if (!user?.token) return;
     try {
-      const res = await fetch('/api/v1/notifications', {
+      const res = await fetch('/api/notifications/unread', {
         headers: { 'Authorization': `Bearer ${user.token}` }
       });
       if (res.ok) {
@@ -288,7 +306,7 @@ function AppLayout() {
   const markAllAsRead = async () => {
     if (!user?.token) return;
     try {
-      const res = await fetch('/api/v1/notifications/read-all', {
+      const res = await fetch('/api/notifications/read-all', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${user.token}` }
       });
@@ -304,7 +322,7 @@ function AppLayout() {
   const markAsRead = async (id: string) => {
     if (!user?.token) return;
     try {
-      const res = await fetch(`/api/v1/notifications/${id}`, {
+      const res = await fetch(`/api/notifications/${id}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${user.token}` }
       });
@@ -321,23 +339,27 @@ function AppLayout() {
   }, [user?.token]);
 
   useEffect(() => {
-    // 1) Sync latest user data from backend (especially for subscription updates after payment)
-    if (user?.token) {
-      fetch('/api/auth/me', {
-        headers: { 'Authorization': `Bearer ${user.token}` }
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.id) {
-          useAppStore.getState().login(data);
-        } else if (data.error === "Token invalide ou expiré.") {
-          handleLogout();
-        }
-      })
-      .catch(console.error);
-    }
+    if (!user?.token) return;
 
-    // 2) Check for successful payment redirect
+    // PERF: /api/init = user + notifications en 1 seul round-trip DB
+    fetch('/api/init', {
+      headers: { 'Authorization': `Bearer ${user.token}` }
+    })
+    .then(res => res.ok ? res.json() : null)
+    .then(data => {
+      if (!data) return;
+      // Mettre à jour le user si changements (abonnement, couleurs, etc.)
+      if (data.user?.id) {
+        useAppStore.getState().login(data.user);
+      }
+      // Notifications en une fois
+      if (Array.isArray(data.notifications)) {
+        setNotifications(data.notifications);
+      }
+    })
+    .catch(console.error);
+
+    // Check for successful payment redirect
     const params = new URLSearchParams(window.location.search);
     if (params.get('payment') === 'success') {
       const ref = params.get('ref');
@@ -358,22 +380,18 @@ function AppLayout() {
               setTimeout(() => window.location.reload(), 1500);
             } else if (attempts < 5) {
               attempts++;
-              setTimeout(checkSync, 3000); // Réessayer dans 3 secondes
+              setTimeout(checkSync, 3000);
             } else {
               toast.info("Paiement en cours de traitement. Vous recevrez un email dès l'activation.");
               window.history.replaceState({}, document.title, window.location.pathname);
             }
           })
           .catch(() => {
-            if (attempts < 5) {
-              attempts++;
-              setTimeout(checkSync, 3000);
-            }
+            if (attempts < 5) { attempts++; setTimeout(checkSync, 3000); }
           });
         };
         checkSync();
       } else {
-        toast.success("Paiement validé ! Bienvenue dans la version Premium.");
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
@@ -634,7 +652,7 @@ function AppLayout() {
                           {new Date(notif.createdAt).toLocaleDateString()}
                         </span>
                       </div>
-                      <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', margin: 0, lineHeight: '16px' }} dangerouslySetInnerHTML={{ __html: notif.message }} />
+                      <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', margin: 0, lineHeight: '16px' }} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(notif.message) }} />
                     </div>
                   ))}
                 </div>
@@ -725,7 +743,7 @@ function AppLayout() {
             {currentModule === 'receipts'  && <Receipts />}
             {currentModule === 'expenses'  && <Expenses />}
             {currentModule === 'reminders' && <Reminders />}
-            {currentModule === 'chat'      && <ChatIA />}
+            {currentModule === 'chat'      && <ComingSoonOverlay featureName="Assistant IA" />}
             {currentModule === 'companies' && <ComingSoonOverlay featureName="Multi-Entreprise" />}
             {currentModule === 'settings'  && <Settings />}
             {currentModule === 'pricing'   && <Pricing />}
@@ -733,13 +751,15 @@ function AppLayout() {
 
           {/* Floating Chat/Help Orb */}
           <button
-            onClick={() => useAppStore.getState().setCurrentModule('chat' as any)}
-            className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-[var(--gold)] text-[#0A0A0F] shadow-[0_4px_24px_rgba(201,168,76,0.5)] flex items-center justify-center cursor-pointer border-none z-50 hover:scale-110 transition-transform duration-300"
+            onClick={() => setIsChatbotOpen(!isChatbotOpen)}
+            className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-[var(--gold)] text-[#0A0A0F] shadow-[0_4px_24px_rgba(201,168,76,0.5)] flex items-center justify-center cursor-pointer border-none z-[1000] hover:scale-110 transition-transform duration-300"
             title="Assistant IA & Aide"
           >
             <div className="absolute inset-0 rounded-full border-2 border-[var(--gold)] opacity-50 animate-ping" />
-            <MessageSquare size={24} />
+            {isChatbotOpen ? <X size={24} /> : <MessageSquare size={24} />}
           </button>
+          
+          <ChatbotWidget isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} />
         </main>
       </div>
       </div>

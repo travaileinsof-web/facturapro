@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { formatCurrency, formatDate, useAppStore, apiFetch } from '../lib/store';
+import { useDebounce } from '../hooks/useDebounce';
 import { cn } from '../lib/utils';
 import { Client } from '../types';
 import { ConfirmDialog } from './ui/ConfirmDialog';
@@ -11,6 +12,8 @@ import { Input } from './ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogBody } from './ui/dialog';
 import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { DownloadIcon, FileTextIcon, FilterIcon, MoreVerticalIcon, PlusIcon, PrinterIcon, ArrowUpRight, ArrowDownLeft, Building, Mail, Phone, MapPin, UserPlus, Edit, FolderOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageHeader } from './ui/PageHeader';
@@ -20,44 +23,70 @@ import { Textarea } from './ui/textarea';
 
 import { Field } from './ui/Field';
 
+const clientSchema = z.object({
+  name: z.string().min(1, 'Le nom est requis'),
+  email: z.union([z.literal(''), z.string().email('Adresse email invalide')]).optional(),
+  phone: z.string().optional(),
+  clientType: z.string().optional(),
+  nif: z.string().optional(),
+  rccm: z.string().optional(),
+  city: z.string().optional(),
+  address: z.string().optional(),
+  country: z.string().optional(),
+  notes: z.string().optional(),
+});
+type ClientFormData = z.infer<typeof clientSchema>;
+
 export function Clients() {
   const refreshClients = useAppStore(state => state.refreshClients);
   const triggerRefresh = useAppStore(state => state.triggerRefresh);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [viewingClient, setViewingClient] = useState<Client | null>(null);
   const [clientToDelete, setClientToDelete] = useState<string | null>(null);
+
+  const openDetails = async (client: Client) => {
+    setViewingClient(client);
+    try {
+      const res = await apiFetch(`/api/clients/${client.id}`);
+      if (res.ok) {
+        const fullClient = await res.json();
+        setViewingClient(fullClient);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const ITEMS_PER_PAGE = 10;
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search]);
+  }, [debouncedSearch]);
 
   const { data: clients = [], isLoading, error, refetch } = useQuery<Client[]>({
-
-    queryKey: ['clients', refreshClients, search],
+    queryKey: ['clients', refreshClients, debouncedSearch],
     queryFn: async () => {
-      const token = useAppStore.getState().user?.token;
-      console.log('[Clients] token in store:', token ? token.substring(0, 12) + '...' : 'NULL/EMPTY');
-      const res = await apiFetch(`/api/clients?q=${encodeURIComponent(search)}`);
-      console.log('[Clients] API response status:', res.status);
+      const res = await apiFetch(`/api/clients?q=${encodeURIComponent(debouncedSearch)}`);
       if (!res.ok) {
         const errBody = await res.text().catch(() => '');
-        console.error('[Clients] API error body:', errBody);
         throw new Error(`HTTP ${res.status}: ${errBody.substring(0, 100)}`);
       }
       const data = await res.json();
-      console.log('[Clients] data received:', data);
       return Array.isArray(data) ? data : [];
     },
-    retry: false
+    retry: false,
+    placeholderData: keepPreviousData,
   });
 
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<ClientFormData>({
+    resolver: zodResolver(clientSchema),
+    defaultValues: { name: '', email: '', phone: '', address: '', city: '', country: '', notes: '', clientType: 'professionnel', nif: '', rccm: '' }
+  });
 
   const openNew = () => {
     setEditingClient(null);
@@ -216,12 +245,12 @@ export function Clients() {
                     {client.phone && <div style={{ color: 'var(--foreground-muted)' }}>{client.phone}</div>}
                   </div>
                 </td>
-                <td>{(client.invoices || []).length}</td>
+                <td>{client.invoiceCount || 0}</td>
                 <td style={{ color: 'var(--success)', fontWeight: 600 }}>{formatCurrency(client.totalPaid || 0)}</td>
                 <td style={{ color: 'var(--warning)', fontWeight: 600 }}>{formatCurrency(client.totalRemaining || 0)}</td>
                 <td>
                     <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
-                      <button className="text-xs font-semibold bg-[var(--surface)] border border-[var(--border-hover)] text-[var(--foreground)] rounded-md hover:bg-[var(--surface-2)] transition-colors cursor-pointer" style={{ padding: 'var(--space-2) var(--space-3)' }} onClick={() => setViewingClient(client)}>Fiche détaillée</button>
+                      <button className="text-xs font-semibold bg-[var(--surface)] border border-[var(--border-hover)] text-[var(--foreground)] rounded-md hover:bg-[var(--surface-2)] transition-colors cursor-pointer" style={{ padding: 'var(--space-2) var(--space-3)' }} onClick={() => openDetails(client)}>Fiche détaillée</button>
                       <button className="text-xs font-semibold bg-[var(--surface)] border border-[var(--border-hover)] text-[var(--foreground)] rounded-md hover:bg-[var(--surface-2)] transition-colors cursor-pointer" style={{ padding: 'var(--space-2) var(--space-3)' }} onClick={() => openEdit(client)}>Modifier</button>
                       <button className="text-xs font-semibold bg-transparent border border-red-200 text-[var(--destructive)] rounded-md hover:bg-red-50 transition-colors cursor-pointer" style={{ padding: 'var(--space-2) var(--space-3)' }} onClick={() => setClientToDelete(client.id)}>Supprimer</button>
                     </div>
@@ -257,7 +286,7 @@ export function Clients() {
                 <Field label="Nom de l'entreprise ou du client" required>
                   <Input 
                     className={cn(errors.name && "border-destructive")} 
-                    {...register('name', { required: "Le nom est requis" })} 
+                    {...register('name')} 
                     placeholder="Ex: Entreprise SA"
                   />
                   {errors.name && <span className="text-destructive text-xs mt-1 block">{errors.name.message as string}</span>}
@@ -267,7 +296,7 @@ export function Clients() {
                   <Input 
                     className={cn(errors.email && "border-destructive")} 
                     type="email" 
-                    {...register('email', { pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Email invalide" } })} 
+                    {...register('email')} 
                     placeholder="contact@entreprise.com"
                   />
                   {errors.email && <span className="text-destructive text-xs block" style={{ marginTop: 'var(--space-1)' }}>{errors.email.message as string}</span>}
@@ -275,6 +304,22 @@ export function Clients() {
 
                 <Field label="Numéro de Téléphone">
                   <Input {...register('phone')} placeholder="+33 1 23 45 67 89" />
+                </Field>
+
+                <Field label="Type de Client">
+                  <select {...register('clientType')} style={{ width: '100%', padding: '4px 8px', background: 'var(--color-bg-page)', border: '1px solid var(--color-border-default)', borderRadius: 'var(--radius-sm)', color: 'var(--color-text-primary)', fontSize: '11px', height: '28px' }}>
+                    <option value="professionnel">Professionnel</option>
+                    <option value="particulier">Particulier</option>
+                    <option value="administration">Administration Publique</option>
+                  </select>
+                </Field>
+
+                <Field label="NIF (Numéro d'Identification Fiscale)">
+                  <Input {...register('nif')} placeholder="Obligatoire pour les pros" />
+                </Field>
+
+                <Field label="RCCM (Registre du Commerce)">
+                  <Input {...register('rccm')} placeholder="Ex: GN.TCC.2023.B.12345" />
                 </Field>
 
                 <Field label="Ville">
@@ -344,7 +389,31 @@ export function Clients() {
                   <span>{[viewingClient.address, viewingClient.city, viewingClient.country].filter(Boolean).join(', ')}</span>
                 </div>
               )}
+              {viewingClient?.clientType && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }} className="text-[13px] text-[var(--foreground-subtle)]">
+                  <Building className="w-4 h-4" />
+                  <span className="capitalize">{viewingClient.clientType}</span>
+                </div>
+              )}
+              {viewingClient?.nif && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }} className="text-[13px] text-[var(--foreground-subtle)]">
+                  <FileTextIcon className="w-4 h-4" />
+                  <span>NIF: {viewingClient.nif}</span>
+                </div>
+              )}
+              {viewingClient?.rccm && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }} className="text-[13px] text-[var(--foreground-subtle)]">
+                  <FileTextIcon className="w-4 h-4" />
+                  <span>RCCM: {viewingClient.rccm}</span>
+                </div>
+              )}
             </div>
+            
+            {viewingClient?.notes && (
+              <div className="mt-1 text-[13px] bg-white p-3 rounded-lg border border-[var(--border)] shadow-sm text-[var(--foreground-muted)]">
+                <strong className="text-[var(--foreground)]">Notes Internes :</strong> {viewingClient.notes}
+              </div>
+            )}
           </div>
 
           {viewingClient && (
@@ -378,13 +447,14 @@ export function Clients() {
               {/* — Historique factures — */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
                 <div className="flex items-center justify-between border-b border-[var(--border)]" style={{ paddingBottom: 'var(--space-4)' }}>
-                  <h3 className="font-bold text-[14px] text-[var(--foreground)]">Dernières Factures</h3>
+                  <h3 className="font-bold text-[14px] text-[var(--foreground)]">Historique des Documents</h3>
                 </div>
                 {viewingClient.invoices?.length > 0 ? (
                   <div className="bg-white rounded-xl border border-[var(--border)] shadow-[0_4px_12px_rgba(0,0,0,0.02)] overflow-hidden">
                     <table className="fp-table w-full">
                       <thead className="bg-[var(--surface-1)]">
                         <tr>
+                          <th className="py-4 px-5 text-[12px] font-bold uppercase tracking-wider text-[var(--foreground-subtle)]">Type</th>
                           <th className="py-4 px-5 text-[12px] font-bold uppercase tracking-wider text-[var(--foreground-subtle)]">Numéro</th>
                           <th className="py-4 px-5 text-[12px] font-bold uppercase tracking-wider text-[var(--foreground-subtle)]">Date</th>
                           <th className="py-4 px-5 text-[12px] font-bold uppercase tracking-wider text-[var(--foreground-subtle)] text-right">Total TTC</th>
@@ -393,25 +463,28 @@ export function Clients() {
                         </tr>
                       </thead>
                       <tbody>
-                        {viewingClient.invoices.map((inv: any) => (
+                        {(viewingClient.invoices || []).filter((inv: any) => inv.status !== 'brouillon').map((inv: any) => (
                           <React.Fragment key={inv.id}>
                             <tr className="hover:bg-[var(--surface-hover)] transition-colors border-b border-[var(--border)] last:border-0">
+                              <td className="py-4 px-5 font-semibold text-[13px] text-[var(--foreground-muted)] capitalize">{inv.type}</td>
                               <td className="py-4 px-5 font-semibold text-[var(--foreground)]">{inv.number}</td>
                               <td className="py-4 px-5 text-[13px] text-[var(--foreground-muted)]">{formatDate(inv.createdAt)}</td>
-                              <td className="py-4 px-5 text-right font-semibold font-mono text-[var(--foreground)]">{formatCurrency(inv.total)}</td>
+                              <td className="py-4 px-5 text-right font-semibold font-mono text-[var(--foreground)]" title={inv.actualTotal ? `Total brut: ${formatCurrency(inv.total)}` : ''}>
+                                {formatCurrency(inv.actualTotal || inv.total)}
+                              </td>
                               <td className="py-4 px-5 text-right font-semibold font-mono text-[var(--success)]">{formatCurrency(inv.amountPaid || 0)}</td>
                               <td className="py-4 px-5 text-center">
                                 <span className={`fp-badge ${inv.status === 'payée' ? 'fp-badge-green' : inv.status === 'partielle' ? 'fp-badge-neutral' : 'fp-badge-neutral'}`}>
-                                  {inv.status === 'brouillon' ? 'Non entamée' : inv.status}
+                                  {inv.status}
                                 </span>
                               </td>
                             </tr>
                             {inv.receipts && inv.receipts.length > 0 && (
                               <tr className="bg-[var(--surface-2)]">
-                                <td colSpan={5} className="p-5 pl-8 border-l-[3px] border-[var(--success)]">
+                                <td colSpan={6} className="p-5 pl-8 border-l-[3px] border-[var(--success)]">
                                   <div className="text-[11px] font-bold text-[var(--foreground-subtle)] uppercase tracking-wider mb-3">Historique des Versements :</div>
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-                                    {inv.receipts.map((rec: any) => (
+                                    {(inv.receipts || []).map((rec: any) => (
                                       <div key={rec.id} className="flex justify-between items-center bg-white rounded-md px-5 py-3 border border-[var(--border)] shadow-sm">
                                         <div className="text-[13px] text-[var(--foreground-muted)]">
                                           <span className="font-semibold text-[var(--foreground)]">{rec.number}</span> <span className="mx-2">•</span> {formatDate(rec.paymentDate)}
@@ -430,7 +503,7 @@ export function Clients() {
                   </div>
                 ) : (
                   <div className="bg-[var(--surface-1)] rounded-xl p-8 text-center border border-[var(--border)] border-dashed">
-                    <p className="text-[14px] text-[var(--foreground-muted)]">Aucune facture pour ce client.</p>
+                    <p className="text-[14px] text-[var(--foreground-muted)]">Aucun document validé pour ce client.</p>
                   </div>
                 )}
               </div>

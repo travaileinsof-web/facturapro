@@ -126,39 +126,16 @@ export function Settings() {
       const updated = await res.json();
       const currentUser = useAppStore.getState().user;
       useAppStore.getState().login({ ...currentUser, ...updated } as any);
-      toast.success('Paramètres enregistrés !');
+      
       setValue('currentPassword', '');
       setValue('password', '');
       refetch();
 
       if (currentCurrency !== newCurrency) {
-        toast.info(`Conversion des montants de ${currentCurrency} vers ${newCurrency} en cours...`);
-        try {
-          const r = await fetch(`https://api.exchangerate-api.com/v4/latest/${currentCurrency}`);
-          const d = await r.json();
-          const rate = d.rates[newCurrency];
-          if (rate) {
-            const convertRes = await apiFetch('/api/settings/convert-currency', {
-              method: 'POST',
-              body: JSON.stringify({ rate, oldCurrency: currentCurrency, newCurrency })
-            });
-            if (convertRes.ok) {
-              toast.success('Conversion des anciens montants réussie !');
-              useAppStore.getState().triggerRefresh('invoices');
-              useAppStore.getState().triggerRefresh('receipts');
-              useAppStore.getState().triggerRefresh('catalog');
-              useAppStore.getState().triggerRefresh('expenses');
-            } else {
-              toast.error('Erreur lors de la conversion.');
-            }
-          } else {
-            toast.error('Taux de change introuvable pour cette paire.');
-          }
-        } catch (e) {
-          console.error(e);
-          toast.error('Erreur réseau lors de la récupération du taux.');
-        }
+        toast.info(`La devise a été modifiée en ${newCurrency}. Cela s'appliquera uniquement aux nouvelles opérations.`);
       }
+
+      toast.success("Paramètres mis à jour avec succès.");
     } else {
       toast.error("Erreur lors de l'enregistrement.");
     }
@@ -250,8 +227,20 @@ export function Settings() {
             <Field label="Nom de la Banque">
               <input type="text" {...register('bankName')} style={inputStyle} placeholder="Ex: Société Générale" />
             </Field>
-            <Field label="Numéro d'Identification (TVA, SIRET...)">
-              <input type="text" {...register('taxId')} style={inputStyle} placeholder="FR00000000" />
+            <Field label="NIF (Numéro d'Identification Fiscale) *">
+              <input type="text" {...register('taxId')} style={inputStyle} placeholder="NIF" />
+            </Field>
+            <Field label="Forme Juridique">
+              <input type="text" {...register('legalForm')} style={inputStyle} placeholder="Ex: SARL, SA, Entreprise Individuelle" />
+            </Field>
+            <Field label="RCCM (Registre du Commerce)">
+              <input type="text" {...register('rccm')} style={inputStyle} placeholder="Ex: GN.TCC.2023.B.12345" />
+            </Field>
+            <Field label="Régime Fiscal">
+              <input type="text" {...register('taxRegime')} style={inputStyle} placeholder="Ex: Réel Simplifié, Assujetti à la TVA" />
+            </Field>
+            <Field label="Taux de TVA par défaut (%)">
+              <input type="number" step="0.01" {...register('defaultVatRate')} style={inputStyle} placeholder="18" />
             </Field>
             <div className="col-span-1 md:col-span-2">
               <Field label="Coordonnées bancaires (IBAN, RIB...)">

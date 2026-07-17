@@ -18,6 +18,13 @@ interface User {
   accentColor?: string;
   role?: string;
   smtpHost?: string;
+  legalForm?: string;
+  rccm?: string;
+  taxRegime?: string;
+  defaultVatRate?: number;
+  taxId?: string;
+  bankName?: string;
+  bankAccount?: string;
 }
 
 interface AppState {
@@ -40,6 +47,9 @@ interface AppState {
   triggerRefresh: (module: 'clients' | 'invoices' | 'receipts' | 'stats' | 'expenses' | 'catalog' | 'reminders') => void;
   tourRunning: boolean;
   setTourRunning: (run: boolean) => void;
+  // Stats
+  statsPeriod: string;
+  setStatsPeriod: (period: string) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -60,6 +70,8 @@ export const useAppStore = create<AppState>()(
       refreshReminders: 0,
       tourRunning: false,
       setTourRunning: (run) => set({ tourRunning: run }),
+      statsPeriod: 'this_month',
+      setStatsPeriod: (statsPeriod) => set({ statsPeriod }),
       triggerRefresh: (module) => set((state) => ({
         [`refresh${module.charAt(0).toUpperCase() + module.slice(1)}`]: (state[`refresh${module.charAt(0).toUpperCase() + module.slice(1)}` as keyof AppState] as number) + 1
       }))
@@ -82,7 +94,13 @@ export async function apiFetch(url: string, options: RequestInit = {}): Promise<
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  return fetch(url, { ...options, headers });
+  const response = await fetch(url, { ...options, headers });
+  
+  if (response.status === 401 && url.startsWith('/api/') && !url.includes('/api/auth/')) {
+    useAppStore.getState().logout();
+  }
+  
+  return response;
 }
 
 // Add formatting utility
@@ -128,4 +146,12 @@ export function escapeHTML(str: string | null | undefined): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+export function getWhatsAppUrl(phone: string, text: string): string {
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  if (isMobile) {
+    return `whatsapp://send?text=${text}` + (phone ? `&phone=${phone}` : '');
+  }
+  return `https://api.whatsapp.com/send?text=${text}` + (phone ? `&phone=${phone}` : '');
 }

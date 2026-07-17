@@ -4,6 +4,9 @@ import { useAppStore } from '../lib/store';
 import { PageTransition } from '../components/ui/PageTransition';
 import { BlobShape, GridPattern, GeometricShapes, WavesShape } from '../components/ui/AbstractShapes';
 import { MotionReveal as Reveal } from '../components/ui/MotionReveal';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { loginSchema, registerSchema, LoginData, RegisterData } from '../lib/schemas';
 
 export function Auth({ mode }: { mode: 'login' | 'register' }) {
   const [tab, setTab] = useState<'login' | 'register'>(mode);
@@ -12,20 +15,25 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
   const navigate = useNavigate();
   const { login } = useAppStore();
 
-  const [loginData, setLoginData] = useState({ email: '', password: '' });
-  const [regData, setRegData] = useState({ firstName: '', lastName: '', email: '', phone: '', company: '', password: '', confirm: '' });
+  const { register: registerLogin, handleSubmit: handleSubmitLogin, formState: { errors: loginErrors } } = useForm<LoginData>({
+    resolver: zodResolver(loginSchema)
+  });
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault(); setError(''); setLoading(true);
+  const { register: registerReg, handleSubmit: handleSubmitReg, formState: { errors: regErrors } } = useForm<RegisterData>({
+    resolver: zodResolver(registerSchema)
+  });
+
+  const handleLogin = async (data: LoginData) => {
+    setError(''); setLoading(true);
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: loginData.email, password: loginData.password })
+        body: JSON.stringify(data)
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Erreur de connexion');
-      login(data);
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.error || 'Erreur de connexion');
+      login(resData);
       navigate('/app');
     } catch (err: any) {
       setError(err.message);
@@ -34,24 +42,17 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
     }
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault(); setError('');
-    if (regData.password !== regData.confirm) return setError('Les mots de passe ne correspondent pas.');
-    if (regData.password.length < 6) return setError('Minimum 6 caractères requis.');
-    setLoading(true);
+  const handleRegister = async (data: RegisterData) => {
+    setError(''); setLoading(true);
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: regData.email, password: regData.password,
-          phone: regData.phone,
-          company: regData.company, firstName: regData.firstName, lastName: regData.lastName
-        })
+        body: JSON.stringify(data)
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Erreur lors de la création du compte');
-      login(data);
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.error || 'Erreur lors de la création du compte');
+      login(resData);
       navigate('/app');
     } catch (err: any) {
       setError(err.message);
@@ -60,16 +61,16 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
     }
   };
 
-  const field = (label: string, type: string, ph: string, val: string, onChange: (v: string) => void, extra?: any) => (
+  const field = (label: string, type: string, ph: string, registration: any, err?: string, extra?: any) => (
     <div {...extra}>
       <label style={{ display: 'block', fontSize: '12px', color: 'var(--color-text)', fontWeight: 500, marginBottom: '6px', letterSpacing: '0.5px' }}>{label}</label>
       <input
-        type={type} placeholder={ph} value={val} required
-        onChange={e => onChange(e.target.value)}
-        style={{ width: '100%', padding: '12px 16px', borderRadius: '2px', border: '1px solid var(--color-border)', fontSize: '13px', color: 'var(--color-text)', outline: 'none', background: 'var(--color-surface)', fontWeight: 300, transition: 'all 0.3s ease' }}
-        onFocus={e => { e.target.style.borderColor = 'var(--color-gold)'; e.target.style.boxShadow = '0 0 0 3px rgba(212, 175, 55, 0.1)'; }}
-        onBlur={e => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
+        type={type} placeholder={ph} {...registration}
+        style={{ width: '100%', padding: '12px 16px', borderRadius: '2px', border: err ? '1px solid #ef4444' : '1px solid var(--color-border)', fontSize: '13px', color: 'var(--color-text)', outline: 'none', background: 'var(--color-surface)', fontWeight: 300, transition: 'all 0.3s ease' }}
+        onFocus={e => { e.target.style.borderColor = err ? '#ef4444' : 'var(--color-gold)'; e.target.style.boxShadow = err ? '0 0 0 3px rgba(239, 68, 68, 0.1)' : '0 0 0 3px rgba(212, 175, 55, 0.1)'; }}
+        onBlur={e => { e.target.style.borderColor = err ? '#ef4444' : 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
       />
+      {err && <span style={{ display: 'block', marginTop: '4px', fontSize: '11px', color: '#ef4444' }}>{err}</span>}
     </div>
   );
 
@@ -108,18 +109,19 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
 
         {/* Form Login */}
         {tab === 'login' && (
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {field('Adresse email ou Identifiant', 'text', 'vous@entreprise.com', loginData.email, v => setLoginData(p => ({ ...p, email: v })))}
+          <form onSubmit={handleSubmitLogin(handleLogin)} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {field('Adresse email ou Identifiant', 'text', 'vous@entreprise.com', registerLogin('email'), loginErrors.email?.message)}
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                 <label style={{ fontSize: '12px', color: 'var(--color-text)', fontWeight: 500, letterSpacing: '0.5px' }}>Mot de passe</label>
                 <button type="button" style={{ background: 'none', border: 'none', color: 'var(--color-gold)', fontSize: '12px', fontWeight: 300, cursor: 'pointer', outline: 'none' }}>Mot de passe oublié ?</button>
               </div>
-              <input type="password" placeholder="••••••••" value={loginData.password} required onChange={e => setLoginData(p => ({ ...p, password: e.target.value }))}
-                style={{ width: '100%', padding: '12px 16px', borderRadius: '2px', border: '1px solid var(--color-border)', fontSize: '13px', color: 'var(--color-text)', outline: 'none', background: 'var(--color-surface)', fontWeight: 300, transition: 'all 0.3s ease' }}
-                onFocus={e => { e.target.style.borderColor = 'var(--color-gold)'; e.target.style.boxShadow = '0 0 0 3px rgba(212, 175, 55, 0.1)'; }}
-                onBlur={e => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
+              <input type="password" placeholder="••••••••" {...registerLogin('password')}
+                style={{ width: '100%', padding: '12px 16px', borderRadius: '2px', border: loginErrors.password ? '1px solid #ef4444' : '1px solid var(--color-border)', fontSize: '13px', color: 'var(--color-text)', outline: 'none', background: 'var(--color-surface)', fontWeight: 300, transition: 'all 0.3s ease' }}
+                onFocus={e => { e.target.style.borderColor = loginErrors.password ? '#ef4444' : 'var(--color-gold)'; e.target.style.boxShadow = loginErrors.password ? '0 0 0 3px rgba(239, 68, 68, 0.1)' : '0 0 0 3px rgba(212, 175, 55, 0.1)'; }}
+                onBlur={e => { e.target.style.borderColor = loginErrors.password ? '#ef4444' : 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
               />
+              {loginErrors.password && <span style={{ display: 'block', marginTop: '4px', fontSize: '11px', color: '#ef4444' }}>{loginErrors.password.message}</span>}
             </div>
             <button type="submit" disabled={loading} style={{ width: '100%', marginTop: '8px', padding: '14px', background: 'var(--color-gold)', color: '#1A1715', fontSize: '13px', fontWeight: 600, borderRadius: '2px', border: 'none', cursor: loading ? 'wait' : 'pointer', transition: 'all 0.3s ease', textTransform: 'uppercase', letterSpacing: '0.5px' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#E6D5B8'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
@@ -132,19 +134,19 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
 
         {/* Form Register */}
         {tab === 'register' && (
-          <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <form onSubmit={handleSubmitReg(handleRegister)} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              {field('Prénom', 'text', 'Jean', regData.firstName, v => setRegData(p => ({ ...p, firstName: v })))}
-              {field('Nom', 'text', 'Diallo', regData.lastName, v => setRegData(p => ({ ...p, lastName: v })))}
+              {field('Prénom', 'text', 'Jean', registerReg('firstName'), regErrors.firstName?.message)}
+              {field('Nom', 'text', 'Diallo', registerReg('lastName'), regErrors.lastName?.message)}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              {field('Email', 'email', 'vous@entreprise.com', regData.email, v => setRegData(p => ({ ...p, email: v })))}
-              {field('Téléphone (WhatsApp)', 'tel', '+224 62X XX XX XX', regData.phone, v => setRegData(p => ({ ...p, phone: v })))}
+              {field('Email', 'email', 'vous@entreprise.com', registerReg('email'), regErrors.email?.message)}
+              {field('Téléphone (WhatsApp)', 'tel', '+224 62X XX XX XX', registerReg('phone'), regErrors.phone?.message)}
             </div>
-            {field('Nom de l\'entreprise', 'text', 'Sarl Mon Entreprise', regData.company, v => setRegData(p => ({ ...p, company: v })))}
+            {field('Nom de l\'entreprise', 'text', 'Sarl Mon Entreprise', registerReg('company'), regErrors.company?.message)}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              {field('Mot de passe', 'password', '••••••••', regData.password, v => setRegData(p => ({ ...p, password: v })))}
-              {field('Confirmez', 'password', '••••••••', regData.confirm, v => setRegData(p => ({ ...p, confirm: v })))}
+              {field('Mot de passe', 'password', '••••••••', registerReg('password'), regErrors.password?.message)}
+              {field('Confirmez', 'password', '••••••••', registerReg('confirm'), regErrors.confirm?.message)}
             </div>
             <button type="submit" disabled={loading} style={{ width: '100%', marginTop: '8px', padding: '14px', background: 'var(--color-gold)', color: '#1A1715', fontSize: '13px', fontWeight: 600, borderRadius: '2px', border: 'none', cursor: loading ? 'wait' : 'pointer', transition: 'all 0.3s ease', textTransform: 'uppercase', letterSpacing: '0.5px' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#E6D5B8'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}
@@ -167,3 +169,4 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
     </PageTransition>
   );
 }
+

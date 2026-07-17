@@ -20,6 +20,26 @@ class DocumentController {
             $stmt->execute($params);
             echo json_encode($stmt->fetchAll());
         } elseif ($method === 'POST') {
+            // FIX IDOR: Vérifier que l'entité liée appartient bien à l'utilisateur
+            $entityType = $body['entityType'] ?? '';
+            $entityId = $body['entityId'] ?? '';
+            
+            if ($entityType && $entityId) {
+                $table = null;
+                if ($entityType === 'client') $table = 'Client';
+                elseif (in_array($entityType, ['facture', 'devis', 'proforma'])) $table = 'ProformaInvoice';
+                elseif ($entityType === 'expense') $table = 'Expense';
+                elseif ($entityType === 'company') $table = 'Company';
+                
+                if ($table) {
+                    $stCheck = $pdo->prepare("SELECT id FROM $table WHERE id = ? AND accountId = ?");
+                    $stCheck->execute([$entityId, $accountId]);
+                    if (!$stCheck->fetch()) {
+                        http_response_code(403); echo json_encode(["error" => "Entité introuvable ou accès refusé."]); exit;
+                    }
+                }
+            }
+
             $newId = Helper::uuid();
             $stmt = $pdo->prepare("INSERT INTO Document (id, accountId, entityType, entityId, fileName, fileUrl, fileType, fileSize) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
@@ -44,9 +64,9 @@ class DocumentController {
                 // Essayer de supprimer le fichier physique si possible
                 $urlParts = explode('/backend/uploads/', $doc['fileUrl']);
                 if (count($urlParts) > 1) {
-                    $filename = end($urlParts);
+                    $filename = basename(end($urlParts));
                     $filepath = __DIR__ . '/../uploads/' . $filename;
-                    if (file_exists($filepath)) {
+                    if (file_exists($filepath) && is_file($filepath)) {
                         unlink($filepath);
                     }
                 }

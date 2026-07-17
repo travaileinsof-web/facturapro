@@ -13,33 +13,6 @@ import { SuperAdminPage } from './pages/SuperAdminPage';
 import { useAppStore } from './lib/store';
 import './index.css';
 
-// =============================================
-// GLOBAL FETCH INTERCEPTOR — Injecte le token
-// sur toutes les requêtes /api/ automatiquement
-// =============================================
-const originalFetch = window.fetch;
-window.fetch = async (input: RequestInfo | URL, init: RequestInit = {}) => {
-  const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-  
-  if (url.startsWith('/api/')) {
-    const token = useAppStore.getState().user?.token;
-    if (token) {
-      init.headers = {
-        ...(init.headers || {}),
-        'Authorization': `Bearer ${token}`,
-      };
-    }
-  }
-  
-  const response = await originalFetch(input, init);
-  
-  // Déconnexion automatique si token expiré/invalide
-  if (response.status === 401 && url.startsWith('/api/') && !url.includes('/api/auth/')) {
-    useAppStore.getState().logout();
-  }
-  
-  return response;
-};
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAppStore();

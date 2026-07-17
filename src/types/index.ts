@@ -14,6 +14,7 @@ export interface Receipt {
   amount: number;
   paymentMethod: string;
   paymentDate: string;
+  receivedBy?: string;
   createdAt?: string;
 }
 
@@ -27,6 +28,11 @@ export interface Invoice {
   amountRemaining?: number;
   createdAt: string;
   dueDate?: string;
+  validityDate?: string;
+  paymentTerms?: string;
+  vatWithholdingApplied?: boolean;
+  vatExemptReason?: string;
+  sourceDocumentId?: string;
   type?: string;
   items?: string | any[];
   receipts?: Receipt[];
@@ -42,6 +48,7 @@ export interface Client {
   rccm?: string;
   city?: string;
   country?: string;
+  clientType?: string;
   createdAt?: string;
   updatedAt?: string;
   totalInvoiced?: number;

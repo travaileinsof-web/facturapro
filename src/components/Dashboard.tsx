@@ -1,11 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
-import { Users, FileText, Banknote, Clock, TrendingUp, TrendingDown, ArrowRight, Minus, CheckCircle, XCircle, LayoutDashboard, Settings as SettingsIcon, Package, PlusCircle, CheckCircle2, ChevronRight } from 'lucide-react';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { useEffect, useRef, useState, useMemo } from 'react';
+import { Users, FileText, Banknote, Clock, TrendingUp, TrendingDown, ArrowRight, Minus, Settings as SettingsIcon, Package, AlertCircle, Calendar, Target, AlertTriangle, CheckCircle2, ChevronRight } from 'lucide-react';
 import { formatCurrency, formatDate, useAppStore, apiFetch } from '../lib/store';
 import { PageHeader } from './ui/PageHeader';
-import { useSearchParams } from 'react-router-dom';
+import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths, startOfQuarter, endOfQuarter, startOfYear, endOfYear, format } from 'date-fns';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, BarChart, Bar, PieChart, Pie, Cell, CartesianGrid } from 'recharts';
 
-/* ── Count-up animation hook ─────────────────────────────────────── */
+/* ── Hooks & Utils ───────────────────────────────────────────────── */
 function useCountUp(target: number, duration = 900) {
   const [value, setValue] = useState(0);
   const frameRef = useRef<number>(0);
@@ -15,7 +16,6 @@ function useCountUp(target: number, duration = 900) {
     const tick = (now: number) => {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease out expo
       const eased = 1 - Math.pow(2, -10 * progress);
       setValue(Math.round(eased * target));
       if (progress < 1) frameRef.current = requestAnimationFrame(tick);
@@ -26,7 +26,52 @@ function useCountUp(target: number, duration = 900) {
   return value;
 }
 
-/* ── Status badge ─────────────────────────────────────────────────── */
+function getDatesFromPeriod(period: string) {
+  const now = new Date();
+  let start = new Date(2000, 0, 1);
+  let end = new Date(2100, 0, 1);
+  
+  switch(period) {
+    case 'this_day':
+      start = startOfDay(now);
+      end = endOfDay(now);
+      break;
+    case 'this_week':
+      start = startOfWeek(now, { weekStartsOn: 1 });
+      end = endOfWeek(now, { weekStartsOn: 1 });
+      break;
+    case 'this_month':
+      start = startOfMonth(now);
+      end = endOfMonth(now);
+      break;
+    case 'last_month':
+      start = startOfMonth(subMonths(now, 1));
+      end = endOfMonth(subMonths(now, 1));
+      break;
+    case 'this_quarter':
+      start = startOfQuarter(now);
+      end = endOfQuarter(now);
+      break;
+    case 'this_semester':
+      start = new Date(now.getFullYear(), now.getMonth() < 6 ? 0 : 6, 1);
+      end = endOfMonth(new Date(now.getFullYear(), now.getMonth() < 6 ? 5 : 11, 1));
+      break;
+    case 'this_year':
+      start = startOfYear(now);
+      end = endOfYear(now);
+      break;
+    case 'all_time':
+    default:
+      break;
+  }
+  
+  return {
+    startDate: format(start, 'yyyy-MM-dd 00:00:00'),
+    endDate: format(end, 'yyyy-MM-dd 23:59:59')
+  };
+}
+
+/* ── Components ──────────────────────────────────────────────────── */
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
     'payée':    { label: 'Payée',       cls: 'fp-badge-green' },
@@ -38,153 +83,102 @@ function StatusBadge({ status }: { status: string }) {
   return <span className={`fp-badge ${cls}`}>{label}</span>;
 }
 
-/* ── Sparkline SVG ───────────────────────────────────────────────── */
-function Sparkline({ values, color = '#C9A84C' }: { values: number[]; color?: string }) {
-  if (!values || values.length < 2) return null;
-  const max = Math.max(...values);
-  const min = Math.min(...values);
-  const range = max - min || 1;
-  const w = 80, h = 28;
-  const pts = values.map((v, i) => {
-    const x = (i / (values.length - 1)) * w;
-    const y = h - ((v - min) / range) * h;
-    return `${x},${y}`;
-  }).join(' ');
+function EmptyList({ label, icon: Icon = Package, actionText, onAction }: { label: string, icon?: any, actionText?: string, onAction?: () => void }) {
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} fill="none">
-      <polyline points={pts} stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  );
-}
-
-/* ── KPI Card ────────────────────────────────────────────────────── */
-function KpiCard({
-  label, value, isCurrency = false, icon: Icon, color = 'var(--color-primary)',
-  trend, delay = 0,
-}: {
-  label: string; value: number; isCurrency?: boolean;
-  icon: any; color?: string; trend?: number; delay?: number;
-}) {
-  const animated = useCountUp(value, 1000);
-  const display = isCurrency ? formatCurrency(animated) : animated.toLocaleString('fr-FR');
-
-  const isPrimary = color.includes('primary') || color === 'var(--color-primary)';
-
-  return (
-    <div className="fp-kpi-card" style={{ opacity: 0, animation: `fp-fade-up 0.5s ease ${delay}s forwards` }}>
-      {/* Glow orb */}
-      <div style={{
-        position: 'absolute', top: '-20px', right: '-20px',
-        width: '80px', height: '80px', borderRadius: '50%',
-        background: isPrimary ? 'rgba(184, 134, 11, 0.15)' : `${color}22`,
-        filter: 'blur(30px)', pointerEvents: 'none',
-      }}/>
-
-      <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-3)' }}>
-        <div className="fp-kpi-label">{label}</div>
-        <div className="w-7 h-7 flex items-center justify-center shrink-0 rounded-md" style={{ background: isPrimary ? 'var(--color-primary-subtle)' : `${color}15`, border: `1px solid ${isPrimary ? 'var(--color-border-subtle)' : `${color}30`}` }}>
-          <Icon size={14} style={{ color }}/>
-        </div>
+    <div className="flex flex-col items-center justify-center text-center text-[var(--foreground-subtle)]" style={{ padding: '40px 20px' }}>
+      <div className="w-12 h-12 rounded-full flex items-center justify-center mb-4" style={{ background: 'var(--surface-2)', color: 'var(--foreground-muted)' }}>
+        <Icon size={20} />
       </div>
-
-      <div className="fp-kpi-value" style={{ fontSize: '28px' }}>{display}</div>
-
-      {trend !== undefined && (
-        <div className="flex items-center text-[12px]" style={{ marginTop: 'var(--space-3)', gap: 'var(--space-2)' }}>
-          {trend > 0
-            ? <TrendingUp size={12} style={{ color: 'var(--color-success)' }}/>
-            : trend < 0
-              ? <TrendingDown size={12} style={{ color: 'var(--color-danger)' }}/>
-              : <Minus size={12} style={{ color: 'var(--color-text-placeholder)' }}/>
-          }
-          <span style={{ color: trend > 0 ? 'var(--color-success)' : trend < 0 ? 'var(--color-danger)' : 'var(--color-text-placeholder)', fontWeight: 600 }}>
-            {trend > 0 ? '+' : ''}{trend}%
-          </span>
-          <span style={{ color: 'var(--color-text-secondary)' }}>vs mois dernier</span>
-        </div>
+      <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--foreground)' }}>{label}</p>
+      {actionText && (
+        <button onClick={onAction} className="mt-4 fp-btn-primary" style={{ padding: '6px 16px', fontSize: '12px' }}>
+          {actionText}
+        </button>
       )}
     </div>
   );
 }
 
-/* ── Empty state ─────────────────────────────────────────────────── */
-function EmptyList({ label }: { label: string }) {
+function KpiCard({
+  label, value, isCurrency = false, isPercent = false, icon: Icon, color = 'var(--color-primary)',
+  trend, delay = 0,
+}: {
+  label: string; value: number; isCurrency?: boolean; isPercent?: boolean;
+  icon: any; color?: string; trend?: number; delay?: number;
+}) {
+  const animated = useCountUp(value, 1000);
+  const display = isCurrency ? formatCurrency(animated) : isPercent ? `${animated}%` : animated.toLocaleString('fr-FR');
+
   return (
-    <div className="text-center text-[var(--foreground-subtle)]" style={{ padding: 'var(--space-12) var(--space-4)' }}>
-      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" className="block opacity-30" style={{ margin: '0 auto var(--space-4)' }}>
-        <rect x="8" y="6" width="24" height="30" rx="3" stroke="currentColor" strokeWidth="1.5"/>
-        <line x1="13" y1="14" x2="27" y2="14" stroke="currentColor" strokeWidth="1.5"/>
-        <line x1="13" y1="19" x2="27" y2="19" stroke="currentColor" strokeWidth="1.5"/>
-        <line x1="13" y1="24" x2="21" y2="24" stroke="currentColor" strokeWidth="1.5"/>
-      </svg>
-      <p style={{ fontSize: '13px', fontWeight: 500 }}>Aucun {label} pour l'instant</p>
+    <div className="fp-kpi-card relative overflow-hidden flex flex-col bg-[var(--surface-1)] border border-[var(--border)] rounded-2xl" style={{ padding: '20px', opacity: 0, animation: `fp-fade-up 0.5s ease ${delay}s forwards`, minHeight: '130px' }}>
+      <div className="flex items-start justify-between gap-4" style={{ marginBottom: '16px' }}>
+        <div className="text-sm font-semibold text-[var(--foreground-subtle)]" style={{ flex: 1, lineHeight: '1.4', paddingRight: '8px', wordBreak: 'break-word', maxWidth: 'calc(100% - 48px)' }}>{label}</div>
+        <div className="w-8 h-8 flex items-center justify-center shrink-0 rounded-md" style={{ background: `${color}15`, border: `1px solid ${color}30` }}>
+          <Icon size={16} style={{ color }}/>
+        </div>
+      </div>
+      <div className="mt-auto">
+        <div className="font-display font-bold text-[var(--foreground)]" style={{ fontSize: '24px' }}>{display}</div>
+        {trend !== undefined && (
+          <div className="flex items-center text-[12px]" style={{ marginTop: '8px', gap: '4px' }}>
+            {trend > 0 ? <TrendingUp size={12} style={{ color: 'var(--color-success)' }}/>
+              : trend < 0 ? <TrendingDown size={12} style={{ color: 'var(--color-danger)' }}/>
+              : <Minus size={12} style={{ color: 'var(--color-text-placeholder)' }}/>
+            }
+            <span style={{ color: trend > 0 ? 'var(--color-success)' : trend < 0 ? 'var(--color-danger)' : 'var(--color-text-placeholder)', fontWeight: 600 }}>
+              {trend > 0 ? '+' : ''}{trend}%
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-/* ── Onboarding Widget ───────────────────────────────────────────── */
 function OnboardingWidget({ stats, user, setCurrentModule }: { stats: any, user: any, setCurrentModule: any }) {
   if (!stats) return null;
-  
+  const { overview } = stats;
   const hasSettings = user?.smtpHost && user?.primaryColor;
-  const hasClient = (stats.totalClients || 0) > 0;
-  const hasCatalog = (stats.totalCatalogItems || 0) > 0;
-  const hasInvoice = (stats.totalInvoices || 0) > 0;
+  const hasClient = stats?.setup?.clientCount > 0; 
+  const hasCatalog = stats?.setup?.itemCount > 0;
+  const hasInvoice = stats?.setup?.invoiceCount > 0;
   
   const steps = [
-    { id: 'settings', title: 'Configurer les paramètres', desc: 'SMTP et identité visuelle', done: hasSettings, icon: SettingsIcon },
-    { id: 'clients', title: 'Ajouter un client', desc: 'Votre premier contact', done: hasClient, icon: Users },
-    { id: 'catalog', title: 'Créer un article', desc: 'Produit ou service', done: hasCatalog, icon: Package },
-    { id: 'invoices', title: 'Première facture', desc: 'Générer une facture', done: hasInvoice, icon: FileText },
+    { id: 'settings', title: 'Personnaliser', desc: 'Identité visuelle & devise', done: hasSettings, icon: SettingsIcon },
+    { id: 'catalog', title: 'Créer le catalogue', desc: 'Ajouter un article', done: hasCatalog, icon: Package },
+    { id: 'clients', title: 'Ajouter un client', desc: 'Premier contact', done: hasClient, icon: Users },
+    { id: 'invoices', title: 'Facturer', desc: 'Première vente', done: hasInvoice, icon: FileText },
   ];
   
   const progress = steps.filter(s => s.done).length;
-  const isComplete = progress === steps.length;
-  
-  if (isComplete) return null;
+  if (progress === steps.length) return null;
+  const percentage = Math.round((progress / steps.length) * 100);
   
   return (
-    <div className="fp-card" style={{ marginBottom: 'var(--space-6)', overflow: 'hidden' }}>
-      <div style={{ padding: 'var(--space-5)', borderBottom: '1px solid var(--color-border)' }}>
-        <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-3)' }}>
-          <h3 className="font-semibold" style={{ fontSize: 'var(--text-lg)', color: 'var(--color-primary)' }}>Configuration du compte</h3>
-          <div className="text-sm font-semibold" style={{ color: 'var(--color-primary)' }}>
-            {Math.round((progress / steps.length) * 100)}% complété
-          </div>
-        </div>
-        <div style={{ width: '100%', height: '4px', background: 'var(--color-primary-subtle)', borderRadius: '2px', overflow: 'hidden' }}>
-          <div style={{ width: `${(progress / steps.length) * 100}%`, height: '100%', background: 'var(--color-primary)', transition: 'width 0.5s ease-out', boxShadow: '0 0 8px var(--color-primary)' }} />
+    <div className="relative mb-8 rounded-2xl overflow-hidden shadow-[0_12px_40px_rgba(201,168,76,0.15)] border border-[var(--gold)]/20 bg-gradient-to-br from-[var(--surface-1)] to-[var(--background)] p-6" style={{ padding: '24px', marginBottom: '32px' }}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6" style={{ marginBottom: '24px' }}>
+        <div>
+          <h3 className="text-2xl font-bold font-display text-[var(--foreground)] tracking-tight flex items-center gap-3">
+            Démarrage Rapide
+            <span className="inline-flex items-center rounded-full bg-[var(--gold)]/10 text-[var(--gold)] text-sm font-bold border border-[var(--gold)]/20 px-3 py-1" style={{ padding: '4px 12px', marginLeft: '12px' }}>{percentage}%</span>
+          </h3>
+          <p className="text-[var(--color-text-secondary)] mt-1 text-sm">Complétez ces 4 étapes pour exploiter tout le potentiel de FacturaPro.</p>
         </div>
       </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x" style={{ borderColor: 'var(--color-border)' }}>
-        {steps.map((step, i) => {
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" style={{ display: 'grid', gap: '16px' }}>
+        {steps.map((step) => {
           const Icon = step.icon;
           return (
-            <div 
-              key={step.id} 
-              onClick={() => setCurrentModule(step.id)}
-              className="flex flex-col relative group cursor-pointer hover:bg-[var(--color-bg-page)] transition-colors"
-              style={{ padding: 'var(--space-4)', opacity: step.done ? 0.6 : 1 }}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div 
-                  className="flex items-center justify-center rounded-full"
-                  style={{ width: '32px', height: '32px', background: step.done ? 'var(--color-success)' : 'var(--color-primary-subtle)', color: step.done ? 'white' : 'var(--color-primary)' }}
-                >
-                  {step.done ? <CheckCircle2 size={16} /> : <Icon size={16} />}
-                </div>
-                {!step.done && <ChevronRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity text-[var(--color-primary)]" />}
-              </div>
-              <h4 className="font-semibold text-[var(--foreground)]" style={{ fontSize: 'var(--text-sm)', marginBottom: '4px' }}>
-                {i + 1}. {step.title}
-              </h4>
-              <p className="text-[var(--foreground-muted)] text-[var(--text-xs)] m-0">
-                {step.desc}
-              </p>
+          <div key={step.id} onClick={() => setCurrentModule(step.id)} className={`relative flex items-center p-4 rounded-xl border cursor-pointer ${step.done ? 'bg-[var(--surface-1)]/50 border-[var(--border)]/50 opacity-70' : 'bg-[var(--surface-1)] border-[var(--gold)]/30 hover:border-[var(--gold)]'}`} style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center mr-4" style={{ background: step.done ? 'var(--surface-2)' : 'var(--gold-subtle)', color: step.done ? 'var(--foreground-muted)' : 'var(--gold)', flexShrink: 0 }}>
+              <Icon size={20} />
             </div>
-          )
-        })}
+            <div>
+              <p className="text-sm font-bold text-[var(--foreground)]">{step.title}</p>
+              <p className="text-xs text-[var(--foreground-subtle)] mt-0.5">{step.desc}</p>
+            </div>
+          </div>
+        )})}
       </div>
     </div>
   );
@@ -192,214 +186,330 @@ function OnboardingWidget({ stats, user, setCurrentModule }: { stats: any, user:
 
 /* ── Main Dashboard ──────────────────────────────────────────────── */
 export function Dashboard() {
-  const refreshStats = useAppStore(state => state.refreshStats);
-
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ['stats', refreshStats],
+  const { user, refreshStats, setCurrentModule, statsPeriod, setStatsPeriod } = useAppStore();
+  const [activeTab, setActiveTab] = useState<'facturation' | 'depenses'>('facturation');
+  
+  const { data: stats, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ['dashboard_stats', refreshStats, statsPeriod],
     queryFn: async () => {
-      const res = await apiFetch('/api/stats');
-      if (!res.ok) return null;
+      const { startDate, endDate } = getDatesFromPeriod(statsPeriod);
+      const res = await apiFetch(`/api/stats?startDate=${startDate}&endDate=${endDate}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Erreur API Dashboard');
+      }
       return res.json();
     },
+    // PERF: garde les données précédentes visibles pendant le refresh (pas d'écran blanc)
+    placeholderData: keepPreviousData,
   });
 
-  const setCurrentModule = useAppStore(state => state.setCurrentModule);
-  const user = useAppStore(state => state.user);
+  const COLORS = ['#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#3B82F6'];
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const paymentStatus = searchParams.get('payment');
+  const combinedEvolution = useMemo(() => {
+    if (!stats) return [];
+    
+    // FIX PERFORMANCE: Fusion O(N*M) remplacée par une Hash Map O(N)
+    const map = new Map<string, { revenu: number, depense: number }>();
+    
+    (stats.billing.caEvolution || []).forEach((d: any) => {
+      map.set(d.date, { revenu: d.amount, depense: 0 });
+    });
+    
+    (stats.expenses.evolution || []).forEach((d: any) => {
+      if (map.has(d.date)) {
+        map.get(d.date)!.depense = d.amount;
+      } else {
+        map.set(d.date, { revenu: 0, depense: d.amount });
+      }
+    });
 
-  const header = <PageHeader title="Tableau de Bord" description="Vue d'ensemble de vos finances et performances" icon={<LayoutDashboard size={20} />} />;
-
-  /* Skeleton loader */
-  if (isLoading) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
-        {header}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style={{ gap: 'var(--space-4)' }}>
-          {[1,2,3,4].map(i => (
-            <div key={i} className="fp-skeleton" style={{ height: '110px', borderRadius: 'var(--radius-xl)' }}/>
-          ))}
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: 'var(--space-6)' }}>
-          <div className="fp-skeleton" style={{ height: '260px' }}/>
-          <div className="fp-skeleton" style={{ height: '260px' }}/>
-        </div>
-      </div>
-    );
-  }
-
-  const encaisse  = Number(String(stats?.encaisse || 0).replace(/\s/g, '')) || 0;
-  const creances  = Number(String(stats?.creances || 0).replace(/\s/g, '')) || 0;
-  const potentiel = Number(String(stats?.potentiel || 0).replace(/\s/g, '')) || 0;
-  const total     = encaisse + creances + potentiel || 1;
-  const encaisseRatio = Math.round((encaisse / total) * 100);
-  const creancesRatio = Math.round((creances / total) * 100);
+    return Array.from(map.entries())
+      .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+      .map(([date, values]) => ({ date, ...values }));
+  }, [stats]);
 
   return (
-    <div className="flex flex-col" style={{ gap: 'var(--space-4)' }}>
-      {header}
-
-      {/* ── Payment Status Alert ── */}
-      {paymentStatus === 'success' && (
-        <div className="flex items-center justify-between rounded-lg animate-[fp-fade-up_0.5s_ease_forwards]" style={{ padding: 'var(--space-5)', background: 'var(--success-dim, rgba(34,197,94,0.1))', border: '1px solid var(--success, #22c55e)' }}>
-          <div className="flex items-center" style={{ gap: 'var(--space-4)' }}>
-            <CheckCircle className="text-[var(--success)]" size={32} />
-            <div>
-              <h4 className="text-[var(--foreground)] text-base font-semibold" style={{ marginBottom: 'var(--space-1)' }}>Paiement réussi !</h4>
-              <p className="text-[var(--foreground-subtle)] text-sm" style={{ margin: 0 }}>Votre abonnement a été mis à jour avec succès. Merci de votre confiance.</p>
-            </div>
+    <div className="max-w-7xl mx-auto pb-24">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+        <PageHeader title="Tableau de bord" description={`Bienvenue, ${user?.name || user?.company || 'Utilisateur'} !`} />
+        
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <select
+              value={statsPeriod}
+              onChange={(e) => setStatsPeriod(e.target.value)}
+              className="appearance-none bg-[var(--surface-1)] border border-[var(--border)] rounded-lg text-sm font-medium text-[var(--foreground)] pl-10 pr-8 py-2.5 focus:outline-none focus:border-[var(--gold)] shadow-sm cursor-pointer"
+            >
+              <option value="this_day">Aujourd'hui</option>
+              <option value="this_week">Cette semaine</option>
+              <option value="this_month">Ce mois-ci</option>
+              <option value="last_month">Mois dernier</option>
+              <option value="this_quarter">Ce trimestre</option>
+              <option value="this_semester">Ce semestre</option>
+              <option value="this_year">Cette année</option>
+              <option value="all_time">Depuis toujours</option>
+            </select>
+            <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--foreground-subtle)] pointer-events-none" />
+            <ChevronRight size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--foreground-subtle)] pointer-events-none rotate-90" />
           </div>
-          <button onClick={() => setSearchParams({})} className="bg-transparent border-none cursor-pointer text-[var(--foreground-subtle)] hover:text-[var(--foreground)] transition-colors">✕</button>
+          <button onClick={() => setCurrentModule('invoices')} className="fp-btn-primary flex items-center gap-2 px-4 py-2.5">
+            <FileText size={16} /> <span>Nouvelle Facture</span>
+          </button>
         </div>
-      )}
-      {paymentStatus === 'cancel' && (
-        <div className="flex items-center justify-between rounded-lg animate-[fp-fade-up_0.5s_ease_forwards]" style={{ padding: 'var(--space-5)', background: 'var(--destructive-dim, rgba(239,68,68,0.1))', border: '1px solid var(--destructive, #ef4444)' }}>
-          <div className="flex items-center" style={{ gap: 'var(--space-4)' }}>
-            <XCircle className="text-[var(--destructive)]" size={32} />
-            <div>
-              <h4 className="text-[var(--foreground)] text-base font-semibold" style={{ marginBottom: 'var(--space-1)' }}>Paiement annulé ou échoué</h4>
-              <p className="text-[var(--foreground-subtle)] text-sm" style={{ margin: 0 }}>La transaction n'a pas pu aboutir. Veuillez réessayer ou vérifier votre mode de paiement.</p>
-            </div>
-          </div>
-          <button onClick={() => setSearchParams({})} className="bg-transparent border-none cursor-pointer text-[var(--foreground-subtle)] hover:text-[var(--foreground)] transition-colors">✕</button>
-        </div>
-      )}
+      </div>
 
       <OnboardingWidget stats={stats} user={user} setCurrentModule={setCurrentModule} />
 
-      {/* ── KPI Grid ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style={{ gap: 'var(--space-5)', marginBottom: 'var(--space-6)' }}>
-          <KpiCard 
-            label="Total Encaissé" 
-            value={stats?.encaisse || 0} 
-            isCurrency 
-            icon={Banknote} 
-            color="var(--gold)"
-            trend={stats?.encaisseTrend}
-            delay={0}
-          />
-          <KpiCard 
-            label="Bénéfice Net" 
-            value={stats?.netProfit || 0} 
-            isCurrency 
-            icon={TrendingUp} 
-            color="#22c55e"
-            trend={stats?.profitTrend}
-            delay={0.1}
-          />
-          <KpiCard 
-            label="Chiffre d'Affaires Potentiel" 
-            value={stats?.potentiel || 0} 
-            isCurrency 
-            icon={TrendingUp}
-            color="var(--blue-accent)"
-            delay={0.2}
-          />
-          <KpiCard 
-            label="Créances (À recouvrer)" 
-            value={stats?.creances || 0} 
-            isCurrency 
-            icon={Clock}
-            color="var(--destructive)"
-            delay={0.3}
-          />
+      {isError && !stats && (
+        <div className="flex flex-col items-center justify-center h-64 text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+          <h3 className="text-lg font-bold text-[var(--foreground)] mb-2">Erreur de chargement</h3>
+          <p className="text-[var(--foreground-subtle)] max-w-md">Impossible de charger les statistiques. {error instanceof Error ? error.message : ''}</p>
+          <button onClick={() => refetch()} className="mt-4 px-4 py-2 bg-[var(--surface-1)] hover:bg-[var(--surface-2)] border border-[var(--border)] rounded-lg text-sm font-medium transition-colors">Réessayer</button>
         </div>
+      )}
 
-      {/* ── Revenue bar ── */}
-      <div className="fp-card opacity-0 animate-[fp-fade-up_0.5s_ease_0.3s_forwards]" style={{ padding: 'var(--space-5)' }}>
-        <div className="flex items-center justify-between" style={{ marginBottom: 'var(--space-4)' }}>
+      {!stats && !isError && (
+        <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--gold)]"></div></div>
+      )}
+
+      {stats ? (
+        <div className="flex flex-col gap-8">
+          
+          {/* SECTION A : VUE D'ENSEMBLE */}
           <div>
-            <p style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--foreground-subtle)', marginBottom: '4px' }}>Répartition du Chiffre d'Affaires</p>
-            <p style={{ fontFamily: 'var(--font-display)', fontSize: '24px', fontWeight: 700, color: 'var(--foreground)', letterSpacing: '-0.5px' }}>{formatCurrency(total)}</p>
+            <h2 className="text-lg font-bold text-[var(--foreground)] mb-4">Vue d'ensemble</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              <KpiCard label="Total Encaissé" value={stats.overview.encaisse} isCurrency icon={Banknote} color="#10B981" delay={0.1} trend={stats.overview.encaisseTrend} />
+              <KpiCard label="Bénéfice Net" value={stats.overview.netProfit} isCurrency icon={TrendingUp} color="#3B82F6" delay={0.2} trend={stats.overview.profitTrend} />
+              <KpiCard label="CA Potentiel" value={stats.overview.potentiel} isCurrency icon={Target} color="var(--gold)" delay={0.3} trend={stats.overview.potentielTrend} />
+              <KpiCard label="Créances" value={stats.overview.creances} isCurrency icon={Clock} color="#F59E0B" delay={0.4} trend={stats.overview.creancesTrend} />
+              <KpiCard label="Recouvrement" value={stats.overview.recoveryRate} isPercent icon={CheckCircle2} color="#8B5CF6" delay={0.5} trend={stats.overview.recoveryRateTrend} />
+            </div>
           </div>
-          <div style={{ textAlign: 'right', fontSize: '11px', color: 'var(--foreground-muted)' }}>
-            <p><span style={{ color: 'var(--success)' }}>●</span> {encaisseRatio}% encaissé</p>
-          </div>
-        </div>
-        <div style={{ height: '6px', background: 'var(--surface-3)', overflow: 'hidden', display: 'flex', border: '1px solid var(--border)' }}>
-          <div style={{ width: `${encaisseRatio}%`, background: 'var(--success)', transition: 'width 1s cubic-bezier(0.4,0,0.2,1)' }}/>
-          <div style={{ width: `${creancesRatio}%`, background: 'var(--warning)', opacity: 0.8 }}/>
-          <div style={{ flex: 1, background: '#8B5CF6', opacity: 0.6 }}/>
-        </div>
-        <div style={{ display: 'flex', gap: 'var(--space-4)', marginTop: 'var(--space-3)', fontSize: '11px', color: 'var(--foreground-subtle)' }}>
-          <span><span style={{ color: '#22C55E' }}>●</span> Encaissé : {formatCurrency(encaisse)}</span>
-          <span><span style={{ color: 'var(--warning)' }}>●</span> Créances : {formatCurrency(creances)}</span>
-          <span><span style={{ color: '#8B5CF6' }}>●</span> Potentiel : {formatCurrency(potentiel)}</span>
-        </div>
-      </div>
-      {/* ── Recent lists ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: 'var(--space-4)' }}>
-        {/* Recent invoices */}
-        <div className="fp-card" style={{ opacity: 0, animation: 'fp-fade-up 0.5s ease 0.35s forwards' }}>
-          <div style={{ padding: 'var(--space-4) var(--space-5)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h3 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--foreground)', margin: 0, display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>Factures Récentes</h3>
-            <span onClick={() => setCurrentModule('invoices')} style={{ fontSize: '11px', color: 'var(--gold)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 'var(--space-1)', fontWeight: 600 }}>
-              Voir tout <ArrowRight size={11}/>
-            </span>
-          </div>
-          <div style={{ padding: 'var(--space-2)' }}>
-            {!stats?.recentInvoices?.length
-              ? <EmptyList label="facture"/>
-              : stats.recentInvoices.map((inv: any, i: number) => (
-                <div key={inv.id} style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '8px var(--space-3)', borderRadius: 0, transition: 'background 0.15s',
-                  cursor: 'default', borderBottom: '1px solid var(--border)',
-                  opacity: 0, animation: `fp-fade-up 0.4s ease ${0.4 + i * 0.05}s forwards`,
-                }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
-                >
-                  <div>
-                    <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--foreground)', marginBottom: '2px' }}>{inv.number}</p>
-                    <p style={{ fontSize: '10px', color: 'var(--foreground-subtle)' }}>{inv.client?.name} · {formatDate(inv.createdAt)}</p>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--foreground)', fontFamily: 'var(--font-mono)', marginBottom: '4px' }}>{formatCurrency(inv.total)}</p>
-                    <StatusBadge status={inv.status}/>
-                  </div>
-                </div>
-              ))
-            }
-          </div>
-        </div>
 
-        {/* Recent receipts */}
-        <div className="fp-card" style={{ opacity: 0, animation: 'fp-fade-up 0.5s ease 0.4s forwards' }}>
-          <div style={{ padding: 'var(--space-4) var(--space-5)', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h3 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--foreground)', margin: 0, display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>Reçus Récents</h3>
-            <span onClick={() => setCurrentModule('receipts')} style={{ fontSize: '11px', color: 'var(--gold)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 'var(--space-1)', fontWeight: 600 }}>
-              Voir tout <ArrowRight size={11}/>
-            </span>
-          </div>
-          <div style={{ padding: 'var(--space-2)' }}>
-            {!stats?.recentReceipts?.length
-              ? <EmptyList label="reçu"/>
-              : stats.recentReceipts.map((rec: any, i: number) => (
-                <div key={rec.id} style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '8px var(--space-3)', borderRadius: 0, transition: 'background 0.15s',
-                  cursor: 'default', borderBottom: '1px solid var(--border)',
-                  opacity: 0, animation: `fp-fade-up 0.4s ease ${0.45 + i * 0.05}s forwards`,
-                }}
-                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'}
-                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
-                >
-                  <div>
-                    <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--foreground)', marginBottom: '2px' }}>{rec.number}</p>
-                    <p style={{ fontSize: '10px', color: 'var(--foreground-subtle)' }}>{rec.client?.name} · {formatDate(rec.createdAt)}</p>
+          {/* SECTION D : RELANCES / IMPAYÉS (Mise en avant) */}
+          <div className="fp-card border-l-4 border-l-red-500 overflow-hidden" style={{ padding: '24px' }}>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center">
+                <AlertTriangle size={20} className="text-red-500" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-[var(--foreground)]">Relances & Impayés</h2>
+                <p className="text-sm text-[var(--foreground-subtle)]">Agissez sur vos factures en retard pour améliorer votre trésorerie.</p>
+              </div>
+            </div>
+
+            {stats.unpaid.lateCount === 0 && stats.unpaid.partialCount === 0 ? (
+              <EmptyList label="Excellente nouvelle ! Vous n'avez aucun retard de paiement. 🎉" icon={CheckCircle2} />
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="col-span-1 flex flex-col gap-4">
+                  <div className="bg-[var(--surface-2)] rounded-xl p-6 border border-red-500/20 flex flex-col justify-center">
+                    <p className="text-sm text-[var(--foreground-subtle)] font-medium mb-2">Factures Échues</p>
+                    <p className="text-3xl font-bold text-red-500 mb-1">{formatCurrency(stats.unpaid.totalOverdue)}</p>
+                    <p className="text-sm text-[var(--foreground-muted)]">{stats.unpaid.lateCount} factures concernées</p>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <p style={{ fontSize: '12px', fontWeight: 700, color: 'var(--success)', fontFamily: 'var(--font-mono)' }}>+{formatCurrency(rec.amount)}</p>
-                    <p style={{ fontSize: '12px', color: 'var(--foreground-subtle)', textTransform: 'capitalize', marginTop: '3px' }}>{rec.paymentMethod?.replace('_', ' ')}</p>
+                  
+                  {/* AJOUT : Paiements Partiels */}
+                  <div className="bg-[var(--surface-2)] rounded-xl p-6 border border-orange-500/20 flex flex-col justify-center">
+                    <p className="text-sm text-[var(--foreground-subtle)] font-medium mb-2">Paiements Partiels (Reste dû)</p>
+                    <p className="text-3xl font-bold text-orange-500 mb-1">{formatCurrency(stats.unpaid.partialAmount)}</p>
+                    <p className="text-sm text-[var(--foreground-muted)]">{stats.unpaid.partialCount} factures concernées</p>
+                  </div>
+
+                  <div className="bg-[var(--surface-2)] rounded-xl p-6 border border-[var(--border)] flex flex-col justify-center">
+                    <p className="text-sm text-[var(--foreground-subtle)] font-medium mb-2">Efficacité des Relances</p>
+                    <p className="text-3xl font-bold text-[var(--foreground)] mb-1">{stats.unpaid.reminderEfficiency}%</p>
+                    <p className="text-sm text-[var(--foreground-muted)]">Sur {stats.unpaid.totalReminders} relance(s) envoyée(s)</p>
                   </div>
                 </div>
-              ))
-            }
+
+                <div className="col-span-2">
+                  <h3 className="text-sm font-bold text-[var(--foreground)] mb-4">Top 5 Clients à Relancer</h3>
+                  {stats.unpaid.topLateClients.length === 0 ? (
+                    <EmptyList label="Aucun client en retard." />
+                  ) : (
+                    <div className="space-y-3">
+                      {(stats?.unpaid?.topLateClients || []).map((client: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-[var(--surface-1)] border border-[var(--border)]">
+                          <div>
+                            <p className="text-sm font-bold text-[var(--foreground)]">{client.name}</p>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <span className="text-sm font-bold text-red-500">{formatCurrency(client.amount)}</span>
+                            <button onClick={() => setCurrentModule('reminders')} className="text-xs font-semibold px-3 py-1.5 rounded bg-red-500 text-white hover:bg-red-600 transition-colors">
+                              Relancer
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* TABS : FACTURATION & DÉPENSES */}
+          <div className="fp-card overflow-hidden" style={{ marginTop: '40px' }}>
+            <div className="flex border-b border-[var(--border)]" style={{ gap: '16px', padding: '16px 16px 0 16px' }}>
+              <button 
+                onClick={() => setActiveTab('facturation')}
+                style={{ padding: '32px 24px', fontSize: '16px', borderRadius: '12px 12px 0 0' }}
+                className={`flex-1 font-bold text-center transition-colors ${activeTab === 'facturation' ? 'text-[var(--gold)] border-b-4 border-[var(--gold)] bg-[var(--surface-2)]' : 'text-[var(--foreground-subtle)] hover:bg-[var(--surface-2)] border-b-4 border-transparent'}`}
+              >
+                Analyse Facturation
+              </button>
+              <button 
+                onClick={() => setActiveTab('depenses')}
+                style={{ padding: '32px 24px', fontSize: '16px', borderRadius: '12px 12px 0 0' }}
+                className={`flex-1 font-bold text-center transition-colors ${activeTab === 'depenses' ? 'text-[var(--gold)] border-b-4 border-[var(--gold)] bg-[var(--surface-2)]' : 'text-[var(--foreground-subtle)] hover:bg-[var(--surface-2)] border-b-4 border-transparent'}`}
+              >
+                Analyse Dépenses
+              </button>
+            </div>
+
+            <div className="p-6" style={{ padding: '24px' }}>
+              {activeTab === 'facturation' && (
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginTop: '24px' }}>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4" style={{ display: 'grid', gap: '16px' }}>
+                    <div className="bg-[var(--surface-2)] rounded-xl p-5 border border-[var(--border)]" style={{ padding: '20px' }}>
+                      <p className="text-sm text-[var(--foreground-subtle)] mb-1">Nombre de factures</p>
+                      <p className="text-2xl font-bold">{stats.billing.nbInvoices}</p>
+                    </div>
+                    <div className="bg-[var(--surface-2)] rounded-xl p-5 border border-[var(--border)]" style={{ padding: '20px' }}>
+                      <p className="text-sm text-[var(--foreground-subtle)] mb-1">Montant moyen</p>
+                      <p className="text-2xl font-bold">{formatCurrency(stats.billing.avgInvoice)}</p>
+                    </div>
+                    <div className="bg-[var(--surface-2)] rounded-xl p-5 border border-[var(--border)]" style={{ padding: '20px' }}>
+                      <p className="text-sm text-[var(--foreground-subtle)] mb-1">Délai moyen de paiement</p>
+                      <p className="text-2xl font-bold">{stats.billing.avgPaymentDelay} jours</p>
+                    </div>
+                  </div>
+
+                  {/* AJOUT : Répartition Factures Payées / Partielles / Impayées */}
+                  {stats.billing.statusCount && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" style={{ display: 'grid', gap: '16px' }}>
+                      <div className="flex flex-col bg-green-500/10 p-4 rounded-xl border border-green-500/20" style={{ padding: '16px' }}>
+                        <p className="text-xs font-semibold text-green-700 uppercase tracking-wide">Factures Payées</p>
+                        <p className="text-xl font-bold text-green-700 mt-2">{stats.billing.statusCount['payée'] || 0}</p>
+                      </div>
+                      <div className="flex flex-col bg-orange-500/10 p-4 rounded-xl border border-orange-500/20" style={{ padding: '16px' }}>
+                        <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide">Partiellement Payées</p>
+                        <p className="text-xl font-bold text-orange-700 mt-2">{stats.billing.statusCount['partielle'] || 0}</p>
+                      </div>
+                      <div className="flex flex-col bg-blue-500/10 p-4 rounded-xl border border-blue-500/20" style={{ padding: '16px' }}>
+                        <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Envoyées / En Attente</p>
+                        <p className="text-xl font-bold text-blue-700 mt-2">{stats.billing.statusCount['envoyée'] || 0}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {stats.billing.caEvolution && stats.billing.caEvolution.length > 0 ? (
+                    <div>
+                      <h3 className="text-sm font-bold mb-4">Évolution du Chiffre d'Affaires</h3>
+                      <div className="h-[250px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={stats.billing.caEvolution}>
+                            <defs>
+                              <linearGradient id="colorCa" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="var(--gold)" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="var(--gold)" stopOpacity={0}/>
+                              </linearGradient>
+                            </defs>
+                            <XAxis dataKey="date" tick={{fontSize: 12, fill: 'var(--foreground-subtle)'}} tickFormatter={(t) => formatDate(t).substring(0, 5)} />
+                            <YAxis tick={{fontSize: 12, fill: 'var(--foreground-subtle)'}} width={80} tickFormatter={(val) => new Intl.NumberFormat('fr-FR', {notation: 'compact'}).format(val)} />
+                            <RechartsTooltip 
+                              contentStyle={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: '8px' }}
+                              labelFormatter={(l) => formatDate(l)}
+                              formatter={(v: number) => [formatCurrency(v), 'Chiffre d\'affaires']}
+                            />
+                            <Area type="monotone" dataKey="amount" stroke="var(--gold)" strokeWidth={3} fillOpacity={1} fill="url(#colorCa)" />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  ) : (
+                    <EmptyList label="Pas assez de données pour afficher l'évolution" icon={TrendingUp} actionText="Créer une facture" onAction={() => setCurrentModule('invoices')} />
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'depenses' && (
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginTop: '24px' }}>
+                   <div className="bg-[var(--surface-2)] rounded-xl p-5 mb-6 text-center max-w-sm mx-auto border border-[var(--border)]" style={{ padding: '20px', marginBottom: '24px', marginLeft: 'auto', marginRight: 'auto' }}>
+                      <p className="text-sm text-[var(--foreground-subtle)] mb-1">Total des Dépenses</p>
+                      <p className="text-3xl font-bold text-red-500">{formatCurrency(stats.expenses.total)}</p>
+                   </div>
+                   
+                   {/* AJOUT : Courbe comparative revenus vs dépenses dans le temps */}
+                   {combinedEvolution.length > 0 && (
+                      <div className="mb-8">
+                        <h3 className="text-sm font-bold mb-4">Revenus vs Dépenses</h3>
+                        <div className="h-[250px] w-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={combinedEvolution}>
+                              <defs>
+                                <linearGradient id="colorRevenu" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
+                                  <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                                </linearGradient>
+                                <linearGradient id="colorDepense" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3}/>
+                                  <stop offset="95%" stopColor="#EF4444" stopOpacity={0}/>
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" opacity={0.5} />
+                              <XAxis dataKey="date" tick={{fontSize: 12, fill: 'var(--foreground-subtle)'}} tickFormatter={(t) => formatDate(t).substring(0, 5)} axisLine={false} tickLine={false} />
+                              <YAxis tick={{fontSize: 12, fill: 'var(--foreground-subtle)'}} width={60} tickFormatter={(val) => new Intl.NumberFormat('fr-FR', {notation: 'compact'}).format(val)} axisLine={false} tickLine={false} />
+                              <RechartsTooltip 
+                                contentStyle={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: '8px' }}
+                                labelFormatter={(l) => formatDate(l)}
+                                formatter={(v: number, name: string) => [formatCurrency(v), name === 'revenu' ? 'Revenu' : 'Dépense']}
+                              />
+                              <Area type="monotone" dataKey="revenu" stroke="#10B981" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenu)" />
+                              <Area type="monotone" dataKey="depense" stroke="#EF4444" strokeWidth={2} fillOpacity={1} fill="url(#colorDepense)" />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                   )}
+
+                   {stats.expenses.byCategory && stats.expenses.byCategory.length > 0 ? (
+                     <div className="flex flex-col md:flex-row items-center justify-center gap-8">
+                       <div className="h-[250px] w-[250px]">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie data={stats.expenses.byCategory} dataKey="total" nameKey="category" cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5}>
+                                {(stats?.expenses?.byCategory || []).map((entry: any, index: number) => (
+                                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                              </Pie>
+                              <RechartsTooltip formatter={(v: number) => formatCurrency(v)} contentStyle={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: '8px' }}/>
+                            </PieChart>
+                          </ResponsiveContainer>
+                       </div>
+                       <div className="space-y-2">
+                         {(stats?.expenses?.byCategory || []).map((entry: any, index: number) => (
+                           <div key={index} className="flex items-center gap-3">
+                             <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                             <span className="text-sm text-[var(--foreground)] w-32">{entry.category}</span>
+                             <span className="text-sm font-bold text-[var(--foreground)]">{formatCurrency(entry.total)}</span>
+                           </div>
+                         ))}
+                       </div>
+                     </div>
+                   ) : (
+                     <EmptyList label="Aucune dépense enregistrée sur cette période." actionText="Ajouter une dépense" onAction={() => setCurrentModule('expenses')} />
+                   )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }

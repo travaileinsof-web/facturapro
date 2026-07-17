@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { formatCurrency, formatDate, useAppStore, safeJSONParse, apiFetch } from '../lib/store';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { formatCurrency, formatDate, useAppStore, safeJSONParse, apiFetch, getWhatsAppUrl } from '../lib/store';
 import { Button } from './ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogBody } from './ui/dialog';
@@ -19,10 +19,25 @@ import { Pagination } from './ui/pagination';
 import { Field } from './ui/Field';
 import { DatePicker } from './ui/DatePicker';
 import { Input } from './ui/input';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+const receiptSchema = z.object({
+  clientId: z.string().min(1, "Le client est requis"),
+  proformaInvoiceId: z.string().optional(),
+  amount: z.number({ invalid_type_error: "Le montant doit être un nombre" }).min(0.01, "Le montant doit être supérieur à 0"),
+  paymentMethod: z.string().min(1, "Le mode de paiement est requis").max(50, "Maximum 50 caractères"),
+  paymentDate: z.string().min(1, "La date de paiement est requise"),
+  notes: z.string().optional(),
+  receivedBy: z.string().min(1, "Le nom du caissier est requis").max(250, "Maximum 250 caractères")
+});
+
+type ReceiptFormValues = z.infer<typeof receiptSchema>;
 
 export function Receipts() {
   const refreshReceipts = useAppStore(state => state.refreshReceipts);
   const refreshClients = useAppStore(state => state.refreshClients);
+  const refreshInvoices = useAppStore(state => state.refreshInvoices);
   const triggerRefresh = useAppStore(state => state.triggerRefresh);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [openCombobox, setOpenCombobox] = useState(false);
@@ -38,7 +53,8 @@ export function Receipts() {
       if (!res.ok) return [];
       const data = await res.json();
       return Array.isArray(data) ? data : [];
-    }
+    },
+    placeholderData: keepPreviousData,
   });
 
   const { data: clients } = useQuery({
@@ -48,24 +64,43 @@ export function Receipts() {
       if (!res.ok) return [];
       const data = await res.json();
       return Array.isArray(data) ? data : [];
-    }
+    },
+    placeholderData: keepPreviousData,
   });
 
-  const { register, handleSubmit, reset, watch, setValue } = useForm({
+  const { data: allInvoices } = useQuery({
+    queryKey: ['invoicesForReceipts', refreshInvoices],
+    queryFn: async () => {
+      const res = await apiFetch(`/api/invoices`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
+    placeholderData: keepPreviousData,
+  });
+
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ReceiptFormValues>({
+    resolver: zodResolver(receiptSchema),
     defaultValues: {
       clientId: '',
       proformaInvoiceId: '',
       amount: 0,
       paymentMethod: 'virement_bancaire',
       paymentDate: new Date().toLocaleDateString('en-CA'),
-      notes: ''
+      notes: '',
+      receivedBy: ''
     }
   });
 
   const watchClientId = watch('clientId');
   // Find the selected client's invoices to filter the dropdown, ignoring the ones completely paid or cancelled
-  const selectedClient = clients?.find((c: any) => c.id === watchClientId);
-  const availableInvoices = selectedClient?.invoices?.filter((inv: any) => inv.status !== 'payée' && inv.status !== 'annulée' && inv.status !== 'payee' && inv.status !== 'annulee');
+  const availableInvoices = allInvoices?.filter((inv: any) => 
+    inv.clientId === watchClientId && 
+    inv.status !== 'payée' && 
+    inv.status !== 'annulée' && 
+    inv.status !== 'payee' && 
+    inv.status !== 'annulee'
+  );
   const watchInvoiceId = watch('proformaInvoiceId');
   const selectedInvoice = availableInvoices?.find((i: any) => i.id === watchInvoiceId);
   
@@ -86,7 +121,7 @@ export function Receipts() {
     }
   };
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: ReceiptFormValues) => {
     if (!data.clientId) {
       toast.error("Veuillez sélectionner un client pour le reçu.");
       return;
@@ -95,7 +130,7 @@ export function Receipts() {
     const payload = {
       ...data,
       amount: Number(data.amount),
-      paymentDate: new Date(data.paymentDate).toISOString()
+      paymentDate: data.paymentDate ? new Date(data.paymentDate).toISOString() : new Date().toISOString()
     };
 
     const res = await apiFetch('/api/receipts', {
@@ -146,8 +181,11 @@ export function Receipts() {
         apiFetch('/api/settings'),
         apiFetch(`/api/receipts/${rec.id}`)
       ]);
-      const settings = await settingsRes.json();
-      const fullRec = await recRes.json();
+      if (!settingsRes.ok || !recRes.ok) throw new Error("Erreur récupération données");
+      const isSettingsJson = settingsRes.headers.get('content-type')?.includes('application/json');
+      const isRecJson = recRes.headers.get('content-type')?.includes('application/json');
+      const settings = isSettingsJson ? await settingsRes.json() : {};
+      const fullRec = isRecJson ? await recRes.json() : rec;
       const html = buildReceiptHTML(fullRec, settings);
       const pdfBase64 = await generatePDFBase64(html);
       
@@ -164,7 +202,11 @@ export function Receipts() {
         })
       });
       
-      if (!res.ok) { const err = await res.json(); throw new Error(err.error); }
+      if (!res.ok) {
+        const isJson = res.headers.get('content-type')?.includes('application/json');
+        const err = isJson ? await res.json() : null;
+        throw new Error(err?.error || 'Erreur lors de l\'envoi');
+      }
       toast.success("Email envoyé avec succès !", { id: toastId });
     } catch (err: any) {
       toast.error(err.message || "Erreur", { id: toastId });
@@ -178,8 +220,11 @@ export function Receipts() {
         apiFetch('/api/settings'),
         apiFetch(`/api/receipts/${rec.id}`)
       ]);
-      const settings = await settingsRes.json();
-      const fullRec = await recRes.json();
+      if (!settingsRes.ok || !recRes.ok) throw new Error("Erreur récupération données");
+      const isSettingsJson = settingsRes.headers.get('content-type')?.includes('application/json');
+      const isRecJson = recRes.headers.get('content-type')?.includes('application/json');
+      const settings = isSettingsJson ? await settingsRes.json() : {};
+      const fullRec = isRecJson ? await recRes.json() : rec;
       const html = buildReceiptHTML(fullRec, settings);
       const pdfBase64 = await generatePDFBase64(html);
       
@@ -224,12 +269,15 @@ export function Receipts() {
         throw new Error(shareData.error || "Erreur de lien PDF");
       } else {
         finalMsg = `${baseMsg}\n\n📄 Voici votre document : ${shareData.url}`;
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         const encodedMsg = encodeURIComponent(finalMsg);
-        const waUrl = isMobile 
-          ? `whatsapp://send?text=${encodedMsg}` + (phone ? `&phone=${phone}` : '') 
-          : (phone ? `https://api.whatsapp.com/send?phone=${phone}&text=${encodedMsg}` : `https://api.whatsapp.com/send?text=${encodedMsg}`);
-        window.open(waUrl, '_blank');
+        const waUrl = getWhatsAppUrl(phone, encodedMsg);
+        
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+          window.location.href = waUrl;
+        } else {
+          window.open(waUrl, '_blank');
+        }
         toast.success("Redirection vers WhatsApp...", { id: toastId });
       }
     } catch (err: any) {
@@ -245,8 +293,11 @@ export function Receipts() {
         apiFetch('/api/settings'),
         apiFetch(`/api/receipts/${rec.id}`)
       ]);
-      const settings = await settingsRes.json();
-      const fullRec = await recRes.json();
+      if (!settingsRes.ok || !recRes.ok) throw new Error("Erreur récupération données");
+      const isSettingsJson = settingsRes.headers.get('content-type')?.includes('application/json');
+      const isRecJson = recRes.headers.get('content-type')?.includes('application/json');
+      const settings = isSettingsJson ? await settingsRes.json() : {};
+      const fullRec = isRecJson ? await recRes.json() : rec;
       if (!fullRec || !fullRec.id) throw new Error('Reçu introuvable');
       const html = buildReceiptHTML(fullRec, settings);
       
@@ -363,6 +414,7 @@ export function Receipts() {
                       <option key={c.id} value={c.id}>{c.name}</option>
                     ))}
                   </select>
+                  {errors.clientId && <p className="text-sm text-red-500 mt-1">{errors.clientId.message}</p>}
                 </Field>
 
                 <div className="col-span-2">
@@ -454,10 +506,10 @@ export function Receipts() {
                 </div>
               </div>
 
-              {/* Grille 2 colonnes : amount + date */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4) var(--space-5)', marginTop: 'var(--space-5)' }}>
                 <Field label="Montant" required>
-                  <Input type="number" step="0.01" {...register('amount', { required: true, valueAsNumber: true })} />
+                  <Input type="number" step="0.01" min="0.01" max={selectedInvoice ? Math.max(0.01, selectedInvoice.amountRemaining || 0.01) : undefined} {...register('amount', { required: true, valueAsNumber: true })} />
+                  {errors.amount && <p className="text-sm text-red-500 mt-1">{errors.amount.message}</p>}
                 </Field>
                 {/* DatePicker unifié — plus jamais d'input type=date natif */}
                 <Field label="Date de Paiement" required>
@@ -466,14 +518,20 @@ export function Receipts() {
                     onChange={v => setValue('paymentDate', v)}
                     required
                   />
+                  {errors.paymentDate && <p className="text-sm text-red-500 mt-1">{errors.paymentDate.message}</p>}
                 </Field>
                 <Field label="Mode de Paiement" required fullWidth>
-                  <select {...register('paymentMethod')}>
+                  <select {...register('paymentMethod')} className="fp-input w-full">
                     <option value="virement_bancaire">Virement Bancaire</option>
                     <option value="especes">Espèces</option>
                     <option value="cheque">Chèque</option>
                     <option value="mobile_money">Mobile Money</option>
                   </select>
+                  {errors.paymentMethod && <p className="text-sm text-red-500 mt-1">{errors.paymentMethod.message}</p>}
+                </Field>
+                <Field label="Reçu par" required fullWidth>
+                  <Input type="text" {...register('receivedBy', { required: true })} placeholder="Nom du caissier/employé" />
+                  {errors.receivedBy && <p className="text-sm text-red-500 mt-1">{errors.receivedBy.message}</p>}
                 </Field>
               </div>
 

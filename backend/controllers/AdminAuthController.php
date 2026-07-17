@@ -11,10 +11,9 @@ class AdminAuthController {
             $admin = $stmt->fetch();
             
             if ($admin && password_verify($password, $admin['passwordHash'])) {
-                $token = $admin['token'] ?: bin2hex(random_bytes(32));
-                if (!$admin['token']) {
-                    $pdo->prepare("UPDATE SuperAdmin SET token = ? WHERE id = ?")->execute([$token, $admin['id']]);
-                }
+                $token = bin2hex(random_bytes(32));
+                $pdo->prepare("UPDATE SuperAdmin SET token = ? WHERE id = ?")->execute([$token, $admin['id']]);
+                
                 echo json_encode([
                     "id" => $admin['id'],
                     "username" => $admin['username'],
@@ -22,6 +21,7 @@ class AdminAuthController {
                     "role" => "superadmin"
                 ]);
             } else {
+                // FIX DOS: Retrait du sleep(1) synchrone qui bloquait les workers PHP-FPM
                 http_response_code(401); echo json_encode(["error" => "Identifiants administrateur incorrects."]);
             }
             exit;

@@ -50,7 +50,7 @@ class NotificationService {
     public static function markAsRead($pdo, $id, $accountId) {
         try {
             $stmt = $pdo->prepare("
-                UPDATE Notification SET isRead = 1 
+                UPDATE Notification SET isRead = true 
                 WHERE id = ? AND accountId = ?
             ");
             $stmt->execute([$id, $accountId]);
@@ -64,7 +64,7 @@ class NotificationService {
     public static function markAllAsRead($pdo, $accountId) {
         try {
             $stmt = $pdo->prepare("
-                UPDATE Notification SET isRead = 1 
+                UPDATE Notification SET isRead = true 
                 WHERE accountId = ?
             ");
             $stmt->execute([$accountId]);

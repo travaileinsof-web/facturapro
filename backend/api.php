@@ -65,17 +65,11 @@ try {
     }
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-    $dbExists = true;
-    
-    if (!$dbExists) {
-        $schema = file_get_contents(__DIR__ . '/database.sql');
-        if ($schema !== false) $pdo->exec($schema);
-    }
 } catch (PDOException $e) {
     // PREVENT ERROR LEAK
     error_log("DB Connection Error: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(["error" => "Erreur interne du serveur de base de données."]);
+    echo json_encode(["error" => "Internal Database Server Error."]);
     exit;
 }
 
@@ -110,7 +104,7 @@ if ($resource === 'auth' && in_array($id, ['login', 'register'])) {
     } catch (Throwable $e) {
         error_log("Auth Error: " . $e->getMessage());
         http_response_code(500);
-        echo json_encode(["error" => "Erreur interne lors de l'authentification."]);
+        echo json_encode(["error" => "Internal Error during authentication."]);
     }
     exit;
 }
@@ -153,6 +147,14 @@ if ($resource === 'admin') {
         http_response_code(403); echo json_encode(["error" => "Accès refusé. Token SuperAdmin invalide."]); exit;
     }
     
+    // FIX SESSION: Déconnexion du SuperAdmin (efface le token en DB)
+    if ($id === 'auth' && $subAction === 'logout') {
+        $newToken = bin2hex(random_bytes(32));
+        $pdo->prepare("UPDATE SuperAdmin SET token = ? WHERE id = ?")->execute([$newToken, $currentAdmin['id']]);
+        echo json_encode(["success" => true]);
+        exit;
+    }
+    
     if ($id === 'settings') {
         AdminSettingsController::handle($pdo, $method, $body);
         exit;
@@ -170,6 +172,13 @@ if (!$currentAccount) {
     http_response_code(401); echo json_encode(["error" => "Token invalide ou expiré."]); exit;
 }
 
+if ($resource === 'auth' && $id === 'logout') {
+    $newToken = bin2hex(random_bytes(32));
+    $pdo->prepare("UPDATE Account SET token = ? WHERE id = ?")->execute([$newToken, $currentAccount['id']]);
+    echo json_encode(["success" => true]);
+    exit;
+}
+
 if ($resource === 'auth' && $id === 'me') {
     echo json_encode([
         "id" => $currentAccount['id'], 
@@ -184,6 +193,59 @@ if ($resource === 'auth' && $id === 'me') {
         "secondaryColor" => $currentAccount['secondaryColor'] ?? null,
         "accentColor" => $currentAccount['accentColor'] ?? null,
         "role" => $currentAccount['role'] ?? 'user'
+    ]);
+    exit;
+}
+
+// ==========================================
+// INIT ENDPOINT: retourne user + notifications
+// en une seule connexion DB (optimisation perf)
+// ==========================================
+if ($resource === 'init' && $method === 'GET') {
+    require_once __DIR__ . '/core/NotificationService.php';
+    $accountId = $currentAccount['id'];
+
+    // 1. User data (déjà chargé via token lookup — 0 requête supplémentaire)
+    $userData = [
+        "id"                 => $currentAccount['id'],
+        "name"               => trim($currentAccount['firstName'] . " " . $currentAccount['lastName']),
+        "email"              => $currentAccount['email'],
+        "company"            => $currentAccount['companyName'],
+        "token"              => $currentAccount['token'],
+        "subscriptionPlan"   => $currentAccount['subscriptionPlan'] ?? 'free',
+        "subscriptionStatus" => Helper::computeSubscriptionStatus($currentAccount),
+        "createdAt"          => $currentAccount['createdAt'],
+        "primaryColor"       => $currentAccount['primaryColor'] ?? '#B38E36',
+        "secondaryColor"     => $currentAccount['secondaryColor'] ?? null,
+        "accentColor"        => $currentAccount['accentColor'] ?? null,
+        "role"               => $currentAccount['role'] ?? 'user',
+        "smtpHost"           => $currentAccount['smtpHost'] ?? null,
+        "legalForm"          => $currentAccount['legalForm'] ?? null,
+        "rccm"               => $currentAccount['rccm'] ?? null,
+        "taxRegime"          => $currentAccount['taxRegime'] ?? null,
+        "defaultVatRate"     => $currentAccount['defaultVatRate'] ?? null,
+        "taxId"              => $currentAccount['taxId'] ?? null,
+        "bankName"           => $currentAccount['bankName'] ?? null,
+        "bankAccount"        => $currentAccount['bankAccount'] ?? null,
+        "currency"           => $currentAccount['currency'] ?? 'GNF',
+    ];
+
+    // 2. Notifications non lues (1 requête simple avec index)
+    $notifications = [];
+    try {
+        $stmt = $pdo->prepare(
+            "SELECT * FROM Notification WHERE accountId = ? AND isRead = 0 ORDER BY createdAt DESC LIMIT 20"
+        );
+        $stmt->execute([$accountId]);
+        $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        error_log("Init notifications error: " . $e->getMessage());
+    }
+
+    echo json_encode([
+        "user"          => $userData,
+        "notifications" => $notifications,
+        "timestamp"     => time(),
     ]);
     exit;
 }
@@ -215,5 +277,5 @@ try {
     // PREVENT ERROR LEAK
     error_log("API Error: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(["error" => "Erreur interne: " . $e->getMessage() . " on line " . $e->getLine() . " in " . $e->getFile()]);
+    echo json_encode(["error" => "Erreur interne du serveur."]);
 }

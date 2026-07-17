@@ -9,14 +9,15 @@ class UploadController {
             }
 
             $file = $_FILES['file'];
-            $mime = $file['type'];
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
 
             $allowedMimes = [
                 'image/jpeg' => 'jpg',
                 'image/png' => 'png',
                 'image/gif' => 'gif',
                 'image/webp' => 'webp',
-                'image/svg+xml' => 'svg',
                 'application/pdf' => 'pdf',
                 'application/msword' => 'doc',
                 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx'

@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { formatCurrency, useAppStore, apiFetch } from '../lib/store';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogBody } from './ui/dialog';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { PlusIcon, PackageIcon, Plus, FolderOpen } from 'lucide-react';
+import { PlusIcon, PackageIcon, Plus, FolderOpen, Search } from 'lucide-react';
 import { PageHeader } from './ui/PageHeader';
 import { Field } from './ui/Field';
 
@@ -16,6 +16,7 @@ export function Catalog() {
   const currency = useAppStore(state => state.user?.currency) || 'FCFA';
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const { data: items, isLoading } = useQuery({
     queryKey: ['catalog', refreshCatalog],
@@ -24,7 +25,8 @@ export function Catalog() {
       if (!res.ok) return [];
       const data = await res.json();
       return Array.isArray(data) ? data : [];
-    }
+    },
+    placeholderData: keepPreviousData,
   });
 
   const { register, handleSubmit, reset } = useForm({
@@ -47,21 +49,43 @@ export function Catalog() {
     const payload = { ...data, unitPrice: Number(data.unitPrice) };
     const url = editingItem ? `/api/catalog/${editingItem.id}` : '/api/catalog';
     const method = editingItem ? 'PUT' : 'POST';
-    const res = await apiFetch(url, { method, body: JSON.stringify(payload) });
-    if (res.ok) {
-      toast.success(editingItem ? 'Élément mis à jour' : 'Élément ajouté');
-      setIsModalOpen(false);
-      triggerRefresh('catalog');
-    } else {
-      toast.error('Erreur lors de l\'enregistrement');
+    try {
+      const res = await apiFetch(url, { method, body: JSON.stringify(payload) });
+      if (res.ok) {
+        toast.success(editingItem ? 'Élément mis à jour' : 'Élément ajouté');
+        setIsModalOpen(false);
+        triggerRefresh('catalog');
+      } else {
+        const isJson = res.headers.get('content-type')?.includes('application/json');
+        const e = isJson ? await res.json() : null;
+        toast.error(e?.error || 'Erreur lors de l\'enregistrement');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur réseau');
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Voulez-vous supprimer cet élément ?')) return;
-    const res = await apiFetch(`/api/catalog/${id}`, { method: 'DELETE' });
-    if (res.ok) { toast.success('Élément supprimé'); triggerRefresh('catalog'); }
+    try {
+      const res = await apiFetch(`/api/catalog/${id}`, { method: 'DELETE' });
+      if (res.ok) { 
+        toast.success('Élément supprimé'); 
+        triggerRefresh('catalog'); 
+      } else {
+        const isJson = res.headers.get('content-type')?.includes('application/json');
+        const e = isJson ? await res.json() : null;
+        toast.error(e?.error || 'Erreur lors de la suppression');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur réseau lors de la suppression');
+    }
   };
+
+  const filteredItems = (items || []).filter((item: any) => 
+    item.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    item.category?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
@@ -77,6 +101,17 @@ export function Catalog() {
       />
 
       <div className="fp-card" style={{ overflow: 'hidden', overflowX: 'auto' }}>
+        <div style={{ padding: 'var(--space-4)', borderBottom: '1px solid var(--color-border-subtle)', display: 'flex', gap: 'var(--space-4)', alignItems: 'center' }}>
+          <div style={{ position: 'relative', flex: 1, maxWidth: '400px' }}>
+            <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-text-secondary)' }} />
+            <Input 
+              placeholder="Rechercher par nom ou catégorie..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ paddingLeft: '36px' }}
+            />
+          </div>
+        </div>
         <table className="fp-table">
           <thead>
             <tr>
@@ -105,8 +140,14 @@ export function Catalog() {
                   </div>
                 </td>
               </tr>
+            ) : filteredItems.length === 0 ? (
+              <tr>
+                <td colSpan={5} style={{ textAlign: 'center', padding: 'var(--space-12) var(--space-4)' }}>
+                  <p style={{ color: 'var(--color-text-secondary)' }}>Aucun résultat pour "{searchQuery}"</p>
+                </td>
+              </tr>
             ) : (
-              items.map((item: any) => (
+              filteredItems.map((item: any) => (
                 <tr key={item.id}>
                   <td>
                     <span style={{ padding: 'var(--space-1) var(--space-2)', borderRadius: 'var(--radius-sm)', fontSize: 'var(--text-xs)', fontWeight: 600, textTransform: 'capitalize', background: item.type === 'produit' ? 'rgba(245,158,11,0.1)' : 'rgba(99,102,241,0.1)', color: item.type === 'produit' ? '#B45309' : '#4f46e5', border: `1px solid ${item.type === 'produit' ? 'rgba(245,158,11,0.2)' : 'rgba(99,102,241,0.2)'}` }}>
@@ -151,12 +192,12 @@ export function Catalog() {
                   </select>
                 </Field>
                 <Field label="Catégorie">
-                  <Input {...register('category')} placeholder="Ex: Développement..." />
+                  <Input {...register('category')} placeholder="Ex: Développement..." maxLength={90} />
                 </Field>
 
                 {/* Pleine largeur */}
                 <Field label="Nom de la prestation / produit" required fullWidth>
-                  <Input {...register('name')} required placeholder="Ex: Création Site Web Vitrine" />
+                  <Input {...register('name')} required placeholder="Ex: Création Site Web Vitrine" maxLength={250} />
                 </Field>
 
                 <Field label="Description détaillée" fullWidth>

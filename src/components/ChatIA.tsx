@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { Send, Bot, User, Mic, MicOff, CheckCircle2 } from 'lucide-react';
@@ -11,6 +11,11 @@ export function ChatIA() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const triggerRefresh = useAppStore(state => state.triggerRefresh);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isLoading]);
 
   const toggleRecording = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -54,15 +59,16 @@ export function ChatIA() {
       const res = await apiFetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMsg, history: messages.map(m => ({role: m.role, text: m.text})) })
+        body: JSON.stringify({ message: userMsg, history: (messages || []).map(m => ({role: m.role, text: m.text})) })
       });
-      const data = await res.json();
-      
+      const isJson = res.headers.get('content-type')?.includes('application/json');
       if (!res.ok) {
-        toast.error(data.error || 'Erreur API IA');
+        const errorData = isJson ? await res.json() : null;
+        toast.error(errorData?.error || 'Erreur API IA');
         setIsLoading(false);
         return;
       }
+      const data = await res.json();
 
       setMessages([...newMessages, { role: 'model', text: data.text, action: data.action }]);
 
@@ -82,8 +88,8 @@ export function ChatIA() {
         }
       }
 
-    } catch (e) {
-      toast.error('Erreur de connexion internet');
+    } catch (e: any) {
+      toast.error(e?.message || 'Erreur réseau/technique');
     } finally {
       setIsLoading(false);
     }
@@ -99,13 +105,13 @@ export function ChatIA() {
              </div>
              <h2 className="text-4xl font-extrabold text-[var(--foreground)] tracking-tight mb-4 font-display">Je suis l'Assistant IA</h2>
              <p className="text-[var(--foreground-muted)] text-base leading-relaxed">
-                Votre assistant intelligent propulsé par Gemini. <br/>
-                Demandez-moi d'analyser vos chiffres, de créer une facture ou de rechercher un document.
+                Votre assistant intelligent de FacturaPro. <br/>
+                Demandez-moi d'analyser vos chiffres, ou de répondre à vos questions sur l'application.
              </p>
           </div>
         )}
         <div className="flex flex-col gap-10">
-          {messages.map((m, i) => (
+          {Array.isArray(messages) && (messages || []).map((m, i) => (
             <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
               <div className="flex items-center gap-2 mb-2">
                 {m.role === 'model' && <Bot className="w-4 h-4 text-[var(--emerald)]" />}
@@ -143,6 +149,7 @@ export function ChatIA() {
               </div>
             </div>
           )}
+          <div ref={messagesEndRef} />
         </div>
       </div>
       

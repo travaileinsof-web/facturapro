@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { formatCurrency, formatDate, useAppStore, safeJSONParse, apiFetch } from '../lib/store';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogBody } from './ui/dialog';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { formatCurrency, formatDate, useAppStore, safeJSONParse, apiFetch, getWhatsAppUrl } from '../lib/store';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogBody } from './ui/dialog';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { toast } from 'sonner';
 import { PageHeader } from './ui/PageHeader';
@@ -28,6 +28,9 @@ export function Invoices() {
   const [editingInvoice, setEditingInvoice] = useState<any>(null);
   const [invoiceToDelete, setInvoiceToDelete] = useState<string | null>(null);
   const [invoiceToConvert, setInvoiceToConvert] = useState<{ inv: any, targetType: string } | null>(null);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [emailToSend, setEmailToSend] = useState('');
+  const [invoiceToEmail, setInvoiceToEmail] = useState<any>(null);
 
   const ITEMS_PER_PAGE = 10;
   const [currentPage, setCurrentPage] = useState(1);
@@ -43,7 +46,8 @@ export function Invoices() {
       if (!res.ok) return [];
       const data = await res.json();
       return Array.isArray(data) ? data : [];
-    }
+    },
+    placeholderData: keepPreviousData,
   });
 
   const { data: clients } = useQuery({
@@ -53,7 +57,8 @@ export function Invoices() {
       if (!res.ok) return [];
       const data = await res.json();
       return Array.isArray(data) ? data : [];
-    }
+    },
+    placeholderData: keepPreviousData,
   });
 
   const { register, control, handleSubmit, reset, watch, setValue } = useForm({
@@ -65,7 +70,12 @@ export function Invoices() {
       notes: '',
       status: 'brouillon',
       type: 'facture',
-      dueDate: ''
+      dueDate: '',
+      validityDate: '',
+      paymentTerms: '',
+      vatWithholdingApplied: false,
+      vatExemptReason: '',
+      sourceDocumentId: ''
     }
   });
 
@@ -76,7 +86,8 @@ export function Invoices() {
       if (!res.ok) return [];
       const data = await res.json();
       return Array.isArray(data) ? data : [];
-    }
+    },
+    placeholderData: keepPreviousData,
   });
 
   const { fields, append, remove, insert, update } = useFieldArray({
@@ -132,7 +143,12 @@ export function Invoices() {
       notes: invoice.notes || '',
       status: invoice.status || 'brouillon',
       type: invoice.type || 'facture',
-      dueDate: invoice.dueDate || ''
+      dueDate: invoice.dueDate || '',
+      validityDate: invoice.validityDate || '',
+      paymentTerms: invoice.paymentTerms || '',
+      vatWithholdingApplied: !!invoice.vatWithholdingApplied,
+      vatExemptReason: invoice.vatExemptReason || '',
+      sourceDocumentId: invoice.sourceDocumentId || ''
     });
     setIsModalOpen(true);
   };
@@ -154,7 +170,12 @@ export function Invoices() {
       notes: data.notes,
       status: data.status || 'brouillon',
       type: data.type || 'facture',
-      dueDate: data.dueDate || null
+      dueDate: data.dueDate || null,
+      validityDate: data.validityDate || null,
+      paymentTerms: data.paymentTerms || null,
+      vatWithholdingApplied: data.vatWithholdingApplied,
+      vatExemptReason: data.vatExemptReason || null,
+      sourceDocumentId: data.sourceDocumentId || null
     };
 
     const url = editingInvoice ? `/api/invoices/${editingInvoice.id}` : '/api/invoices';
@@ -213,12 +234,25 @@ export function Invoices() {
     if(!invoiceToConvert) return;
     const { inv, targetType } = invoiceToConvert;
     const payload = {
-      ...inv,
-      type: targetType,
-      items: safeJSONParse(inv.items)
+      clientId: inv.clientId,
+      items: safeJSONParse(inv.items),
+      subtotal: inv.subtotal,
+      taxRate: inv.taxRate,
+      taxAmount: inv.taxAmount,
+      discount: inv.discount,
+      total: inv.total,
+      notes: inv.notes,
+      dueDate: inv.dueDate,
+      validityDate: inv.validityDate,
+      paymentTerms: inv.paymentTerms,
+      vatWithholdingApplied: inv.vatWithholdingApplied,
+      vatExemptReason: inv.vatExemptReason,
+      sourceDocumentId: inv.number,
+      status: 'brouillon',
+      type: targetType
     };
     
-    const promise = apiFetch(`/api/invoices/${inv.id}`, { method: 'PUT', body: JSON.stringify(payload) }).then(async (res) => {
+    const promise = apiFetch(`/api/invoices`, { method: 'POST', body: JSON.stringify(payload) }).then(async (res) => {
       if(!res.ok) throw new Error("Erreur de conversion");
       triggerRefresh('invoices');
       triggerRefresh('reminders');
@@ -242,8 +276,11 @@ export function Invoices() {
         apiFetch('/api/settings'),
         apiFetch(`/api/invoices/${inv.id}`)
       ]);
-      const settings = await settingsRes.json();
-      const fullInv = await invRes.json();
+      if (!settingsRes.ok || !invRes.ok) throw new Error("Erreur récupération données");
+      const isSettingsJson = settingsRes.headers.get('content-type')?.includes('application/json');
+      const isInvJson = invRes.headers.get('content-type')?.includes('application/json');
+      const settings = isSettingsJson ? await settingsRes.json() : {};
+      const fullInv = isInvJson ? await invRes.json() : inv;
       
       let phone = fullInv.client?.phone || inv.client?.phone || "";
       if (phone) phone = phone.replace(/[^0-9]/g, '');
@@ -291,19 +328,29 @@ export function Invoices() {
       }
       
       const encodedMsg = encodeURIComponent(finalMsg);
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      const waUrl = isMobile 
-        ? `whatsapp://send?text=${encodedMsg}` + (phone ? `&phone=${phone}` : '') 
-        : (phone ? `https://api.whatsapp.com/send?phone=${phone}&text=${encodedMsg}` : `https://api.whatsapp.com/send?text=${encodedMsg}`);
-      window.open(waUrl, '_blank');
+      const waUrl = getWhatsAppUrl(phone, encodedMsg);
+      
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile) {
+        window.location.href = waUrl;
+      } else {
+        window.open(waUrl, '_blank');
+      }
     } catch (err: any) {
       toast.error(err.message || "Erreur", { id: toastId });
     }
   };
 
-  const shareViaEmail = async (inv: any) => {
-    const email = prompt("Adresse email du client :", inv.client?.email || "");
-    if (!email) return;
+  const shareViaEmail = (inv: any) => {
+    setInvoiceToEmail(inv);
+    setEmailToSend(inv.client?.email || "");
+    setEmailModalOpen(true);
+  };
+
+  const confirmShareViaEmail = async () => {
+    if (!emailToSend || !invoiceToEmail) return;
+    const inv = invoiceToEmail;
+    setEmailModalOpen(false);
     
     const toastId = toast.loading("Génération et envoi...");
     try {
@@ -311,8 +358,11 @@ export function Invoices() {
         apiFetch('/api/settings'),
         apiFetch(`/api/invoices/${inv.id}`)
       ]);
-      const settings = await settingsRes.json();
-      const fullInv = await invRes.json();
+      if (!settingsRes.ok || !invRes.ok) throw new Error("Erreur récupération données");
+      const isSettingsJson = settingsRes.headers.get('content-type')?.includes('application/json');
+      const isInvJson = invRes.headers.get('content-type')?.includes('application/json');
+      const settings = isSettingsJson ? await settingsRes.json() : {};
+      const fullInv = isInvJson ? await invRes.json() : inv;
       const html = buildInvoiceHTML(fullInv, settings);
       const pdfBase64 = await generatePDFBase64(html);
       
@@ -320,7 +370,7 @@ export function Invoices() {
         method: 'POST',
         body: JSON.stringify({
           type: 'email',
-          to: email,
+          to: emailToSend,
           subject: `Facture ${inv.number}`,
           message: `Bonjour,\n\nVeuillez trouver ci-joint votre facture ${inv.number} d'un montant de ${formatCurrency(inv.total)}.\n\nCordialement,`,
           filename: `Facture_${inv.number}.pdf`,
@@ -329,7 +379,11 @@ export function Invoices() {
         })
       });
       
-      if (!res.ok) { const err = await res.json(); throw new Error(err.error); }
+      if (!res.ok) {
+        const isJson = res.headers.get('content-type')?.includes('application/json');
+        const err = isJson ? await res.json() : null;
+        throw new Error(err?.error || 'Erreur lors de l\'envoi');
+      }
       toast.success("Email envoyé avec succès !", { id: toastId });
     } catch (err: any) {
       toast.error(err.message || "Erreur", { id: toastId });
@@ -344,8 +398,11 @@ export function Invoices() {
         apiFetch('/api/settings'),
         apiFetch(`/api/invoices/${inv.id}`)
       ]);
-      const settings = await settingsRes.json();
-      const fullInv = await invRes.json();
+      if (!settingsRes.ok || !invRes.ok) throw new Error("Erreur récupération données");
+      const isSettingsJson = settingsRes.headers.get('content-type')?.includes('application/json');
+      const isInvJson = invRes.headers.get('content-type')?.includes('application/json');
+      const settings = isSettingsJson ? await settingsRes.json() : {};
+      const fullInv = isInvJson ? await invRes.json() : inv;
       const html = buildInvoiceHTML(fullInv, settings);
 
       await exportHTMLToPDF(html, `Facture_${inv.number}`);
@@ -385,10 +442,10 @@ export function Invoices() {
               >
                 <option value="toutes">Tous les statuts</option>
                 <option value="brouillon">Brouillon</option>
-                <option value="envoyee">Envoyée</option>
-                <option value="partiellement_payee">Partiellement Payée</option>
-                <option value="payee">Payée</option>
-                <option value="annulee">Annulée</option>
+                <option value="envoyée">Envoyée</option>
+                <option value="partielle">Partiellement Payée</option>
+                <option value="payée">Payée</option>
+                <option value="annulée">Annulée</option>
               </select>
             </div>
             <button onClick={openNew} className="fp-btn-primary">
@@ -430,7 +487,7 @@ export function Invoices() {
                   </div>
                 </td>
               </tr>
-            ) : paginatedInvoices.map((inv: any) => {
+            ) : (paginatedInvoices || []).map((inv: any) => {
                const paid = (inv.receipts || []).reduce((sum: number, r: any) => sum + r.amount, 0);
                const reste = inv.total - paid;
                return (
@@ -534,13 +591,21 @@ export function Invoices() {
                   </select>
                 </Field>
 
-                {/* Date d'échéance — DatePicker unifié */}
-                <Field label="Date d'échéance" hint="Requis pour relances auto.">
-                  <DatePicker
-                    value={watch('dueDate')}
-                    onChange={v => setValue('dueDate', v)}
-                  />
-                </Field>
+                {/* Dates */}
+                <div style={{ display: 'flex', gap: 'var(--space-4)', width: '100%' }}>
+                  <div style={{ flex: 1 }}>
+                    <Field label="Date d'échéance" hint="Requis pour relances auto.">
+                      <DatePicker value={watch('dueDate')} onChange={v => setValue('dueDate', v)} />
+                    </Field>
+                  </div>
+                  {watch('type') !== 'facture' && (
+                    <div style={{ flex: 1 }}>
+                      <Field label="Date de validité">
+                        <DatePicker value={watch('validityDate')} onChange={v => setValue('validityDate', v)} />
+                      </Field>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* ── Tableau des lignes : grille CSS partagée header + rows ── */}
@@ -581,8 +646,8 @@ export function Invoices() {
                         ))}
                       </select>
                       <Input placeholder="Description de l'article" {...register(`items.${index}.description` as const, { required: true })} />
-                      <Input type="number" placeholder="1" style={{ textAlign: 'right' }} {...register(`items.${index}.quantity` as const, { valueAsNumber: true })} />
-                      <Input type="number" placeholder="0" style={{ textAlign: 'right' }} {...register(`items.${index}.unitPrice` as const, { valueAsNumber: true })} />
+                      <Input type="number" placeholder="1" min="0" style={{ textAlign: 'right' }} {...register(`items.${index}.quantity` as const, { valueAsNumber: true })} />
+                      <Input type="number" placeholder="0" min="0" style={{ textAlign: 'right' }} {...register(`items.${index}.unitPrice` as const, { valueAsNumber: true })} />
                       <div style={{ textAlign: 'right', fontWeight: 'var(--font-weight-semibold)', fontFamily: 'monospace', color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)' }}>
                         {formatCurrency((isNaN(watchItems[index]?.quantity) ? 0 : watchItems[index]?.quantity || 0) * (isNaN(watchItems[index]?.unitPrice) ? 0 : watchItems[index]?.unitPrice || 0))}
                       </div>
@@ -619,8 +684,21 @@ export function Invoices() {
                       <span className={`fp-badge ${editingInvoice.status === 'payée' ? 'fp-badge-green' : editingInvoice.status === 'envoyée' ? 'fp-badge-blue' : 'fp-badge-neutral'} capitalize`}>{editingInvoice.status === 'brouillon' ? 'Non entamée' : editingInvoice.status}</span>
                     </div>
                   )}
-                  <Field label="Remarques / Conditions">
-                    <Textarea {...register('notes')} placeholder="Conditions de paiement, mentions légales, informations bancaires..." />
+                  <Field label="Conditions de paiement (ex: 30 jours, à réception)">
+                    <Input {...register('paymentTerms')} placeholder="Modalités de règlement" maxLength={250} />
+                  </Field>
+                  <Field label="Document Source (ex: Devis N°xxx)">
+                    <Input {...register('sourceDocumentId')} placeholder="Référence du document lié" maxLength={50} />
+                  </Field>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                    <input type="checkbox" id="vatWithholding" {...register('vatWithholdingApplied')} />
+                    <label htmlFor="vatWithholding" style={{ fontSize: 'var(--text-sm)' }}>Appliquer la retenue à la source (TVA)</label>
+                  </div>
+                  <Field label="Motif d'exonération de TVA (si applicable)">
+                    <Input {...register('vatExemptReason')} placeholder="Art. xxx du CGI..." maxLength={250} />
+                  </Field>
+                  <Field label="Remarques Générales">
+                    <Textarea {...register('notes')} placeholder="Mentions légales, informations bancaires..." />
                   </Field>
                 </div>
 
@@ -635,12 +713,12 @@ export function Invoices() {
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-4)' }}>
                       <span className="text-[14px] font-medium text-[var(--foreground-subtle)]">TVA (%)</span>
-                      <div className="w-[120px]"><Input type="number" style={{ textAlign: 'right', fontFamily: 'monospace' }} {...register('taxRate', { valueAsNumber: true })} /></div>
+                      <div className="w-[120px]"><Input type="number" min="0" max="100" style={{ textAlign: 'right', fontFamily: 'monospace' }} {...register('taxRate', { valueAsNumber: true })} /></div>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-4)' }}>
                       <span className="text-[14px] font-medium text-[var(--foreground-subtle)]">Remise globale</span>
                       <div className="relative w-[140px]">
-                        <Input type="number" style={{ textAlign: 'right', fontFamily: 'monospace', paddingRight: 'var(--space-8)' }} {...register('discount', { valueAsNumber: true })} />
+                        <Input type="number" min="0" style={{ textAlign: 'right', fontFamily: 'monospace', paddingRight: 'var(--space-8)' }} {...register('discount', { valueAsNumber: true })} />
                         <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[13px] font-bold text-[var(--foreground-muted)]">{currency}</span>
                       </div>
                     </div>
@@ -682,6 +760,28 @@ export function Invoices() {
         variant="primary"
         onConfirm={confirmConvertToFacture}
       />
+
+      <Dialog open={emailModalOpen} onOpenChange={setEmailModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Envoyer par email</DialogTitle>
+          </DialogHeader>
+          <DialogBody>
+            <Field label="Adresse email du client">
+              <Input 
+                type="email" 
+                value={emailToSend} 
+                onChange={(e) => setEmailToSend(e.target.value)} 
+                placeholder="client@exemple.com" 
+              />
+            </Field>
+          </DialogBody>
+          <DialogFooter>
+            <button type="button" className="fp-btn-outline" onClick={() => setEmailModalOpen(false)}>Annuler</button>
+            <button type="button" className="fp-btn-primary" onClick={confirmShareViaEmail}>Envoyer</button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,233 +1,65 @@
 <?php
+require_once __DIR__ . '/ChatKnowledgeBase.php';
+
 class ChatController {
     public static function handle($pdo, $method, $accountId, $body, $currentAccount) {
         if ($method === 'POST') {
             $history = $body['history'] ?? [];
             $userMsg = $body['message'] ?? '';
             
-            // Clé globale (A remplacer par votre vraie clé en production)
-            $geminiKey = getenv('GEMINI_API_KEY') ?: 'VOTRE_CLE_API_GLOBALE_ICI';
-            if (empty($geminiKey) || $geminiKey === 'VOTRE_CLE_API_GLOBALE_ICI') {
-                http_response_code(400); 
-                echo json_encode(["error" => "Le service IA est momentanément indisponible (Clé globale manquante)."]); 
-                exit;
-            }
-
-            // --- 1. PREPARE DATA CONTEXT ---
-            $stmtC = $pdo->prepare("SELECT id, name, email FROM Client WHERE accountId = ?"); 
-            $stmtC->execute([$accountId]);
-            $clients = $stmtC->fetchAll(PDO::FETCH_ASSOC);
-
-            $stmtCat = $pdo->prepare("SELECT id, name, unitPrice FROM CatalogItem WHERE accountId = ?"); 
-            $stmtCat->execute([$accountId]);
-            $catalog = $stmtCat->fetchAll(PDO::FETCH_ASSOC);
-
-            $stmtDoc = $pdo->prepare("SELECT id, number, clientId, status, total, type FROM ProformaInvoice WHERE accountId = ?");
-            $stmtDoc->execute([$accountId]);
-            $documents = $stmtDoc->fetchAll(PDO::FETCH_ASSOC);
-
-            // System Context definition
-            $systemInstruction = "Tu es ARIA, le super assistant IA de FacturaPro. Tu pilotes l'application. 
-Tu peux déclencher des actions via tes 'tools'. 
-Voici les données actuelles de l'utilisateur pour t'aider à trouver les IDs :
-- Clients: " . json_encode($clients) . "
-- Catalogue: " . json_encode($catalog) . "
-- Documents: " . json_encode($documents) . "
-Règles :
-1. Si l'utilisateur demande une action, utilise TOUJOURS l'outil correspondant. N'invente pas les IDs, cherche-les dans tes données contextuelles.
-2. Si tu exécutes une action 'Client-Side' (ex: open_whatsapp_share), confirme à l'utilisateur que c'est fait.
-3. Réponds de manière professionnelle et courte.";
-
-            // --- 2. FORMAT MESSAGES FOR GEMINI ---
-            $contents = [];
-            foreach($history as $m) {
-                // Ignore empty or unsupported messages for simplicity, but map roles
-                $role = $m['role'] === 'user' ? 'user' : 'model';
-                $contents[] = [
-                    "role" => $role,
-                    "parts" => [["text" => $m['text']]]
-                ];
-            }
-            if ($userMsg) {
-                $contents[] = [
-                    "role" => "user",
-                    "parts" => [["text" => $userMsg]]
-                ];
-            }
-
-            // --- 3. DEFINE THE SKILLS (TOOLS) ---
-            $tools = [[
-                "functionDeclarations" => [
-                    [
-                        "name" => "create_client",
-                        "description" => "Créer un nouveau client dans la base de données.",
-                        "parameters" => [
-                            "type" => "OBJECT",
-                            "properties" => [
-                                "name" => ["type" => "STRING", "description" => "Nom du client"],
-                                "email" => ["type" => "STRING", "description" => "Email du client"],
-                                "phone" => ["type" => "STRING", "description" => "Téléphone du client"]
-                            ],
-                            "required" => ["name"]
-                        ]
-                    ],
-                    [
-                        "name" => "create_document",
-                        "description" => "Créer un Devis, une Pro Forma ou une Facture.",
-                        "parameters" => [
-                            "type" => "OBJECT",
-                            "properties" => [
-                                "clientId" => ["type" => "STRING", "description" => "ID du client (récupéré depuis le contexte)"],
-                                "type" => ["type" => "STRING", "description" => "Type: 'devis', 'proforma' ou 'facture'"],
-                                "items" => [
-                                    "type" => "ARRAY",
-                                    "description" => "Liste des articles. Ex: [{name: 'Site Web', quantity: 1, unitPrice: 500}]",
-                                    "items" => [
-                                        "type" => "OBJECT",
-                                        "properties" => [
-                                            "name" => ["type" => "STRING"],
-                                            "quantity" => ["type" => "NUMBER"],
-                                            "unitPrice" => ["type" => "NUMBER"]
-                                        ]
-                                    ]
-                                ]
-                            ],
-                            "required" => ["clientId", "type", "items"]
-                        ]
-                    ],
-                    [
-                        "name" => "convert_document",
-                        "description" => "Convertir un devis en facture ou proforma.",
-                        "parameters" => [
-                            "type" => "OBJECT",
-                            "properties" => [
-                                "documentId" => ["type" => "STRING", "description" => "ID du document à convertir"],
-                                "targetType" => ["type" => "STRING", "description" => "'proforma' ou 'facture'"]
-                            ],
-                            "required" => ["documentId", "targetType"]
-                        ]
-                    ],
-                    [
-                        "name" => "open_whatsapp_share",
-                        "description" => "Ouvrir l'interface WhatsApp pour envoyer un document au client. C'est une action Client-Side.",
-                        "parameters" => [
-                            "type" => "OBJECT",
-                            "properties" => [
-                                "documentId" => ["type" => "STRING", "description" => "L'ID du document à partager"]
-                            ],
-                            "required" => ["documentId"]
-                        ]
-                    ]
-                ]
-            ]];
-
-            $requestData = [
-                "systemInstruction" => [
-                    "parts" => [["text" => $systemInstruction]]
-                ],
-                "contents" => $contents,
-                "tools" => $tools
-            ];
-
-            // --- 4. CALL GEMINI API ---
-            $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' . $geminiKey;
+            // --- MOCK LOCAL AI (Sans API Externe) ---
+            $lowerMsg = mb_strtolower(trim($userMsg), 'UTF-8');
             
-            $ch = curl_init($url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($requestData));
-            
-            $response = curl_exec($ch);
-            curl_close($ch);
-            
-            $geminiData = json_decode($response, true);
-            
-            if (isset($geminiData['error'])) {
-                http_response_code(500);
-                echo json_encode(["error" => "Erreur Gemini API: " . $geminiData['error']['message']]);
-                exit;
-            }
-
-            // Analyze response
-            $candidate = $geminiData['candidates'][0]['content']['parts'][0] ?? [];
+            // Suppression des accents pour un meilleur matching
+            $unwanted_array = array('à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'ç'=>'c', 'è'=>'e', 'é'=>'e', 'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i', 'î'=>'i', 'ï'=>'i', 'ñ'=>'n', 'ò'=>'o', 'ó'=>'o', 'ô'=>'o', 'õ'=>'o', 'ö'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ü'=>'u', 'ý'=>'y', 'ÿ'=>'y');
+            $cleanMsg = strtr($lowerMsg, $unwanted_array);
+            // Suppression de la ponctuation basique
+            $cleanMsg = str_replace(['?', '!', '.', ',', '\'', '"', '-'], ' ', $cleanMsg);
             
             $replyText = "";
-            $actionResult = null;
             $clientSideAction = null;
 
-            if (isset($candidate['functionCall'])) {
-                $funcName = $candidate['functionCall']['name'];
-                $args = $candidate['functionCall']['args'] ?? [];
+            // 1. Actions pratiques refusées
+            if (preg_match('/^(creer|ajoute|modifier|supprime|envoie|cree|ouvre|fais|faites|creez|ajoutez|modifiez|supprimez|envoyez|ouvrez)\b/i', ltrim($cleanMsg)) ||
+                preg_match('/\b(tu peux|peux tu|je veux que tu)\b.*\b(creer|ajoute|modifier|supprime|envoie|cree|ouvre|fais|faites|creez|ajoutez|modifiez|supprimez|envoyez|ouvrez)\b/i', $cleanMsg)) {
+                $replyText = "Je ne suis pas habilité à effectuer des actions pratiques à votre place. Mon rôle est uniquement de répondre à vos questions et de vous orienter dans l'application.";
+                echo json_encode(["text" => $replyText, "action" => null]);
+                return;
+            }
 
-                // SKILL ROUTER
-                if ($funcName === 'create_client') {
-                    $newId = Helper::uuid();
-                    $stmt = $pdo->prepare("INSERT INTO Client (id, accountId, name, email, phone) VALUES (?, ?, ?, ?, ?)");
-                    $stmt->execute([$newId, $accountId, $args['name'], $args['email']??null, $args['phone']??null]);
-                    
-                    $actionResult = "Client créé avec succès. ID: $newId";
-                    $replyText = "J'ai créé le client {$args['name']}.";
-                    $clientSideAction = ["type" => "REFETCH", "target" => "clients"];
-                }
-                else if ($funcName === 'create_document') {
-                    $clientId = $args['clientId'];
-                    $type = $args['type'];
-                    $today = date('Ymd');
-                    
-                    $prefix = "FAC";
-                    if ($type === 'devis') $prefix = "DEV";
-                    else if ($type === 'proforma') $prefix = "PRO";
+            // 2. Moteur de Recherche d'Intentions (Scoring par mots-clés)
+            $intents = ChatKnowledgeBase::getIntents();
+            $bestIntent = null;
+            $highestScore = 0;
 
-                    $stmt = $pdo->prepare("SELECT number FROM ProformaInvoice WHERE accountId = ? AND number LIKE ? ORDER BY number DESC LIMIT 1");
-                    $stmt->execute([$accountId, "$prefix-$today-%"]);
-                    $last = $stmt->fetchColumn(); 
-                    $seq = $last ? (int)array_pop(explode('-', $last)) + 1 : 1;
+            foreach ($intents as $intent) {
+                $score = 0;
+                foreach ($intent['keywords'] as $kw) {
+                    $kwClean = strtr(mb_strtolower(trim($kw), 'UTF-8'), $unwanted_array);
+                    if (empty($kwClean)) continue;
                     
-                    $newId = Helper::uuid();
-                    $num = sprintf("%s-%s-%03d", $prefix, $today, $seq);
-                    $items = $args['items'] ?? [];
-                    $subtotal = 0; 
-                    foreach($items as $it) $subtotal += ($it['quantity'] * $it['unitPrice']);
-                    
-                    $stmt = $pdo->prepare("INSERT INTO ProformaInvoice (id, accountId, number, clientId, items, subtotal, total, status, type) VALUES (?, ?, ?, ?, ?, ?, ?, 'brouillon', ?)");
-                    $stmt->execute([$newId, $accountId, $num, $clientId, json_encode($items), $subtotal, $subtotal, $type]);
-                    
-                    $actionResult = "Document créé. ID: $newId, Numéro: $num";
-                    $replyText = "J'ai créé le $type ($num) pour ce client.";
-                    $clientSideAction = ["type" => "REFETCH", "target" => "invoices"];
+                    // Match mots entiers uniquement pour éviter les faux positifs
+                    if (preg_match('/\b' . preg_quote($kwClean, '/') . '\b/i', $cleanMsg)) {
+                        $score++;
+                    }
                 }
-                else if ($funcName === 'convert_document') {
-                    $docId = $args['documentId'];
-                    $tType = $args['targetType'];
-                    
-                    $prefix = $tType === 'facture' ? 'FAC' : 'PRO';
-                    $today = date('Ymd');
-                    $stmt = $pdo->prepare("SELECT number FROM ProformaInvoice WHERE accountId = ? AND number LIKE ? ORDER BY number DESC LIMIT 1");
-                    $stmt->execute([$accountId, "$prefix-$today-%"]);
-                    $last = $stmt->fetchColumn(); $seq = $last ? (int)array_pop(explode('-', $last)) + 1 : 1;
-                    $newNum = sprintf("%s-%s-%03d", $prefix, $today, $seq);
+                
+                // Si on a un meilleur score, on remplace
+                if ($score > $highestScore) {
+                    $highestScore = $score;
+                    $bestIntent = $intent;
+                }
+            }
 
-                    $stmt = $pdo->prepare("UPDATE ProformaInvoice SET type = ?, number = ? WHERE id = ? AND accountId = ?");
-                    $stmt->execute([$tType, $newNum, $docId, $accountId]);
-                    
-                    $replyText = "J'ai converti le document en $tType ($newNum).";
-                    $clientSideAction = ["type" => "REFETCH", "target" => "invoices"];
-                }
-                else if ($funcName === 'open_whatsapp_share') {
-                    $replyText = "Je vous prépare le message WhatsApp pour ce document !";
-                    $clientSideAction = ["type" => "WHATSAPP_SHARE", "documentId" => $args['documentId']];
-                }
-                else {
-                    $replyText = "Action $funcName non implémentée totalement.";
-                }
-
-                // Pour un vrai système agentic complexe, on renverrait $actionResult à Gemini dans une 2e requête curl 
-                // pour qu'il génère le texte lui-même. 
-                // Ici, pour des raisons de vitesse d'interface, on court-circuite et on répond directement à l'utilisateur.
-            } 
-            else if (isset($candidate['text'])) {
-                $replyText = $candidate['text'];
+            // 3. Réponse finale (Seuil de pertinence = 1 mot-clé trouvé minimum)
+            if ($highestScore > 0 && $bestIntent) {
+                $replyText = $bestIntent['answer'];
+            }
+            elseif (strpos($cleanMsg, 'bonjour') !== false || strpos($cleanMsg, 'salut') !== false || strpos($cleanMsg, 'hello') !== false) {
+                $replyText = "Bonjour ! Je suis l'assistant FacturaPro. Posez-moi vos questions, je connais le logiciel sur le bout des doigts !";
+            }
+            else {
+                $replyText = "Je n'ai pas tout à fait compris votre demande. Pourriez-vous reformuler avec des mots plus simples (ex: 'Comment créer une facture ?', 'Où modifier ma devise ?') ?";
             }
 
             echo json_encode(["text" => $replyText, "action" => $clientSideAction]);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAppStore, formatCurrency } from '../lib/store';
+import { useAppStore, formatCurrency, apiFetch } from '../lib/store';
 import { toast } from 'sonner';
 import {
   Users, DollarSign, Search, LogIn,
@@ -7,6 +7,7 @@ import {
   ArrowLeft, Calendar, Phone, MapPin, RefreshCw, Ban, CheckCircle, Settings, Mail
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import { adminStatsSchema, adminAccountsResponseSchema } from '../lib/schemas';
 
 export function Admin() {
   const { user } = useAppStore();
@@ -20,24 +21,25 @@ export function Admin() {
 
   const token = user?.token;
 
-  const apiFetch = (path: string, opts: RequestInit = {}) =>
-    fetch(`/api/admin/${path}`, {
-      ...opts,
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', ...(opts.headers || {}) }
-    });
-
   const loadData = async (silent = false) => {
     if (!silent) setLoading(true);
     else setRefreshing(true);
     try {
       const [sRes, aRes] = await Promise.all([
-        apiFetch(`stats?timeframe=${timeframe}`),
-        apiFetch('accounts')
+        apiFetch(`/api/admin/stats?timeframe=${timeframe}`),
+        apiFetch('/api/admin/accounts')
       ]);
-      if (sRes.ok) setStats(await sRes.json());
-      if (aRes.ok) setAccounts(await aRes.json());
-    } catch {
-      toast.error('Erreur de chargement');
+      if (sRes.ok) {
+        const rawStats = await sRes.json();
+        setStats(adminStatsSchema.parse(rawStats));
+      }
+      if (aRes.ok) {
+        const rawAccounts = await aRes.json();
+        setAccounts(adminAccountsResponseSchema.parse(rawAccounts));
+      }
+    } catch (err: any) {
+      console.error("Erreur Admin API:", err);
+      toast.error('Erreur de chargement ou données invalides');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -169,9 +171,7 @@ function AdminSettings({ token }: { token: string }) {
   });
 
   useEffect(() => {
-    fetch('/api/admin/settings', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    }).then(r => r.json()).then(data => {
+    apiFetch('/api/admin/settings').then(r => r.json()).then(data => {
       setSettings((prev: any) => {
           const newData = { ...prev, ...data };
           if (!newData.REMINDER_SETTINGS) {
@@ -187,9 +187,8 @@ function AdminSettings({ token }: { token: string }) {
     e.preventDefault();
     setSaving(true);
     try {
-      const res = await fetch('/api/admin/settings', {
+      const res = await apiFetch('/api/admin/settings', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(settings)
       });
       if (res.ok) toast.success('Paramètres sauvegardés avec succès.');
@@ -484,7 +483,7 @@ function AdminDashboard({ stats }: { stats: any; accounts: any[] }) {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-              {(kpisData.recentAccounts || []).map((acc: any, i: number) => (
+              {(kpisData?.recentAccounts || []).map((acc: any, i: number) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: '1px solid var(--border)' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <div style={{ width: '40px', height: '40px', background: 'var(--surface-2)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '16px', color: 'var(--gold)' }}>
@@ -618,7 +617,7 @@ function AdminAccounts({ accounts, onSelect }: { accounts: any[]; onSelect: (id:
                   Aucun résultat ne correspond à votre recherche.
                 </td>
               </tr>
-            ) : filtered.map((acc) => (
+            ) : (filtered || []).map((acc) => (
               <tr key={acc.id} onClick={() => onSelect(acc.id)} style={{ cursor: 'pointer' }} onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--surface-2)'} onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}>
                 <td className="fp-table-td">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -665,16 +664,14 @@ function AdminAccountDetails({ accountId, token, onBack }: { accountId: string; 
   const { login } = useAppStore();
 
   useEffect(() => {
-    fetch(`/api/admin/accounts/${accountId}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    }).then(r => r.json()).then(setData);
+    apiFetch(`/api/admin/accounts/${accountId}`).then(r => r.json()).then(setData);
   }, [accountId, token]);
 
   const handleImpersonate = async () => {
     if (!window.confirm(`Vous allez prendre le contrôle de l'institution ${data.companyName}. Continuer ?`)) return;
     try {
-      const res = await fetch(`/api/admin/impersonate/${accountId}`, {
-        method: 'POST', headers: { 'Authorization': `Bearer ${token}` }
+      const res = await apiFetch(`/api/admin/impersonate/${accountId}`, {
+        method: 'POST'
       });
       if (res.ok) {
         const u = await res.json();
@@ -689,9 +686,8 @@ function AdminAccountDetails({ accountId, token, onBack }: { accountId: string; 
     const exp = new Date();
     if (months > 0) exp.setMonth(exp.getMonth() + months);
     const expiresAt = months > 0 ? exp.toISOString().split('T')[0] + ' 23:59:59' : null;
-    const res = await fetch(`/api/admin/accounts/${accountId}/subscription`, {
+    const res = await apiFetch(`/api/admin/accounts/${accountId}/subscription`, {
       method: 'PUT',
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ plan, status, expiresAt })
     });
     if (res.ok) { toast.success('Abonnement prolongé'); onBack(); }
@@ -700,9 +696,8 @@ function AdminAccountDetails({ accountId, token, onBack }: { accountId: string; 
 
   const toggleSuspend = async () => {
     const newVal = !data.isSuspended;
-    const res = await fetch(`/api/admin/accounts/${accountId}/suspend`, {
+    const res = await apiFetch(`/api/admin/accounts/${accountId}/suspend`, {
       method: 'PUT',
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ isSuspended: newVal ? 1 : 0 })
     });
     if (res.ok) { toast.success(newVal ? 'Institution suspendue' : 'Accès rétabli'); setData({ ...data, isSuspended: newVal }); }
@@ -711,9 +706,8 @@ function AdminAccountDetails({ accountId, token, onBack }: { accountId: string; 
   const handleRemind = async () => {
     if (!window.confirm(`Voulez-vous envoyer un email de relance de paiement (Proforma) à ${data.email} ?`)) return;
     try {
-      const res = await fetch(`/api/admin/accounts/${accountId}/remind`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
+      const res = await apiFetch(`/api/admin/accounts/${accountId}/remind`, {
+        method: 'POST'
       });
       if (res.ok) toast.success('Relance envoyée avec succès.');
       else {
@@ -728,9 +722,8 @@ function AdminAccountDetails({ accountId, token, onBack }: { accountId: string; 
   const handleDelete = async () => {
     if (!window.confirm(`Êtes-vous sûr de vouloir SUPPRIMER DÉFINITIVEMENT l'institution ${data.companyName} et toutes ses données ? Cette action est irréversible.`)) return;
     try {
-      const res = await fetch(`/api/admin/accounts/${accountId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+      const res = await apiFetch(`/api/admin/accounts/${accountId}`, {
+        method: 'DELETE'
       });
       if (res.ok) {
         toast.success('Institution supprimée');
@@ -904,7 +897,7 @@ function AdminAccountDetails({ accountId, token, onBack }: { accountId: string; 
               </tr>
             </thead>
             <tbody>
-              {data.payments.map((p: any, i: number) => (
+              {(data?.payments || []).map((p: any, i: number) => (
                 <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
                   <td className="fp-table-td" style={{ fontSize: '13px', fontWeight: 600, color: 'var(--foreground)' }}>
                     {new Date(p.createdAt).toLocaleDateString('fr-FR')}

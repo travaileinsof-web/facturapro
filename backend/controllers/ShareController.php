@@ -20,7 +20,7 @@ class ShareController {
             $pdfData = base64_decode($base64String);
             
             if ($type === 'whatsapp') {
-                $uniqueName = uniqid() . '_' . preg_replace('/[^a-zA-Z0-9_\.-]/', '', $filename);
+                $uniqueName = uniqid() . '.pdf';
                 $blobToken = getenv('BLOB_READ_WRITE_TOKEN');
                 
                 if ($blobToken) {

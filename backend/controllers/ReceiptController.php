@@ -9,8 +9,8 @@ class ReceiptController {
                 $rec = $stmt->fetch();
                 if ($rec) {
                     // Fetch full Client
-                    $stC = $pdo->prepare("SELECT * FROM Client WHERE id = ?");
-                    $stC->execute([$rec['clientId']]);
+                    $stC = $pdo->prepare("SELECT * FROM Client WHERE id = ? AND accountId = ?");
+                    $stC->execute([$rec['clientId'], $accountId]);
                     $rec['client'] = $stC->fetch();
                     
                     if (!empty($rec['companyId'])) {
@@ -25,15 +25,20 @@ class ReceiptController {
                     
                     // Fetch full Invoice and compute paid/remaining
                     if ($rec['proformaInvoiceId']) {
-                        $stI = $pdo->prepare("SELECT * FROM ProformaInvoice WHERE id = ?");
-                        $stI->execute([$rec['proformaInvoiceId']]);
+                        $stI = $pdo->prepare("SELECT * FROM ProformaInvoice WHERE id = ? AND accountId = ?");
+                        $stI->execute([$rec['proformaInvoiceId'], $accountId]);
                         $inv = $stI->fetch();
                         if ($inv) {
                             $stR = $pdo->prepare("SELECT SUM(amount) FROM Receipt WHERE proformaInvoiceId = ?");
                             $stR->execute([$inv['id']]);
                             $paid = (float)$stR->fetchColumn();
                             $inv['amountPaid'] = $paid;
-                            $inv['amountRemaining'] = max(0, (float)$inv['total'] - $paid);
+                            
+                            $actualTotal = (float)$inv['total'];
+                            if (!empty($inv['vatWithholdingApplied']) && (float)$inv['taxAmount'] > 0) {
+                                $actualTotal -= ((float)$inv['taxAmount'] / 2);
+                            }
+                            $inv['amountRemaining'] = max(0, $actualTotal - $paid);
                             $inv['items'] = json_decode($inv['items'], true);
                             $rec['invoice'] = $inv;
                         }
@@ -51,11 +56,30 @@ class ReceiptController {
                 echo json_encode($receipts);
             }
         } elseif ($method === 'POST') {
+            // FIX IDOR: Vérifier que le client appartient bien au compte
+            if (empty($body['clientId'])) {
+                http_response_code(400); echo json_encode(["error" => "Client manquant."]); exit;
+            }
+            $stC = $pdo->prepare("SELECT id FROM Client WHERE id = ? AND accountId = ?");
+            $stC->execute([$body['clientId'], $accountId]);
+            if (!$stC->fetch()) {
+                http_response_code(403); echo json_encode(["error" => "Client introuvable ou accès refusé."]); exit;
+            }
+
+            // FIX IDOR: Vérifier que la facture appartient bien au compte
+            if (!empty($body['proformaInvoiceId'])) {
+                $stI = $pdo->prepare("SELECT id FROM ProformaInvoice WHERE id = ? AND accountId = ?");
+                $stI->execute([$body['proformaInvoiceId'], $accountId]);
+                if (!$stI->fetch()) {
+                    http_response_code(403); echo json_encode(["error" => "Facture introuvable ou accès refusé."]); exit;
+                }
+            }
+
             $newId = Helper::uuid();
             
-            $today = date('Ymd');
+            $year = date('Y');
             $stmt = $pdo->prepare("SELECT number FROM Receipt WHERE accountId = ? AND number LIKE ? ORDER BY number DESC LIMIT 1");
-            $stmt->execute([$accountId, "REC-$today-%"]);
+            $stmt->execute([$accountId, "REC-$year-%"]);
             $last = $stmt->fetchColumn();
             if ($last) {
                 $parts = explode('-', $last);
@@ -63,14 +87,18 @@ class ReceiptController {
             } else {
                 $seq = 1;
             }
-            $number = sprintf("REC-%s-%03d", $today, $seq);
+            $number = sprintf("REC-%s-%04d", $year, $seq);
 
             $invId = $body['proformaInvoiceId']??null;
-            $paymentDate = empty($body['paymentDate']) ? date('Y-m-d H:i:s') : $body['paymentDate'];
-            $stmt = $pdo->prepare("INSERT INTO Receipt (id, accountId, number, proformaInvoiceId, clientId, amount, paymentMethod, paymentDate, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $paymentDate = (empty($body['paymentDate']) || !strtotime($body['paymentDate'])) ? date('Y-m-d H:i:s') : date('Y-m-d H:i:s', strtotime($body['paymentDate']));
+            $receivedBy = substr(Validator::sanitizeString($body['receivedBy'] ?? null), 0, 250);
+            $paymentMethod = substr(Validator::sanitizeString($body['paymentMethod'] ?? null), 0, 50);
+            $amount = (float)($body['amount'] ?? 0);
+            
+            $stmt = $pdo->prepare("INSERT INTO Receipt (id, accountId, number, proformaInvoiceId, clientId, amount, paymentMethod, paymentDate, notes, \"receivedBy\") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
-                $newId, $accountId, $number, $invId, $body['clientId'], $body['amount'],
-                $body['paymentMethod']??null, $paymentDate, $body['notes']??null
+                $newId, $accountId, $number, $invId, $body['clientId'], $amount,
+                $paymentMethod, $paymentDate, $body['notes']??null, $receivedBy
             ]);
             
             if ($invId) {

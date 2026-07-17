@@ -12,8 +12,7 @@ export function TourTutorial({ run, onFinish, primaryColor = '#B38E36' }: TourTu
     {
       target: '#nav-settings',
       content: 'Bienvenue sur FacturaPro ! Commencez par configurer votre serveur SMTP et l\'identité visuelle de votre entreprise dans les Paramètres. C\'est indispensable pour l\'envoi d\'emails et la personnalisation de l\'application.',
-      placement: 'right',
-      disableBeacon: true
+      placement: 'right'
     },
     {
       target: '#nav-clients',

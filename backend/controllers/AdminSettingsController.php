@@ -51,8 +51,9 @@ class AdminSettingsController {
                 echo json_encode(["success" => true, "message" => "Paramètres mis à jour"]);
                 exit;
             } catch (Exception $e) {
+                error_log("Admin Settings Error: " . $e->getMessage());
                 http_response_code(500);
-                echo json_encode(["error" => "Erreur lors de la mise à jour des paramètres: " . $e->getMessage()]);
+                echo json_encode(["error" => "Erreur interne lors de la mise à jour des paramètres."]);
                 exit;
             }
         }

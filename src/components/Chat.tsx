@@ -54,7 +54,7 @@ Comment puis-je vous aider ?`,
     if (!messageText || isLoading) return;
 
     const userMessage: Message = { role: 'user', text: messageText };
-    const history = messages.filter(m => !m.loading).map(m => ({ role: m.role, text: m.text }));
+    const history = (messages || []).filter(m => !m.loading).map(m => ({ role: m.role, text: m.text }));
 
     setMessages(prev => [...prev, userMessage, { role: 'model', text: '', loading: true }]);
     setInput('');
@@ -66,8 +66,13 @@ Comment puis-je vous aider ?`,
         body: JSON.stringify({ message: messageText, history })
       });
 
+      const isJson = res.headers.get('content-type')?.includes('application/json');
+      if (!res.ok) {
+        const errorData = isJson ? await res.json() : null;
+        throw new Error(errorData?.error || 'Erreur serveur');
+      }
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Erreur serveur');
 
       const botMessage: Message = {
         role: 'model',
@@ -161,7 +166,7 @@ Comment puis-je vous aider ?`,
         flex: 1, overflowY: 'auto', padding: '24px 28px',
         display: 'flex', flexDirection: 'column', gap: '20px'
       }}>
-        {messages.map((msg, idx) => (
+        {(messages || []).map((msg, idx) => (
           <div key={idx} style={{
             display: 'flex',
             flexDirection: msg.role === 'user' ? 'row-reverse' : 'row',

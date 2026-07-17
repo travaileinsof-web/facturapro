@@ -11,6 +11,10 @@ CREATE TABLE IF NOT EXISTS Account (
     phone VARCHAR(50) NULL,
     website VARCHAR(255) NULL,
     taxId VARCHAR(100) NULL,
+    legalForm VARCHAR(50) NULL,
+    rccm VARCHAR(100) NULL,
+    taxRegime VARCHAR(100) NULL,
+    defaultVatRate DECIMAL(5,2) DEFAULT 18.0,
     bankName VARCHAR(255) NULL,
     bankAccount VARCHAR(255) NULL,
     logo TEXT NULL,
@@ -71,6 +75,9 @@ CREATE TABLE IF NOT EXISTS Client (
     city VARCHAR(100) NULL,
     country VARCHAR(100) NULL,
     notes TEXT NULL,
+    clientType VARCHAR(50) DEFAULT 'professionnel',
+    nif VARCHAR(100) NULL,
+    rccm VARCHAR(100) NULL,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (accountId) REFERENCES Account(id) ON DELETE CASCADE
@@ -92,6 +99,11 @@ CREATE TABLE IF NOT EXISTS ProformaInvoice (
     issueDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     dueDate TIMESTAMP NULL,
     lastReminderDate TIMESTAMP NULL,
+    validityDate TIMESTAMP NULL,
+    paymentTerms TEXT NULL,
+    vatWithholdingApplied INTEGER DEFAULT 0,
+    vatExemptReason TEXT NULL,
+    sourceDocumentId VARCHAR(50) NULL,
     notes TEXT NULL,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -108,6 +120,7 @@ CREATE TABLE IF NOT EXISTS Receipt (
     amount DECIMAL(15, 2) NOT NULL,
     paymentMethod VARCHAR(50) NULL,
     paymentDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    receivedBy VARCHAR(255) NULL,
     notes TEXT NULL,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -192,4 +205,14 @@ CREATE TABLE IF NOT EXISTS SubscriptionReminderLog (
     reminderType VARCHAR(50) NOT NULL,
     sentAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (accountId) REFERENCES Account(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS InvoiceReminderLog (
+    id VARCHAR(50) PRIMARY KEY,
+    accountId VARCHAR(50) NOT NULL,
+    invoiceId VARCHAR(50) NOT NULL,
+    method VARCHAR(50) DEFAULT 'email',
+    sentAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (accountId) REFERENCES Account(id) ON DELETE CASCADE,
+    FOREIGN KEY (invoiceId) REFERENCES ProformaInvoice(id) ON DELETE CASCADE
 );

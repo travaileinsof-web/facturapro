@@ -10,11 +10,7 @@ class Router {
                 UploadController::handle($method, $accountId);
                 break;
             case 'settings':
-                if ($id === 'convert-currency' && $method === 'POST') {
-                    SettingsController::convertCurrency($pdo, $accountId, $body);
-                } else {
-                    SettingsController::handle($pdo, $method, $accountId, $body, $currentAccount);
-                }
+                SettingsController::handle($pdo, $method, $accountId, $body, $currentAccount);
                 break;
             case 'companies':
                 $segments = [$resource, $id, $subAction];
@@ -28,7 +24,7 @@ class Router {
                 break;
             case 'invoices':
             case 'proforma':
-                InvoiceController::handle($pdo, $method, $id, $accountId, $body);
+                InvoiceController::handle($pdo, $method, $id, $accountId, $body, $subAction);
                 break;
             case 'receipts':
                 ReceiptController::handle($pdo, $method, $id, $accountId, $body);
@@ -73,10 +69,6 @@ class Router {
                     exit;
                 }
                 break;
-            case 'debug':
-                $stmt = $pdo->query("SELECT table_name FROM information_schema.tables WHERE table_schema='public'");
-                echo json_encode($stmt->fetchAll(PDO::FETCH_COLUMN));
-                exit;
             default:
                 http_response_code(404);
                 echo json_encode(["error" => "Endpoint not found"]);

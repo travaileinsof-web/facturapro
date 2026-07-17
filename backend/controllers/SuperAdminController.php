@@ -113,7 +113,7 @@ class SuperAdminController {
             $stmt->execute([$targetId]);
             $account['totalClients'] = $stmt->fetch()['total'];
 
-            $stmt = $pdo->prepare("SELECT COUNT(*) as total, SUM(total) as amount FROM ProformaInvoice WHERE accountId = ?");
+            $stmt = $pdo->prepare("SELECT COUNT(*) as total, SUM(CASE WHEN \"vatWithholdingApplied\" = 1 AND taxAmount > 0 THEN total - (taxAmount / 2.0) ELSE total END) as amount FROM ProformaInvoice WHERE accountId = ?");
             $stmt->execute([$targetId]);
             $invStats = $stmt->fetch();
             $account['totalInvoices'] = $invStats['total'];
@@ -309,8 +309,9 @@ class SuperAdminController {
             echo json_encode(["error" => "Endpoint introuvable"]);
             exit;
         } catch (Exception $e) {
+            error_log("SuperAdmin Error: " . $e->getMessage() . "\n" . $e->getTraceAsString());
             http_response_code(500);
-            echo json_encode(["error" => $e->getMessage(), "trace" => $e->getTraceAsString()]);
+            echo json_encode(["error" => "Erreur interne du serveur."]);
             exit;
         }
     }

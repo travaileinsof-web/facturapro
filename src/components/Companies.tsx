@@ -190,28 +190,70 @@ export function Companies() {
   });
 
   const saveCompany = async (id: string, data: any) => {
-    const res = await apiFetch(`/api/companies/${id}`, { method: 'PUT', body: JSON.stringify(data) });
-    if (res.ok) { toast.success('Entreprise mise à jour !'); refetch(); setExpanded(null); }
-    else { const e = await res.json(); toast.error(e.error || 'Erreur sauvegarde'); }
+    try {
+      const res = await apiFetch(`/api/companies/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+      if (res.ok) { 
+        toast.success('Entreprise mise à jour !'); 
+        refetch(); 
+        setExpanded(null); 
+      } else { 
+        const isJson = res.headers.get('content-type')?.includes('application/json');
+        const e = isJson ? await res.json() : null; 
+        toast.error(e?.error || 'Erreur sauvegarde'); 
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur réseau de sauvegarde');
+    }
   };
 
   const createCompany = async (data: any) => {
-    const res = await apiFetch('/api/companies', { method: 'POST', body: JSON.stringify(data) });
-    if (res.ok) { toast.success('Entreprise créée !'); refetch(); setCreating(false); }
-    else { const e = await res.json(); toast.error(e.error || 'Erreur création'); }
+    try {
+      const res = await apiFetch('/api/companies', { method: 'POST', body: JSON.stringify(data) });
+      if (res.ok) { 
+        toast.success('Entreprise créée !'); 
+        refetch(); 
+        setCreating(false); 
+      } else { 
+        const isJson = res.headers.get('content-type')?.includes('application/json');
+        const e = isJson ? await res.json() : null; 
+        toast.error(e?.error || 'Erreur création'); 
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur réseau de création');
+    }
   };
 
   const setDefault = async (id: string) => {
-    const res = await apiFetch(`/api/companies/${id}`, { method: 'PUT', body: JSON.stringify({ setDefault: true }) });
-    if (res.ok) { toast.success('Entreprise principale définie !'); refetch(); }
-    else { const e = await res.json(); toast.error(e.error || 'Erreur'); }
+    try {
+      const res = await apiFetch(`/api/companies/${id}`, { method: 'PUT', body: JSON.stringify({ setDefault: true }) });
+      if (res.ok) { 
+        toast.success('Entreprise principale définie !'); 
+        refetch(); 
+      } else { 
+        const isJson = res.headers.get('content-type')?.includes('application/json');
+        const e = isJson ? await res.json() : null; 
+        toast.error(e?.error || 'Erreur'); 
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur réseau');
+    }
   };
 
   const deleteCompany = async (id: string, name: string) => {
     if (!confirm(`Supprimer "${name}" ? Cette action est irréversible.`)) return;
-    const res = await apiFetch(`/api/companies/${id}`, { method: 'DELETE' });
-    if (res.ok) { toast.success('Entreprise supprimée.'); refetch(); }
-    else { const e = await res.json(); toast.error(e.error || 'Erreur suppression'); }
+    try {
+      const res = await apiFetch(`/api/companies/${id}`, { method: 'DELETE' });
+      if (res.ok) { 
+        toast.success('Entreprise supprimée.'); 
+        refetch(); 
+      } else { 
+        const isJson = res.headers.get('content-type')?.includes('application/json');
+        const e = isJson ? await res.json() : null; 
+        toast.error(e?.error || 'Erreur suppression'); 
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur réseau lors de la suppression');
+    }
   };
 
   return (
@@ -248,7 +290,7 @@ export function Companies() {
       )}
 
       {/* Company list */}
-      {(companies as any[]).map((company: any) => (
+      {((companies as any[]) || []).map((company: any) => (
         <div key={company.id} style={{ border: `1px solid ${company.isDefault ? 'var(--border-gold)' : 'var(--border)'}`, background: company.isDefault ? 'var(--gold-dim)' : 'var(--surface)' }}>
           {/* Company header row */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-3) var(--space-4)' }}>

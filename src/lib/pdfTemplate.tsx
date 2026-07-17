@@ -60,6 +60,17 @@ export function buildInvoiceHTML(invoice: any, settings: any): string {
       <span style="color:#ef4444;font-size:12px;font-weight:600;">-${formatCurrency(invoice.discount)}</span>
     </div>` : '';
 
+  const withholdingRow = invoice.vatWithholdingApplied && invoice.taxAmount ? `
+    <div style="display:flex;justify-content:space-between;padding:8px 0;">
+      <span style="color:#64748b;font-size:12px;">Retenue à la source (50% TVA)</span>
+      <span style="color:#111;font-size:12px;font-weight:600;">-${formatCurrency(invoice.taxAmount / 2)}</span>
+    </div>` : '';
+
+  const vatExemptRow = invoice.vatExemptReason ? `
+    <div style="margin-top:12px;padding:8px 12px;background:#f8fafc;border-left:2px solid ${color};font-size:11px;color:#475569;line-height:1.4;">
+      <strong>Exonération TVA :</strong> ${escapeHTML(invoice.vatExemptReason)}
+    </div>` : '';
+
   const notesBlock = invoice.notes ? `
     <div style="margin-bottom:24px;">
       <div style="font-size:10px; font-weight:800; color:${color}; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid ${color}; padding-bottom:4px; margin-bottom:8px; display:inline-block;">Notes & Conditions</div>
@@ -119,9 +130,14 @@ export function buildInvoiceHTML(invoice: any, settings: any): string {
           ${logoHTML}
         </div>
         <div style="font-size:11px;color:#64748b;line-height:1.7;">
+          ${companyInfo?.legalForm ? `<div style="font-weight:600;color:#1e293b;">${escapeHTML(companyInfo.legalForm)}</div>` : ''}
           ${companyInfo?.address ? `<div style="color:#475569;">${escapeHTML(companyInfo.address)}</div>` : ''}
           ${contactInfo ? `<div>${contactInfo}</div>` : ''}
-          ${companyInfo?.taxId ? `<div style="margin-top:4px;">NIF/RCCM : ${escapeHTML(companyInfo.taxId)}</div>` : ''}
+          <div style="margin-top:6px;padding-top:6px;border-top:1px solid #e2e8f0;display:inline-block;">
+            ${companyInfo?.taxId ? `<div><strong>NIF :</strong> ${escapeHTML(companyInfo.taxId)}</div>` : ''}
+            ${companyInfo?.rccm ? `<div><strong>RCCM :</strong> ${escapeHTML(companyInfo.rccm)}</div>` : ''}
+            ${companyInfo?.taxRegime ? `<div><strong>Régime :</strong> ${escapeHTML(companyInfo.taxRegime)}</div>` : ''}
+          </div>
         </div>
       </div>
     </div>
@@ -141,7 +157,9 @@ export function buildInvoiceHTML(invoice: any, settings: any): string {
           ${invoice.client?.address ? `${escapeHTML(invoice.client.address)}<br/>` : ''}
           ${invoice.client?.city ? `${escapeHTML(invoice.client.city)}${invoice.client?.country ? ', ' + escapeHTML(invoice.client.country) : ''}<br/>` : ''}
           ${invoice.client?.phone ? `${escapeHTML(invoice.client.phone)}<br/>` : ''}
-          ${invoice.client?.email ? `${escapeHTML(invoice.client.email)}` : ''}
+          ${invoice.client?.email ? `${escapeHTML(invoice.client.email)}<br/>` : ''}
+          ${invoice.client?.nif ? `<br/><strong>NIF :</strong> ${escapeHTML(invoice.client.nif)}` : ''}
+          ${invoice.client?.rccm ? `<br/><strong>RCCM :</strong> ${escapeHTML(invoice.client.rccm)}` : ''}
         </div>
       </div>
 
@@ -163,6 +181,21 @@ export function buildInvoiceHTML(invoice: any, settings: any): string {
           <tr>
             <td style="padding-bottom:10px;">Échéance :</td>
             <td style="padding-bottom:10px;font-weight:800;color:${color};text-align:right;">${formatDate(invoice.dueDate)}</td>
+          </tr>` : ''}
+          ${invoice.validityDate && invoice.type !== 'facture' ? `
+          <tr>
+            <td style="padding-bottom:10px;">Validité :</td>
+            <td style="padding-bottom:10px;font-weight:800;color:${color};text-align:right;">${formatDate(invoice.validityDate)}</td>
+          </tr>` : ''}
+          ${invoice.sourceDocumentId ? `
+          <tr>
+            <td style="padding-bottom:10px;">Document lié :</td>
+            <td style="padding-bottom:10px;font-weight:800;color:#111;text-align:right;">${escapeHTML(invoice.sourceDocumentId)}</td>
+          </tr>` : ''}
+          ${invoice.paymentTerms ? `
+          <tr>
+            <td style="padding-bottom:10px;">Paiement :</td>
+            <td style="padding-bottom:10px;font-weight:600;color:#475569;text-align:right;">${escapeHTML(invoice.paymentTerms)}</td>
           </tr>` : ''}
         </table>
       </div>
@@ -195,11 +228,13 @@ export function buildInvoiceHTML(invoice: any, settings: any): string {
         </div>
         ${taxRow}
         ${discountRow}
+        ${withholdingRow}
         
         <div style="border-top:1px solid #111;padding-top:12px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;">
           <span style="font-size:12px;font-weight:800;color:#111;text-transform:uppercase;letter-spacing:0.5px;">TOTAL FACTURE</span>
-          <span style="font-size:16px;font-weight:900;color:#111;letter-spacing:-0.5px;">${formatCurrency(invoice.total)}</span>
+          <span style="font-size:16px;font-weight:900;color:#111;letter-spacing:-0.5px;">${formatCurrency(invoice.vatWithholdingApplied && invoice.taxAmount ? invoice.total - (invoice.taxAmount / 2) : invoice.total)}</span>
         </div>
+        ${vatExemptRow}
 
         ${(invoice.receipts && invoice.receipts.length > 0) ? `
         <div style="margin-top:20px;background:#f8fafc;padding:12px 16px;border-left:2px solid #94a3b8;">
@@ -305,9 +340,14 @@ export function buildReceiptHTML(receipt: any, settings: any): string {
           ${logoHTML}
         </div>
         <div style="font-size:11px;color:#64748b;line-height:1.7;">
+          ${companyInfo?.legalForm ? `<div style="font-weight:600;color:#1e293b;">${escapeHTML(companyInfo.legalForm)}</div>` : ''}
           ${companyInfo?.address ? `<div style="color:#475569;">${escapeHTML(companyInfo.address)}</div>` : ''}
           ${contactInfo ? `<div>${contactInfo}</div>` : ''}
-          ${companyInfo?.taxId ? `<div style="margin-top:4px;">NIF/RCCM : ${escapeHTML(companyInfo.taxId)}</div>` : ''}
+          <div style="margin-top:6px;padding-top:6px;border-top:1px solid #e2e8f0;display:inline-block;">
+            ${companyInfo?.taxId ? `<div><strong>NIF :</strong> ${escapeHTML(companyInfo.taxId)}</div>` : ''}
+            ${companyInfo?.rccm ? `<div><strong>RCCM :</strong> ${escapeHTML(companyInfo.rccm)}</div>` : ''}
+            ${companyInfo?.taxRegime ? `<div><strong>Régime :</strong> ${escapeHTML(companyInfo.taxRegime)}</div>` : ''}
+          </div>
         </div>
       </div>
     </div>
@@ -327,7 +367,9 @@ export function buildReceiptHTML(receipt: any, settings: any): string {
           ${receipt.client?.address ? `${escapeHTML(receipt.client.address)}<br/>` : ''}
           ${receipt.client?.city ? `${escapeHTML(receipt.client.city)}${receipt.client?.country ? ', ' + escapeHTML(receipt.client.country) : ''}<br/>` : ''}
           ${receipt.client?.phone ? `${escapeHTML(receipt.client.phone)}<br/>` : ''}
-          ${receipt.client?.email ? `${escapeHTML(receipt.client.email)}` : ''}
+          ${receipt.client?.email ? `${escapeHTML(receipt.client.email)}<br/>` : ''}
+          ${receipt.client?.nif ? `<br/><strong>NIF :</strong> ${escapeHTML(receipt.client.nif)}` : ''}
+          ${receipt.client?.rccm ? `<br/><strong>RCCM :</strong> ${escapeHTML(receipt.client.rccm)}` : ''}
         </div>
       </div>
 
@@ -349,6 +391,11 @@ export function buildReceiptHTML(receipt: any, settings: any): string {
             <td style="padding-bottom:10px;">Moyen de paiement :</td>
             <td style="padding-bottom:10px;font-weight:800;color:${color};text-align:right;">${paymentMethod}</td>
           </tr>
+          ${receipt.receivedBy ? `
+          <tr>
+            <td style="padding-bottom:10px;">Reçu par :</td>
+            <td style="padding-bottom:10px;font-weight:600;color:#475569;text-align:right;">${escapeHTML(receipt.receivedBy)}</td>
+          </tr>` : ''}
         </table>
       </div>
 
@@ -393,6 +440,12 @@ export function buildReceiptHTML(receipt: any, settings: any): string {
               <span>Total de la facture</span>
               <span style="font-weight:700;color:#111;">${formatCurrency(receipt.invoice.total)}</span>
            </div>
+           ${(receipt.invoice.amountPaid - receipt.amount) > 0 ? `
+           <div style="display:flex;justify-content:space-between;font-size:12px;color:#475569;margin-bottom:10px;">
+              <span>Déjà payé</span>
+              <span style="font-weight:700;color:#111;">- ${formatCurrency(receipt.invoice.amountPaid - receipt.amount)}</span>
+           </div>
+           ` : ''}
            <div style="display:flex;justify-content:space-between;font-size:12px;color:#475569;margin-bottom:12px;">
               <span>Ce paiement</span>
               <span style="font-weight:700;color:#15803d;">- ${formatCurrency(receipt.amount)}</span>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { formatCurrency, formatDate, useAppStore, apiFetch } from '../lib/store';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -8,8 +8,22 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import { useForm } from 'react-hook-form';
 import { PageHeader } from './ui/PageHeader';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Field } from './ui/Field';
+import { DatePicker } from './ui/DatePicker';
 import { Plus, TrendingDown, FileText as FileTextIcon } from 'lucide-react';
 import { toast } from 'sonner';
+
+const expenseSchema = z.object({
+  category: z.string().min(1, "La catégorie est requise").max(100),
+  amount: z.number({ invalid_type_error: "Le montant doit être un nombre" }).min(0.01, "Le montant doit être supérieur à 0"),
+  expenseDate: z.string().min(1, "La date est requise"),
+  description: z.string().optional(),
+  receiptUrl: z.string().optional()
+});
+
+type ExpenseFormValues = z.infer<typeof expenseSchema>;
 
 export function Expenses() {
   const refreshExpenses = useAppStore(state => state.refreshExpenses);
@@ -23,10 +37,12 @@ export function Expenses() {
       if (!res.ok) return [];
       const data = await res.json();
       return Array.isArray(data) ? data : [];
-    }
+    },
+    placeholderData: keepPreviousData,
   });
 
-  const { register, handleSubmit, reset } = useForm({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ExpenseFormValues>({
+    resolver: zodResolver(expenseSchema),
     defaultValues: {
       category: 'Général',
       amount: 0,
@@ -41,40 +57,49 @@ export function Expenses() {
     setIsModalOpen(true);
   };
 
-  const onSubmit = async (data: any) => {
-    if (!data.amount || data.amount <= 0) {
-      toast.error("Le montant doit être supérieur à zéro.");
-      return;
-    }
-
+  const onSubmit = async (data: ExpenseFormValues) => {
     const payload = {
       ...data,
       amount: Number(data.amount),
-      expenseDate: new Date(data.expenseDate).toISOString()
+      expenseDate: data.expenseDate ? new Date(data.expenseDate).toISOString() : new Date().toISOString()
     };
 
-    const res = await apiFetch('/api/expenses', {
-       method: 'POST',
-       body: JSON.stringify(payload)
-    });
+    try {
+      const res = await apiFetch('/api/expenses', {
+         method: 'POST',
+         body: JSON.stringify(payload)
+      });
 
-    if (res.ok) {
-      toast.success('Dépense enregistrée');
-      setIsModalOpen(false);
-      triggerRefresh('expenses');
-      triggerRefresh('stats');
-    } else {
-      toast.error('Erreur lors de l\'enregistrement');
+      if (res.ok) {
+        toast.success('Dépense enregistrée');
+        setIsModalOpen(false);
+        triggerRefresh('expenses');
+        triggerRefresh('stats');
+      } else {
+        const isJson = res.headers.get('content-type')?.includes('application/json');
+        const e = isJson ? await res.json() : null;
+        toast.error(e?.error || 'Erreur lors de l\'enregistrement');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur réseau lors de l\'enregistrement');
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Voulez-vous supprimer cette dépense ?')) return;
-    const res = await apiFetch(`/api/expenses/${id}`, { method: 'DELETE' });
-    if (res.ok) {
-      toast.success('Dépense supprimée');
-      triggerRefresh('expenses');
-      triggerRefresh('stats');
+    try {
+      const res = await apiFetch(`/api/expenses/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('Dépense supprimée');
+        triggerRefresh('expenses');
+        triggerRefresh('stats');
+      } else {
+        const isJson = res.headers.get('content-type')?.includes('application/json');
+        const e = isJson ? await res.json() : null;
+        toast.error(e?.error || 'Erreur lors de la suppression');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Erreur réseau lors de la suppression');
     }
   };
 
@@ -144,8 +169,7 @@ export function Expenses() {
           />
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
             <div className="overflow-y-auto custom-scrollbar flex-1 grid bg-[var(--background)]" style={{ gap: 'var(--space-5)', padding: 'var(--space-6) var(--space-8)' }}>
-              <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)]" style={{ marginBottom: 'var(--space-1)' }}>Catégorie</label>
+              <Field label="Catégorie" required>
                 <select {...register('category')} className="fp-input w-full">
                   <option value="Achats">Achats &amp; Matériel</option>
                   <option value="Salaires">Salaires &amp; Primes</option>
@@ -154,19 +178,20 @@ export function Expenses() {
                   <option value="Marketing">Marketing &amp; Pub</option>
                   <option value="Général">Frais Généraux</option>
                 </select>
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)]" style={{ marginBottom: 'var(--space-1)' }}>Montant</label>
-                <Input type="number" step="0.01" {...register('amount')} required />
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)]" style={{ marginBottom: 'var(--space-1)' }}>Date de dépense</label>
-                <Input type="date" {...register('expenseDate')} required />
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold tracking-wide uppercase text-[var(--foreground-subtle)]" style={{ marginBottom: 'var(--space-1)' }}>Description (facultative)</label>
+                {errors.category && <p className="text-sm text-red-500 mt-1">{errors.category.message}</p>}
+              </Field>
+              <Field label="Montant" required>
+                <Input type="number" step="0.01" min="0.01" {...register('amount', { valueAsNumber: true })} />
+                {errors.amount && <p className="text-sm text-red-500 mt-1">{errors.amount.message}</p>}
+              </Field>
+              <Field label="Date de dépense" required>
+                <DatePicker value={watch('expenseDate')} onChange={v => setValue('expenseDate', v)} required />
+                {errors.expenseDate && <p className="text-sm text-red-500 mt-1">{errors.expenseDate.message}</p>}
+              </Field>
+              <Field label="Description (facultative)">
                 <Textarea {...register('description')} placeholder="Ex: Achat d'une nouvelle imprimante..." />
-              </div>
+                {errors.description && <p className="text-sm text-red-500 mt-1">{errors.description.message}</p>}
+              </Field>
             </div>
             <DialogFooter>
               <button type="button" className="fp-btn-outline" onClick={() => setIsModalOpen(false)}>Annuler</button>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useAppStore, formatCurrency, formatDate, apiFetch } from '../lib/store';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import { useAppStore, formatCurrency, formatDate, apiFetch, getWhatsAppUrl } from '../lib/store';
 import { PageHeader } from './ui/PageHeader';
 import { toast } from 'sonner';
 import { MessageCircle, Mail, AlertTriangle, Calendar } from 'lucide-react';
@@ -11,31 +11,16 @@ export function Reminders() {
   const refreshReminders = useAppStore(state => state.refreshReminders);
   const triggerRefresh = useAppStore(state => state.triggerRefresh);
 
-  const { data: invoices, isLoading, refetch } = useQuery({
+  const { data: pendingInvoices, isLoading, refetch } = useQuery({
     queryKey: ['reminders', refreshReminders],
     queryFn: async () => {
-      // On récupère toutes les factures, puis on filtre côté client pour l'instant
-      const res = await apiFetch(`/api/invoices?status=toutes`);
+      const res = await apiFetch(`/api/invoices?status=impayee`);
       if (!res.ok) return [];
       const data = await res.json();
       return Array.isArray(data) ? data : [];
-    }
+    },
+    placeholderData: keepPreviousData,
   });
-
-  // On filtre pour n'avoir que ce qui a un reste à payer et qui n'est pas un devis ou annulé
-  const pendingInvoices = invoices?.filter((inv: any) => {
-     // Recalcul sécurisé du reste à payer côté frontend
-     const paid = (inv.receipts || []).reduce((sum: number, r: any) => sum + Number(r.amount || 0), 0);
-     const remaining = Math.max(0, Number(inv.total || 0) - paid);
-     
-     const isDevis = String(inv.type).toLowerCase() === 'devis';
-     const isCanceled = String(inv.status).toLowerCase() === 'annulée';
-     
-     // On s'assure d'écraser la valeur pour l'affichage au cas où
-     inv.amountRemaining = remaining;
-     
-     return !isDevis && !isCanceled && remaining > 0;
-  }) || [];
 
   const sendReminder = async (inv: any, method: 'whatsapp' | 'email') => {
     const toastId = toast.loading(`Envoi de la relance via ${method}...`);
@@ -97,12 +82,13 @@ export function Reminders() {
         }
         
         const encodedMsg = encodeURIComponent(finalMsg);
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        const waUrl = isMobile 
-          ? `whatsapp://send?text=${encodedMsg}` + (phone ? `&phone=${phone}` : '') 
-          : (phone ? `https://api.whatsapp.com/send?phone=${phone}&text=${encodedMsg}` : `https://api.whatsapp.com/send?text=${encodedMsg}`);
-        window.open(waUrl, '_blank');
-        
+        const waUrl = getWhatsAppUrl(phone, encodedMsg);
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+          window.location.href = waUrl;
+        } else {
+          window.open(waUrl, '_blank');
+        }
       } else {
         const email = fullInv.client?.email;
         if(!email) throw new Error("Aucun email pour ce client");
@@ -123,9 +109,9 @@ export function Reminders() {
       }
 
       // Mettre à jour lastReminderDate
-      await apiFetch(`/api/invoices/${inv.id}`, { 
-          method: 'PUT', 
-          body: JSON.stringify({ ...inv, lastReminderDate: new Date().toISOString() }) 
+      await apiFetch(`/api/invoices/${inv.id}/remind`, { 
+          method: 'POST', 
+          body: JSON.stringify({ method }) 
       });
 
       toast.success("Relance envoyée avec succès !", { id: toastId });
@@ -168,7 +154,7 @@ export function Reminders() {
                 </td>
               </tr>
             ) : (
-              pendingInvoices.map((inv: any) => {
+              (pendingInvoices || []).map((inv: any) => {
                 const daysSinceIssue = Math.floor((new Date().getTime() - new Date(inv.createdAt).getTime()) / (1000 * 60 * 60 * 24));
                 const isLate = daysSinceIssue > 30; // On considère en retard après 30 jours
                 

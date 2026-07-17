@@ -36,7 +36,13 @@ $GLOBALS['camelCaseCols'] = [
     'filesize' => 'fileSize', 'uploadedat' => 'uploadedAt',
     'clientname' => 'clientName', 'invoicenumber' => 'invoiceNumber',
     'remindertype' => 'reminderType', 'sentat' => 'sentAt',
-    'remindersettings' => 'reminderSettings'
+    'remindersettings' => 'reminderSettings',
+    'clienttype' => 'clientType', 'legalform' => 'legalForm',
+    'taxregime' => 'taxRegime', 'defaultvatrate' => 'defaultVatRate',
+    'validitydate' => 'validityDate', 'paymentterms' => 'paymentTerms',
+    'vatwithholdingapplied' => 'vatWithholdingApplied',
+    'vatexemptreason' => 'vatExemptReason', 'sourcedocumentid' => 'sourceDocumentId',
+    'receivedby' => 'receivedBy'
 ];
 
 if (!class_exists('MyPDOStatement')) {

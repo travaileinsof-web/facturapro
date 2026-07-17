@@ -10,22 +10,28 @@ class Helper {
     public static function recalculerStatutFacture($pdo, $invoiceId, $accountId) {
         if (!$invoiceId) return;
         
-        $stmt = $pdo->prepare("SELECT total FROM ProformaInvoice WHERE id = ? AND accountId = ?");
+        $stmt = $pdo->prepare("SELECT total, \"vatWithholdingApplied\", taxAmount, status FROM ProformaInvoice WHERE id = ? AND accountId = ?");
         $stmt->execute([$invoiceId, $accountId]);
-        $invoiceTotal = $stmt->fetchColumn();
+        $inv = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        if ($invoiceTotal === false) return;
+        if (!$inv) return;
+
+        $actualTotal = (float)$inv['total'];
+        if (!empty($inv['vatWithholdingApplied']) && (float)$inv['taxAmount'] > 0) {
+            $actualTotal -= ((float)$inv['taxAmount'] / 2);
+        }
 
         $stmt = $pdo->prepare("SELECT SUM(amount) as paid FROM Receipt WHERE proformaInvoiceId = ? AND accountId = ?");
         $stmt->execute([$invoiceId, $accountId]);
-        $paid = $stmt->fetchColumn() ?: 0;
+        $paid = (float)($stmt->fetchColumn() ?: 0);
         
         if ($paid == 0) {
-            $status = 'envoyee';
-        } elseif ($paid >= $invoiceTotal) {
-            $status = 'payee';
+            $currentStatus = $inv['status'];
+            $status = ($currentStatus === 'brouillon' || $currentStatus === 'annulée') ? $currentStatus : 'envoyée';
+        } elseif ($paid >= $actualTotal) {
+            $status = 'payée';
         } else {
-            $status = 'partiellement_payee';
+            $status = 'partielle';
         }
         
         $stmt = $pdo->prepare("UPDATE ProformaInvoice SET status = ? WHERE id = ? AND accountId = ?");
@@ -54,5 +60,36 @@ class Helper {
         }
         
         return $status;
+    }
+
+    public static function getExchangeRate($fromCurrency, $toCurrency) {
+        $fromCurrency = strtoupper($fromCurrency ?? '');
+        $toCurrency = strtoupper($toCurrency ?? '');
+        
+        if ($fromCurrency === $toCurrency || empty($fromCurrency) || empty($toCurrency)) {
+            return 1.0;
+        }
+
+        // Base de référence: 1 USD
+        $rates = [
+            'USD' => 1.0,
+            'GNF' => 8500.0, // Franc Guinéen
+            'XOF' => 600.0,  // Franc CFA (UEMOA)
+            'XAF' => 600.0,  // Franc CFA (CEMAC)
+            'EUR' => 0.92,
+            'CAD' => 1.35,
+            'GBP' => 0.78,
+            'MAD' => 10.0,   // Dirham marocain
+            'ZAR' => 18.5,   // Rand sud-africain
+        ];
+
+        $rateFrom = $rates[$fromCurrency] ?? null;
+        $rateTo = $rates[$toCurrency] ?? null;
+
+        if (!$rateFrom || !$rateTo) {
+            return 1.0; // Fallback: pas de conversion si devise inconnue
+        }
+
+        return $rateTo / $rateFrom;
     }
 }
