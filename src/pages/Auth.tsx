@@ -26,16 +26,32 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
     resolver: zodResolver(registerSchema)
   });
 
+  const safeFetch = async (url: string, options: RequestInit) => {
+    const res = await fetch(url, options);
+    let data: any = {};
+    try {
+      const text = await res.text();
+      data = text ? JSON.parse(text) : {};
+    } catch {
+      if (!res.ok) throw new Error(`Erreur serveur (${res.status}). Veuillez réessayer.`);
+    }
+    if (!res.ok) {
+      if (data?.code === 'DB_UNAVAILABLE') {
+        throw new Error('⏳ La base de données se réveille. Veuillez réessayer dans 5 secondes.');
+      }
+      throw new Error(data?.error || `Erreur ${res.status}`);
+    }
+    return data;
+  };
+
   const handleLogin = async (data: LoginData) => {
     setError(''); setLoading(true);
     try {
-      const res = await fetch('/api/auth/login', {
+      const resData = await safeFetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      const resData = await res.json();
-      if (!res.ok) throw new Error(resData.error || 'Erreur de connexion');
       login(resData);
       navigate('/app');
     } catch (err: any) {
@@ -48,13 +64,11 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
   const handleRegister = async (data: RegisterData) => {
     setError(''); setLoading(true);
     try {
-      const res = await fetch('/api/auth/register', {
+      const resData = await safeFetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      const resData = await res.json();
-      if (!res.ok) throw new Error(resData.error || 'Erreur lors de la création du compte');
       login(resData);
       navigate('/app');
     } catch (err: any) {

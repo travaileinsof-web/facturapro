@@ -14,8 +14,13 @@ if (php_sapi_name() === 'cli-server') {
 // ==========================================
 $allowedOrigins = [
     'http://localhost:3003',
+    'http://127.0.0.1:3003',
     'http://localhost:8000',
+    'http://127.0.0.1:8000',
     'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:5174',
+    'http://127.0.0.1:5174',
     'https://facturapro.com'
 ];
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
@@ -25,6 +30,7 @@ if (in_array($origin, $allowedOrigins)) {
     // Si l'origine n'est pas autorisée, on ne renvoie pas d'entête CORS permissive
     if ($origin !== '') {
         http_response_code(403);
+        echo json_encode(["error" => "CORS Origin not allowed: " . $origin]);
         exit;
     }
 }
@@ -60,19 +66,32 @@ require_once __DIR__ . '/controllers/SuperAdminController.php';
 require_once __DIR__ . '/controllers/AdminSettingsController.php';
 require_once __DIR__ . '/controllers/AdminAuthController.php';
 
-// Database Connection
-try {
-    $pdo = new PDO(DB_DSN, DB_USER, DB_PASS);
-    if (class_exists('MyPDOStatement')) {
-        $pdo->setAttribute(PDO::ATTR_STATEMENT_CLASS, ['MyPDOStatement', []]);
+// Database Connection — with retry for Neon cold-start (3 attempts)
+$pdo       = null;
+$dbLastErr = '';
+for ($dbAttempt = 1; $dbAttempt <= 3; $dbAttempt++) {
+    try {
+        $pdo = new PDO(DB_DSN, DB_USER, DB_PASS);
+        if (class_exists('MyPDOStatement')) {
+            $pdo->setAttribute(PDO::ATTR_STATEMENT_CLASS, ['MyPDOStatement', []]);
+        }
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        break; // success
+    } catch (PDOException $e) {
+        $dbLastErr = $e->getMessage();
+        error_log("DB Connection attempt $dbAttempt failed: $dbLastErr");
+        if ($dbAttempt < 3) {
+            sleep(1); // wait 1s before retry (Neon wake-up)
+        }
     }
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    // PREVENT ERROR LEAK
-    error_log("DB Connection Error: " . $e->getMessage());
-    http_response_code(500);
-    echo json_encode(["error" => "Internal Database Server Error."]);
+}
+if ($pdo === null) {
+    http_response_code(503);
+    echo json_encode([
+        "error"   => "Service temporairement indisponible. La base de données se réveille, veuillez réessayer dans 5 secondes.",
+        "code"    => "DB_UNAVAILABLE"
+    ]);
     exit;
 }
 
