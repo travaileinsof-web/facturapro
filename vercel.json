@@ -21,15 +21,29 @@
       }
     }
   ],
-  "rewrites": [
-    { "source": "/api/cron/reminders", "destination": "/backend/cron_reminders.php" },
-    { "source": "/api/check_db/:path*",  "destination": "/backend/check_db.php" },
-    { "source": "/api/:path*",           "destination": "/backend/api.php" }
-  ],
-  "headers": [
+  "routes": [
     {
-      "source": "/backend/(.*)",
-      "headers": [{ "key": "x-robots-tag", "value": "noindex" }]
+      "src": "/api/cron/reminders",
+      "dest": "/backend/cron_reminders.php"
+    },
+    {
+      "src": "/api/check_db(.*)",
+      "dest": "/backend/check_db.php"
+    },
+    {
+      "src": "/api(.*)",
+      "dest": "/backend/api.php"
+    },
+    {
+      "src": "/backend/(.*)",
+      "status": 403
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ],
   "crons": [
