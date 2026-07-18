@@ -26,6 +26,8 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
     resolver: zodResolver(registerSchema)
   });
 
+  const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
   const safeFetch = async (url: string, options: RequestInit) => {
     const res = await fetch(url, options);
     let data: any = {};
@@ -35,19 +37,33 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
     } catch {
       if (!res.ok) throw new Error(`Erreur serveur (${res.status}). Veuillez réessayer.`);
     }
-    if (!res.ok) {
-      if (data?.code === 'DB_UNAVAILABLE') {
-        throw new Error('⏳ La base de données se réveille. Veuillez réessayer dans 5 secondes.');
-      }
-      throw new Error(data?.error || `Erreur ${res.status}`);
-    }
+    if (!res.ok) throw Object.assign(new Error(data?.error || `Erreur ${res.status}`), { code: data?.code });
     return data;
+  };
+
+  const fetchWithDbRetry = async (url: string, options: RequestInit, maxRetries = 3): Promise<any> => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await safeFetch(url, options);
+      } catch (err: any) {
+        if (err?.code === 'DB_UNAVAILABLE' && attempt < maxRetries) {
+          // Compte à rebours automatique
+          for (let s = 5; s >= 1; s--) {
+            setError(`⏳ Base de données en démarrage... nouvelle tentative dans ${s}s (essai ${attempt}/${maxRetries})`);
+            await sleep(1000);
+          }
+          setError('');
+          continue;
+        }
+        throw err;
+      }
+    }
   };
 
   const handleLogin = async (data: LoginData) => {
     setError(''); setLoading(true);
     try {
-      const resData = await safeFetch('/api/auth/login', {
+      const resData = await fetchWithDbRetry('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -64,7 +80,7 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
   const handleRegister = async (data: RegisterData) => {
     setError(''); setLoading(true);
     try {
-      const resData = await safeFetch('/api/auth/register', {
+      const resData = await fetchWithDbRetry('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)

@@ -68,31 +68,21 @@ require_once __DIR__ . '/controllers/SuperAdminController.php';
 require_once __DIR__ . '/controllers/AdminSettingsController.php';
 require_once __DIR__ . '/controllers/AdminAuthController.php';
 
-// Database Connection — with retry for Neon cold-start (3 attempts)
-$pdo       = null;
-$dbLastErr = '';
-for ($dbAttempt = 1; $dbAttempt <= 3; $dbAttempt++) {
-    try {
-        $pdo = new PDO(DB_DSN, DB_USER, DB_PASS);
-        if (class_exists('MyPDOStatement')) {
-            $pdo->setAttribute(PDO::ATTR_STATEMENT_CLASS, ['MyPDOStatement', []]);
-        }
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        break; // success
-    } catch (PDOException $e) {
-        $dbLastErr = $e->getMessage();
-        error_log("DB Connection attempt $dbAttempt failed: $dbLastErr");
-        if ($dbAttempt < 3) {
-            sleep(1); // wait 1s before retry (Neon wake-up)
-        }
+// Database Connection — fast fail for Neon cold-start (frontend handles retry)
+$pdo = null;
+try {
+    $pdo = new PDO(DB_DSN, DB_USER, DB_PASS);
+    if (class_exists('MyPDOStatement')) {
+        $pdo->setAttribute(PDO::ATTR_STATEMENT_CLASS, ['MyPDOStatement', []]);
     }
-}
-if ($pdo === null) {
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    error_log("DB Connection failed: " . $e->getMessage());
     http_response_code(503);
     echo json_encode([
-        "error"   => "Service temporairement indisponible. La base de données se réveille, veuillez réessayer dans 5 secondes.",
-        "code"    => "DB_UNAVAILABLE"
+        "error" => "Base de données indisponible. Nouvelle tentative automatique...",
+        "code"  => "DB_UNAVAILABLE"
     ]);
     exit;
 }
