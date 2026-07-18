@@ -21,7 +21,9 @@ $allowedOrigins = [
     'http://127.0.0.1:5173',
     'http://localhost:5174',
     'http://127.0.0.1:5174',
-    'https://facturapro.com'
+    'https://facturapro.com',
+    'https://www.facturadigit.online',
+    'https://facturadigit.online'
 ];
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (in_array($origin, $allowedOrigins)) {
