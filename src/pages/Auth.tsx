@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Logo } from '../components/Logo';
 import { useAppStore } from '../lib/store';
 import { PageTransition } from '../components/ui/PageTransition';
 import { BlobShape, GridPattern, GeometricShapes, WavesShape } from '../components/ui/AbstractShapes';
@@ -12,6 +14,7 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
   const [tab, setTab] = useState<'login' | 'register'>(mode);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { login } = useAppStore();
 
@@ -61,15 +64,26 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
     }
   };
 
-  const field = (label: string, type: string, ph: string, registration: any, err?: string, extra?: any) => (
+  const field = (label: string, type: string, ph: string, registration: any, err?: string, extra?: any, showToggle?: boolean) => (
     <div {...extra}>
       <label style={{ display: 'block', fontSize: '12px', color: 'var(--color-text)', fontWeight: 500, marginBottom: '6px', letterSpacing: '0.5px' }}>{label}</label>
-      <input
-        type={type} placeholder={ph} {...registration}
-        style={{ width: '100%', padding: '12px 16px', borderRadius: '2px', border: err ? '1px solid #ef4444' : '1px solid var(--color-border)', fontSize: '13px', color: 'var(--color-text)', outline: 'none', background: 'var(--color-surface)', fontWeight: 300, transition: 'all 0.3s ease' }}
-        onFocus={e => { e.target.style.borderColor = err ? '#ef4444' : 'var(--color-gold)'; e.target.style.boxShadow = err ? '0 0 0 3px rgba(239, 68, 68, 0.1)' : '0 0 0 3px rgba(212, 175, 55, 0.1)'; }}
-        onBlur={e => { e.target.style.borderColor = err ? '#ef4444' : 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
-      />
+      <div style={{ position: 'relative' }}>
+        <input
+          type={type === 'password' && showToggle ? 'text' : type} placeholder={ph} {...registration}
+          style={{ width: '100%', padding: '12px 16px', paddingRight: type === 'password' ? '40px' : '16px', borderRadius: '2px', border: err ? '1px solid #ef4444' : '1px solid var(--color-border)', fontSize: '13px', color: 'var(--color-text)', outline: 'none', background: 'var(--color-surface)', fontWeight: 300, transition: 'all 0.3s ease' }}
+          onFocus={e => { e.target.style.borderColor = err ? '#ef4444' : 'var(--color-gold)'; e.target.style.boxShadow = err ? '0 0 0 3px rgba(239, 68, 68, 0.1)' : '0 0 0 3px rgba(212, 175, 55, 0.1)'; }}
+          onBlur={e => { e.target.style.borderColor = err ? '#ef4444' : 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
+        />
+        {type === 'password' && (
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            {showToggle ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        )}
+      </div>
       {err && <span style={{ display: 'block', marginTop: '4px', fontSize: '11px', color: '#ef4444' }}>{err}</span>}
     </div>
   );
@@ -85,10 +99,7 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
       {/* Brand logo */}
       <Reveal delay={0}>
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', marginBottom: '32px', position: 'relative', zIndex: 1 }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '2px', background: 'var(--color-gold)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: '20px', fontWeight: 700, color: '#1A1715', fontFamily: '"Playfair Display", serif' }}>F</span>
-          </div>
-          <span style={{ fontWeight: 600, fontSize: '20px', color: 'var(--color-text)', letterSpacing: '0.5px' }}>FacturaPro</span>
+          <img src="/logo-dark.png" alt="FacturaPro Logo" style={{ width: '160px', height: 'auto', objectFit: 'contain' }} />
         </Link>
       </Reveal>
 
@@ -114,13 +125,22 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                 <label style={{ fontSize: '12px', color: 'var(--color-text)', fontWeight: 500, letterSpacing: '0.5px' }}>Mot de passe</label>
-                <button type="button" style={{ background: 'none', border: 'none', color: 'var(--color-gold)', fontSize: '12px', fontWeight: 300, cursor: 'pointer', outline: 'none' }}>Mot de passe oublié ?</button>
+                <button type="button" onClick={() => navigate('/forgot-password')} style={{ background: 'none', border: 'none', color: 'var(--color-gold)', fontSize: '12px', fontWeight: 300, cursor: 'pointer', outline: 'none' }}>Mot de passe oublié ?</button>
               </div>
-              <input type="password" placeholder="••••••••" {...registerLogin('password')}
-                style={{ width: '100%', padding: '12px 16px', borderRadius: '2px', border: loginErrors.password ? '1px solid #ef4444' : '1px solid var(--color-border)', fontSize: '13px', color: 'var(--color-text)', outline: 'none', background: 'var(--color-surface)', fontWeight: 300, transition: 'all 0.3s ease' }}
-                onFocus={e => { e.target.style.borderColor = loginErrors.password ? '#ef4444' : 'var(--color-gold)'; e.target.style.boxShadow = loginErrors.password ? '0 0 0 3px rgba(239, 68, 68, 0.1)' : '0 0 0 3px rgba(212, 175, 55, 0.1)'; }}
-                onBlur={e => { e.target.style.borderColor = loginErrors.password ? '#ef4444' : 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
-              />
+              <div style={{ position: 'relative' }}>
+                <input type={showPassword ? 'text' : 'password'} placeholder="••••••••" {...registerLogin('password')}
+                  style={{ width: '100%', padding: '12px 16px', paddingRight: '40px', borderRadius: '2px', border: loginErrors.password ? '1px solid #ef4444' : '1px solid var(--color-border)', fontSize: '13px', color: 'var(--color-text)', outline: 'none', background: 'var(--color-surface)', fontWeight: 300, transition: 'all 0.3s ease' }}
+                  onFocus={e => { e.target.style.borderColor = loginErrors.password ? '#ef4444' : 'var(--color-gold)'; e.target.style.boxShadow = loginErrors.password ? '0 0 0 3px rgba(239, 68, 68, 0.1)' : '0 0 0 3px rgba(212, 175, 55, 0.1)'; }}
+                  onBlur={e => { e.target.style.borderColor = loginErrors.password ? '#ef4444' : 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
               {loginErrors.password && <span style={{ display: 'block', marginTop: '4px', fontSize: '11px', color: '#ef4444' }}>{loginErrors.password.message}</span>}
             </div>
             <button type="submit" disabled={loading} style={{ width: '100%', marginTop: '8px', padding: '14px', background: 'var(--color-gold)', color: '#1A1715', fontSize: '13px', fontWeight: 600, borderRadius: '2px', border: 'none', cursor: loading ? 'wait' : 'pointer', transition: 'all 0.3s ease', textTransform: 'uppercase', letterSpacing: '0.5px' }}
@@ -145,8 +165,8 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
             </div>
             {field('Nom de l\'entreprise', 'text', 'Sarl Mon Entreprise', registerReg('company'), regErrors.company?.message)}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              {field('Mot de passe', 'password', '••••••••', registerReg('password'), regErrors.password?.message)}
-              {field('Confirmez', 'password', '••••••••', registerReg('confirm'), regErrors.confirm?.message)}
+              {field('Mot de passe', 'password', '••••••••', registerReg('password'), regErrors.password?.message, undefined, showPassword)}
+              {field('Confirmez', 'password', '••••••••', registerReg('confirm'), regErrors.confirm?.message, undefined, showPassword)}
             </div>
             <button type="submit" disabled={loading} style={{ width: '100%', marginTop: '8px', padding: '14px', background: 'var(--color-gold)', color: '#1A1715', fontSize: '13px', fontWeight: 600, borderRadius: '2px', border: 'none', cursor: loading ? 'wait' : 'pointer', transition: 'all 0.3s ease', textTransform: 'uppercase', letterSpacing: '0.5px' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#E6D5B8'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'; }}

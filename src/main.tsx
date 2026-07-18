@@ -8,6 +8,7 @@ import { Pricing } from './pages/public/Pricing';
 import { About } from './pages/public/About';
 import { Contact } from './pages/public/Contact';
 import { Auth } from './pages/Auth';
+import { ForgotPassword } from './pages/ForgotPassword';
 import App from './App';
 import { SuperAdminPage } from './pages/SuperAdminPage';
 import { useAppStore } from './lib/store';
@@ -38,6 +39,7 @@ function AnimatedRoutes() {
         <Route path="/contact" element={<PublicRoute><Contact /></PublicRoute>} />
         <Route path="/login" element={<PublicRoute><Auth mode="login" /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Auth mode="register" /></PublicRoute>} />
+        <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
         <Route path="/app" element={<ProtectedRoute><App /></ProtectedRoute>} />
         <Route path="/admin" element={<SuperAdminPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />

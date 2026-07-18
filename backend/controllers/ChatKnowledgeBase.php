@@ -61,7 +61,7 @@ class ChatKnowledgeBase {
             // ==========================================
             [
                 'id' => 'client_ajouter',
-                'keywords' => ['comment', 'ajouter', 'nouveau', 'client', 'creer', 'particulier'],
+                'keywords' => ['ajouter', 'nouveau', 'creer', 'particulier', 'entreprise', 'faire'],
                 'answer' => "Pour ajouter un client, allez dans le menu 'Clients' puis cliquez sur le bouton 'Nouveau Client'. Remplissez ses coordonnées et enregistrez."
             ],
             [
@@ -115,7 +115,7 @@ class ChatKnowledgeBase {
             // ==========================================
             [
                 'id' => 'catalogue_ajouter',
-                'keywords' => ['ajouter', 'nouvel', 'article', 'service', 'produit', 'catalogue'],
+                'keywords' => ['ajouter', 'creer', 'nouvel', 'article', 'service', 'produit', 'faire'],
                 'answer' => "Allez dans le menu 'Catalogue', cliquez sur 'Nouvel Article', choisissez s'il s'agit d'un Produit ou d'un Service, et définissez son prix."
             ],
             [
@@ -169,8 +169,8 @@ class ChatKnowledgeBase {
             // ==========================================
             [
                 'id' => 'facture_creer',
-                'keywords' => ['creer', 'nouvelle', 'facture'],
-                'answer' => "Allez dans 'Factures' > 'Nouveau Document', sélectionnez un client, ajoutez vos articles, et cliquez sur 'Enregistrer'."
+                'keywords' => ['creer', 'nouvelle', 'devis', 'proforma', 'faire'],
+                'answer' => "Allez dans 'Factures' > 'Nouveau Document', sélectionnez un client, ajoutez vos articles, et cliquez sur 'Enregistrer'. Lors de la création, vous pourrez choisir s'il s'agit d'une Facture ou d'un Devis (Proforma)."
             ],
             [
                 'id' => 'facture_diff_proforma',
@@ -223,7 +223,7 @@ class ChatKnowledgeBase {
             // ==========================================
             [
                 'id' => 'recu_generer',
-                'keywords' => ['generer', 'officiel', 'reception', 'paiement'],
+                'keywords' => ['generer', 'creer', 'nouveau', 'officiel', 'reception', 'paiement', 'faire'],
                 'answer' => "Depuis une facture, cliquez sur 'Ajouter un paiement'. Renseignez le montant reçu et le mode de paiement, le reçu sera généré automatiquement."
             ],
             [
@@ -277,7 +277,7 @@ class ChatKnowledgeBase {
             // ==========================================
             [
                 'id' => 'depense_enregistrer',
-                'keywords' => ['enregistrer', 'nouvelle', 'depense', 'operationnelle'],
+                'keywords' => ['enregistrer', 'creer', 'ajouter', 'nouvelle', 'operationnelle', 'achat', 'faire'],
                 'answer' => "Allez dans le menu 'Dépenses', cliquez sur 'Nouvelle Dépense', indiquez le montant, la catégorie, la date et le bénéficiaire."
             ],
             [

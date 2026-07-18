@@ -10,9 +10,11 @@ class AdminAuthController {
             $stmt->execute([$username]);
             $admin = $stmt->fetch();
             
-            if ($admin && password_verify($password, $admin['passwordHash'])) {
+            $dbHash = $admin['passwordHash'] ?? $admin['passwordhash'] ?? '';
+            if ($admin && password_verify($password, $dbHash)) {
                 $token = bin2hex(random_bytes(32));
-                $pdo->prepare("UPDATE SuperAdmin SET token = ? WHERE id = ?")->execute([$token, $admin['id']]);
+                $hashedToken = hash('sha256', $token);
+                $pdo->prepare("UPDATE SuperAdmin SET token = ? WHERE id = ?")->execute([$hashedToken, $admin['id']]);
                 
                 echo json_encode([
                     "id" => $admin['id'],

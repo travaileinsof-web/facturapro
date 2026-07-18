@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Logo } from '../../components/Logo';
 
 const NAV_LINKS = [
   { to: '/', label: 'Accueil' },
@@ -35,19 +36,8 @@ export function PublicNavbar() {
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px', height: '68px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
           {/* Logo */}
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', flexShrink: 0 }}>
-            <div style={{ width: '34px', height: '34px', borderRadius: '4px', background: '#1C1917', border: '1px solid #2A2421', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B38E36" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-              </svg>
-            </div>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: '16px', color: '#EFEBE3', letterSpacing: '1px', lineHeight: 1, textTransform: 'uppercase' }}>FacturaPro</div>
-              <div style={{ fontSize: '10px', color: '#78716C', lineHeight: 1, marginTop: '4px', letterSpacing: '0.5px' }}>by EINSOFT DIGIT</div>
-            </div>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}>
+            <Logo width={100} />
           </Link>
 
           {/* Desktop Nav */}
@@ -115,16 +105,8 @@ export function PublicFooter() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '40px', marginBottom: '48px' }}>
           {/* Brand */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '24px' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '4px', background: '#1C1917', border: '1px solid #2A2421', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B38E36" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                  <line x1="16" y1="13" x2="8" y2="13"/>
-                  <line x1="16" y1="17" x2="8" y2="17"/>
-                </svg>
-              </div>
-              <span style={{ fontWeight: 600, fontSize: '16px', color: '#EFEBE3', letterSpacing: '1px', textTransform: 'uppercase' }}>FacturaPro</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+              <Logo width={120} />
             </div>
             <p style={{ fontSize: '13px', lineHeight: 1.8, color: '#78716C', maxWidth: '280px' }}>
               La solution de facturation professionnelle conçue pour les entreprises africaines. Simple, puissant, élégant.
@@ -132,7 +114,7 @@ export function PublicFooter() {
             <div style={{ marginTop: '24px', fontSize: '13px', color: '#A39B94' }}>
               <div>Conakry, République de Guinée</div>
               <div style={{ marginTop: '6px' }}>
-                <a href="mailto:contacts@einsofdigit.com" style={{ color: '#B38E36', textDecoration: 'none' }}>contacts@einsofdigit.com</a>
+                <a href="mailto:equipe@facturadigit.online" style={{ color: '#B38E36', textDecoration: 'none' }}>equipe@facturadigit.online</a>
               </div>
               <div style={{ marginTop: '6px' }}>+224 624 77 06 18</div>
             </div>
@@ -178,7 +160,7 @@ export function PublicFooter() {
               <div>Disponible 24h/24</div>
               <div>7j/7</div>
               <div style={{ marginTop: '12px' }}>
-                <a href="mailto:contacts@einsofdigit.com" style={{ color: '#B38E36', textDecoration: 'none', borderBottom: '1px solid #B38E36', paddingBottom: '2px' }}>Nous écrire</a>
+                <a href="mailto:equipe@facturadigit.online" style={{ color: '#B38E36', textDecoration: 'none', borderBottom: '1px solid #B38E36', paddingBottom: '2px' }}>Nous écrire</a>
               </div>
             </div>
           </div>

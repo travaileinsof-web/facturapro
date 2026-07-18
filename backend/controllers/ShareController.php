@@ -1,6 +1,6 @@
 <?php
 class ShareController {
-    public static function handle($method, $body, $currentAccount) {
+    public static function handle($pdo, $method, $body, $currentAccount) {
         if ($method === 'POST') {
             $type = $body['type'] ?? 'whatsapp';
             $pdfBase64 = $body['pdfBase64'] ?? '';
@@ -76,25 +76,28 @@ class ShareController {
                 
                 $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
                 try {
+                    $stmt = $pdo->query("SELECT * FROM PlatformSettings WHERE id = 'global'");
+                    $settings = $stmt->fetch();
+                    
+                    if (!$settings || empty($settings['smtpUser']) || empty($settings['smtpPass'])) {
+                        http_response_code(500);
+                        echo json_encode(["error" => "Configuration email (SMTP) globale manquante. Contactez l'administrateur."]);
+                        exit;
+                    }
+
                     $mail->isSMTP();
                     $mail->CharSet    = 'UTF-8'; // Correction des caractères spéciaux
                     $mail->Encoding   = 'base64'; // FIX: Empêche la corruption des accents par les serveurs SMTP (7bit/8bit)
-                    $mail->Host       = $currentAccount['smtpHost'] ?? $currentAccount['smtphost'] ?? 'smtp.gmail.com';
+                    $mail->Host       = $settings['smtpHost'] ?? 'smtp.gmail.com';
                     $mail->SMTPAuth   = true;
                     
-                    $smtpUser = $currentAccount['smtpUser'] ?? $currentAccount['smtpuser'] ?? '';
-                    $smtpPass = $currentAccount['smtpPass'] ?? $currentAccount['smtppass'] ?? '';
+                    $mail->Username   = $settings['smtpUser']; 
+                    $mail->Password   = $settings['smtpPass']; 
                     
-                    if (empty($smtpUser) || empty($smtpPass)) {
-                        http_response_code(400);
-                        echo json_encode(["error" => "Configuration email (SMTP) manquante dans vos paramètres."]);
-                        exit;
-                    }
+                    $portRaw = $settings['smtpPort'] ?? 587;
+                    $port = $portRaw ? (int)$portRaw : 587;
                     
-                    $mail->Username   = $smtpUser; 
-                    $mail->Password   = $smtpPass; 
-                    
-                    $encryptionRaw = $currentAccount['smtpEncryption'] ?? $currentAccount['smtpencryption'] ?? 'tls';
+                    $encryptionRaw = $settings['smtpEncryption'] ?? ($port === 465 ? 'ssl' : 'tls');
                     $encryption = strtolower($encryptionRaw);
                     if ($encryption === 'ssl') {
                         $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
@@ -105,11 +108,16 @@ class ShareController {
                         $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
                     }
                     
-                    $portRaw = $currentAccount['smtpPort'] ?? $currentAccount['smtpport'] ?? 587;
-                    $mail->Port       = $portRaw ? (int)$portRaw : 587;
+                    $mail->Port       = $port;
                     
                     $companyName = $currentAccount['companyName'] ?? $currentAccount['companyname'] ?? 'FacturaPro';
-                    $mail->setFrom($smtpUser, $companyName);
+                    $mail->setFrom($settings['smtpUser'], $companyName);
+                    
+                    $userEmail = $currentAccount['email'] ?? '';
+                    if ($userEmail) {
+                        $mail->addReplyTo($userEmail, $companyName);
+                    }
+                    
                     $mail->addAddress($to);
                     
                     $mail->isHTML(true);
@@ -127,10 +135,8 @@ class ShareController {
                 } catch (Exception $e) {
                     http_response_code(500);
                     $errorMsg = $mail->ErrorInfo;
-                    if (stripos($errorMsg, 'Could not authenticate') !== false) {
-                        $errorMsg = "Vos identifiants SMTP sont incorrects. Si vous utilisez Gmail, vous devez générer un 'Mot de passe d\'application' et l\'utiliser à la place de votre mot de passe habituel.";
-                    } elseif (stripos($errorMsg, 'Could not connect to SMTP host') !== false) {
-                        $errorMsg = "Impossible de se connecter au serveur SMTP. Vérifiez que l'hôte, le port et le type de chiffrement (TLS/SSL) sont corrects dans vos Paramètres.";
+                    if (stripos($errorMsg, 'Could not authenticate') !== false || stripos($errorMsg, 'Could not connect to SMTP host') !== false) {
+                        $errorMsg = "Le service d'envoi d'emails de la plateforme est momentanément indisponible. Veuillez réessayer plus tard ou contacter le support.";
                     }
                     echo json_encode(["error" => $errorMsg]);
                 }

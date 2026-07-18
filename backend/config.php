@@ -1,13 +1,16 @@
 <?php
 // Database Configuration
-define('DB_CONNECTION', 'pgsql'); // Changed to pgsql for Neon
+$envFile = __DIR__ . '/../.env';
+$env = file_exists($envFile) ? parse_ini_file($envFile) : [];
 
-// Neon PostgreSQL Configuration
-define('DB_HOST', 'ep-gentle-lab-at2wepx2-pooler.c-9.us-east-1.aws.neon.tech');
-define('DB_NAME', 'neondb');
-define('DB_USER', 'neondb_owner');
-define('DB_PASS', 'npg_S8GTJ7bfBdjx');
-define('DB_DSN', 'pgsql:host=' . DB_HOST . ';port=5432;dbname=' . DB_NAME . ';sslmode=require;options=endpoint=ep-gentle-lab-at2wepx2');
+define('DB_CONNECTION', $env['DB_CONNECTION'] ?? 'pgsql');
+define('DB_HOST', $env['DB_HOST'] ?? 'localhost');
+define('DB_NAME', $env['DB_NAME'] ?? 'neondb');
+define('DB_USER', $env['DB_USER'] ?? 'neondb_owner');
+define('DB_PASS', $env['DB_PASS'] ?? '');
+$endpointId = $env['DB_ENDPOINT_ID'] ?? '';
+
+define('DB_DSN', 'pgsql:host=' . DB_HOST . ';port=5432;dbname=' . DB_NAME . ';sslmode=require' . ($endpointId ? ';options=endpoint=' . $endpointId : ''));
 
 // Fix pour PostgreSQL qui renvoie toutes les colonnes en minuscules
 $GLOBALS['camelCaseCols'] = [
@@ -85,11 +88,11 @@ define('SUBSCRIPTION_PLANS', [
 // =============================================================
 // SECRET WHATSAPP API
 // =============================================================
-define('WHATSAPP_API_SECRET', 'fp_wa_secret_2026_xyz');
+define('WHATSAPP_API_SECRET', $env['WHATSAPP_API_SECRET'] ?? '');
 
 // =============================================================
 // PAIEMENT DJOMY API
 // =============================================================
-define('DJOMY_CLIENT_ID', 'djomy-client-1783402253216-a94e');
-define('DJOMY_CLIENT_SECRET', 's3cr3t-hnmS30UNAtnjfhkx2FeJbd1S7fOJpZWl');
-define('DJOMY_API_URL', 'https://api.djomy.africa'); // A ajuster selon l'environnement
+define('DJOMY_CLIENT_ID', $env['DJOMY_CLIENT_ID'] ?? '');
+define('DJOMY_CLIENT_SECRET', $env['DJOMY_CLIENT_SECRET'] ?? '');
+define('DJOMY_API_URL', $env['DJOMY_API_URL'] ?? 'https://api.djomy.africa');

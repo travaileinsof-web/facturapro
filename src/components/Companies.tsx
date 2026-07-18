@@ -31,10 +31,9 @@ function CompanyForm({
   const [form, setForm] = useState<any>(initial || {
     name: '', slogan: '', address: '', phone: '', email: '', website: '',
     taxId: '', bankName: '', bankAccount: '', primaryColor: '#0f172a',
-    currency: 'XOF', smtpHost: '', smtpPort: '587', smtpUser: '',
-    smtpPass: '', smtpFrom: '', smtpFromName: '',
+    currency: 'XOF',
   });
-  const [showSmtp, setShowSmtp] = useState(false);
+
 
   const set = (k: string, v: string) => setForm((p: any) => ({ ...p, [k]: v }));
 
@@ -115,53 +114,6 @@ function CompanyForm({
         </div>
       </div>
 
-      {/* SMTP collapsible */}
-      <div>
-        <button
-          type="button"
-          onClick={() => setShowSmtp(!showSmtp)}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: 'var(--space-3)', background: 'var(--gold-dim)', border: '1px solid var(--border-gold)', color: 'var(--gold)', cursor: 'pointer', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}
-        >
-          <span style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-            <Mail size={13} /> Configuration Email SMTP {form.smtpPassSet ? '(configuré ✓)' : ''}
-          </span>
-          {showSmtp ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-        </button>
-
-        {showSmtp && (
-          <div style={{ padding: 'var(--space-5)', background: 'var(--surface-2)', border: '1px solid var(--border)', borderTop: 'none', display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
-            <p style={{ fontSize: '12px', color: 'var(--foreground-muted)', lineHeight: 1.6, padding: 'var(--space-3) var(--space-4)', background: 'rgba(0,0,0,0.03)', borderLeft: '2px solid var(--gold)' }}>
-              Configurez un serveur SMTP spécifique pour cette entreprise. Les factures et relances seront envoyées depuis cet email.
-            </p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-5)' }}>
-              <div>
-                <label style={labelStyle}>Hôte SMTP</label>
-                <input style={inputStyle} value={form.smtpHost || ''} onChange={e => set('smtpHost', e.target.value)} placeholder="smtp.gmail.com" />
-              </div>
-              <div>
-                <label style={labelStyle}>Port</label>
-                <input style={inputStyle} value={form.smtpPort || '587'} onChange={e => set('smtpPort', e.target.value)} placeholder="587 ou 465" />
-              </div>
-              <div>
-                <label style={labelStyle}>Email expéditeur</label>
-                <input style={inputStyle} type="email" value={form.smtpUser || ''} onChange={e => set('smtpUser', e.target.value)} placeholder="factures@entreprise.com" />
-              </div>
-              <div>
-                <label style={labelStyle}>Mot de passe d'application {form.smtpPassSet ? '(configuré)' : ''}</label>
-                <input style={inputStyle} type="password" value={form.smtpPass || ''} onChange={e => set('smtpPass', e.target.value)} placeholder={form.smtpPassSet ? '••••••••••••• (laisser vide = inchangé)' : '••••••••••••'} />
-              </div>
-              <div>
-                <label style={labelStyle}>Nom affiché (expéditeur)</label>
-                <input style={inputStyle} value={form.smtpFromName || ''} onChange={e => set('smtpFromName', e.target.value)} placeholder="Cabinet DUPONT" />
-              </div>
-              <div>
-                <label style={labelStyle}>Email de réponse (Reply-To)</label>
-                <input style={inputStyle} type="email" value={form.smtpFrom || ''} onChange={e => set('smtpFrom', e.target.value)} placeholder="contact@entreprise.com" />
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* Actions */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-4)', paddingTop: 'var(--space-5)', borderTop: '1px solid var(--border)', marginTop: 'var(--space-2)' }}>
@@ -264,7 +216,7 @@ export function Companies() {
         <div>
           <p style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: 700, color: 'var(--foreground)' }}>Mes Entreprises</p>
           <p style={{ fontSize: '12px', color: 'var(--foreground-muted)', marginTop: '4px' }}>
-            Gérez plusieurs entités. Chaque entreprise a ses propres informations et config email SMTP.
+            Gérez plusieurs entités. Chaque entreprise a ses propres informations.
           </p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 'var(--space-1)' }}>
@@ -306,11 +258,6 @@ export function Companies() {
                 {company.isDefault && (
                   <span style={{ fontSize: '10px', fontWeight: 700, padding: 'var(--space-1) var(--space-2)', background: 'var(--gold)', color: '#fff', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
                     Principal
-                  </span>
-                )}
-                {company.smtpPassSet && (
-                  <span style={{ fontSize: '10px', fontWeight: 600, padding: 'var(--space-1) var(--space-2)', background: 'rgba(16,185,129,0.1)', color: 'var(--emerald)', border: '1px solid rgba(16,185,129,0.2)', display: 'flex', alignItems: 'center', gap: 'var(--space-1)' }}>
-                    <Mail size={9} /> SMTP configuré
                   </span>
                 )}
               </div>
@@ -379,7 +326,7 @@ export function Companies() {
           <p style={{ fontSize: '12px', fontWeight: 600, color: 'var(--foreground)', marginBottom: '4px' }}>Comment fonctionne le multi-entreprises ?</p>
           <p style={{ fontSize: '11px', color: 'var(--foreground-muted)', lineHeight: 1.7 }}>
             L'entreprise <strong>Principale</strong> est utilisée par défaut pour toutes les nouvelles factures et documents.
-            Chaque entreprise peut avoir sa propre configuration SMTP — les relances automatiques utilisent le SMTP de l'entreprise associée à la facture.
+
             Vous pouvez créer jusqu'à <strong>5 entreprises</strong> par compte.
           </p>
         </div>

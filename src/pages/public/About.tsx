@@ -131,7 +131,7 @@ export function About() {
               <div style={{ fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: 1.8, fontWeight: 300 }}>
                 <strong style={{ color: 'var(--color-text)', fontWeight: 400 }}>EINSOFT DIGIT</strong> — Siège social à Conakry, République de Guinée<br />
                 <span style={{ display: 'inline-block', marginTop: '12px' }}>
-                  <a href="mailto:contacts@einsofdigit.com" style={{ color: 'var(--color-gold)', textDecoration: 'none', borderBottom: '1px solid rgba(212, 175, 55, 0.3)' }}>contacts@einsofdigit.com</a> &nbsp;&nbsp;&nbsp;
+                  <a href="mailto:equipe@facturadigit.online" style={{ color: 'var(--color-gold)', textDecoration: 'none', borderBottom: '1px solid rgba(212, 175, 55, 0.3)' }}>equipe@facturadigit.online</a> &nbsp;&nbsp;&nbsp;
                   <span style={{ opacity: 0.5 }}>+224 624 77 06 18</span> &nbsp;&nbsp;&nbsp;
                   <a href="https://einsofdigit.com" target="_blank" rel="noreferrer" style={{ color: 'var(--color-gold)', textDecoration: 'none', borderBottom: '1px solid rgba(212, 175, 55, 0.3)' }}>einsofdigit.com</a>
                 </span>

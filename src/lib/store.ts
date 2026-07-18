@@ -103,16 +103,35 @@ export async function apiFetch(url: string, options: RequestInit = {}): Promise<
   return response;
 }
 
-// Add formatting utility
-export function formatCurrency(amount: number, currency?: string): string {
-  const storeCurrency = useAppStore.getState().user?.currency || 'XOF';
-  const finalCurrency = currency || storeCurrency;
-  
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'decimal',
+// ============================================================
+// Formatage de la devise — Version non-réactive (pour PDF, templates string)
+// Lit le store au moment de l'appel. Correcte dans les contextes non-React.
+// ============================================================
+export function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('fr-GN', {
+    style: 'currency',
+    currency: 'GNF',
     minimumFractionDigits: 0,
-    maximumFractionDigits: 2
-  }).format(amount) + ' ' + finalCurrency;
+    maximumFractionDigits: 0
+  }).format(amount).replace('GNF', 'GNF');
+}
+
+// ============================================================
+// Hook React réactif pour la devise courante
+// À utiliser dans les composants React pour garantir le re-render
+// quand l'utilisateur change de devise dans les paramètres.
+// ============================================================
+export function useCurrency() {
+  const fmt = (amount: number): string => {
+    return new Intl.NumberFormat('fr-GN', {
+      style: 'currency',
+      currency: 'GNF',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount).replace('GNF', 'GNF');
+  };
+  
+  return { currency: 'GNF', fmt };
 }
 
 export function formatDate(dateStr: string | null | undefined): string {

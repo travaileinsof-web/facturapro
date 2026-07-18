@@ -9,3 +9,8 @@
 
 # Désactiver le listage des répertoires pour des raisons de sécurité
 Options -Indexes
+
+# Transmettre l'en-tête Authorization
+RewriteEngine On
+RewriteCond %{HTTP:Authorization} ^(.*)
+RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]

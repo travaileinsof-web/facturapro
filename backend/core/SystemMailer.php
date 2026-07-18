@@ -22,7 +22,8 @@ class SystemMailer {
         $mail->Username   = $settings['smtpUser'];
         $mail->Password   = $settings['smtpPass'];
         
-        $encryption = strtolower($settings['smtpEncryption'] ?? 'tls');
+        $port = (int)($settings['smtpPort'] ?? 587);
+        $encryption = strtolower($settings['smtpEncryption'] ?? ($port === 465 ? 'ssl' : 'tls'));
         if ($encryption === 'ssl') {
             $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
         } elseif ($encryption === 'none') {
@@ -31,7 +32,7 @@ class SystemMailer {
         } else {
             $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
         }
-        $mail->Port = (int)($settings['smtpPort'] ?? 587);
+        $mail->Port = $port;
         
         $companyName = $settings['companyName'] ?? 'FacturaPro';
         $mail->setFrom($settings['smtpUser'], $companyName);
@@ -318,6 +319,42 @@ class SystemMailer {
             return $mail->send();
         } catch (Exception $e) {
             error_log("Email PostExpiration error: " . $mail->ErrorInfo);
+            return false;
+        }
+    }
+
+    public static function sendPasswordResetCode($pdo, $toEmail, $code) {
+        $mail = self::getMailer($pdo);
+        if (!$mail) return false;
+
+        $stmt = $pdo->query("SELECT * FROM PlatformSettings WHERE id = 'global'");
+        $settings = $stmt->fetch();
+        $primary = $settings['primaryColor'] ?? '#B38E36';
+        $companyName = $settings['companyName'] ?? 'FacturaPro';
+
+        try {
+            $mail->addAddress($toEmail);
+            $mail->Subject = "Réinitialisation de votre mot de passe - $companyName";
+            
+            $html = "
+                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; border: 1px solid #eee; border-radius: 8px; overflow: hidden;'>
+                    <div style='background-color: $primary; padding: 20px; text-align: center; color: white;'>
+                        <h1 style='margin: 0; font-size: 24px;'>$companyName</h1>
+                    </div>
+                    <div style='padding: 30px;'>
+                        <h2>Réinitialisation de mot de passe</h2>
+                        <p>Vous avez demandé à réinitialiser votre mot de passe. Voici votre code de vérification à 6 chiffres :</p>
+                        <div style='text-align: center; margin: 30px 0;'>
+                            <span style='background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 5px; padding: 15px 30px; font-size: 24px; font-weight: bold; letter-spacing: 4px; color: $primary;'>$code</span>
+                        </div>
+                        <p>Ce code est valable pendant 1 heure. S'il n'a pas été demandé par vous, vous pouvez ignorer cet email en toute sécurité.</p>
+                    </div>
+                </div>
+            ";
+            $mail->Body = $html;
+            return $mail->send();
+        } catch (Exception $e) {
+            error_log("Email PasswordReset error: " . $mail->ErrorInfo);
             return false;
         }
     }

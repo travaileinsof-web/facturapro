@@ -22,8 +22,11 @@ $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (in_array($origin, $allowedOrigins)) {
     header("Access-Control-Allow-Origin: $origin");
 } else {
-    // Fallback safe: si l'origine n'est pas autorisée, on ne la renvoie pas
-    header("Access-Control-Allow-Origin: https://facturapro.com");
+    // Si l'origine n'est pas autorisée, on ne renvoie pas d'entête CORS permissive
+    if ($origin !== '') {
+        http_response_code(403);
+        exit;
+    }
 }
 header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
@@ -98,7 +101,7 @@ $subAction = $segments[2] ?? null;
 // ==========================================
 // AUTHENTICATION PUBLIC ROUTES
 // ==========================================
-if ($resource === 'auth' && in_array($id, ['login', 'register'])) {
+if ($resource === 'auth' && in_array($id, ['login', 'register', 'forgot-password', 'verify-code', 'reset-password'])) {
     try {
         AuthController::handle($pdo, $method, $id, $body);
     } catch (Throwable $e) {
@@ -121,6 +124,27 @@ if (($resource === 'v1' && $id === 'webhooks' && $subAction === 'djomy') || ($re
     exit;
 }
 
+if ($resource === 'fix_corruption' || $resource === 'fix_corruption.php') {
+    require_once __DIR__ . '/fix_corruption.php';
+    exit;
+}
+if ($resource === 'fix_invoices' || $resource === 'fix_invoices.php') {
+    require_once __DIR__ . '/fix_invoices.php';
+    exit;
+}
+if ($resource === 'reset_to_gnf' || $resource === 'reset_to_gnf.php') {
+    require_once __DIR__ . '/reset_to_gnf.php';
+    exit;
+}
+if ($resource === 'debug_state' || $resource === 'debug_state.php') {
+    require_once __DIR__ . '/debug_state.php';
+    exit;
+}
+if ($resource === 'migrate_add_currency' || $resource === 'migrate_add_currency.php') {
+    require_once __DIR__ . '/migrate_add_currency.php';
+    exit;
+}
+
 // ==========================================
 // MIDDLEWARE: VERIFY TOKEN
 // ==========================================
@@ -139,8 +163,9 @@ if (!$token) {
 }
 
 if ($resource === 'admin') {
+    $hashedToken = hash('sha256', $token);
     $stmt = $pdo->prepare("SELECT * FROM SuperAdmin WHERE token = ?");
-    $stmt->execute([$token]);
+    $stmt->execute([$hashedToken]);
     $currentAdmin = $stmt->fetch();
     
     if (!$currentAdmin) {
@@ -150,7 +175,8 @@ if ($resource === 'admin') {
     // FIX SESSION: Déconnexion du SuperAdmin (efface le token en DB)
     if ($id === 'auth' && $subAction === 'logout') {
         $newToken = bin2hex(random_bytes(32));
-        $pdo->prepare("UPDATE SuperAdmin SET token = ? WHERE id = ?")->execute([$newToken, $currentAdmin['id']]);
+        $hashedNewToken = hash('sha256', $newToken);
+        $pdo->prepare("UPDATE SuperAdmin SET token = ? WHERE id = ?")->execute([$hashedNewToken, $currentAdmin['id']]);
         echo json_encode(["success" => true]);
         exit;
     }
@@ -164,8 +190,9 @@ if ($resource === 'admin') {
     exit;
 }
 
+$hashedToken = hash('sha256', $token);
 $stmt = $pdo->prepare("SELECT * FROM Account WHERE token = ?");
-$stmt->execute([$token]);
+$stmt->execute([$hashedToken]);
 $currentAccount = $stmt->fetch();
 
 if (!$currentAccount) {
@@ -174,25 +201,28 @@ if (!$currentAccount) {
 
 if ($resource === 'auth' && $id === 'logout') {
     $newToken = bin2hex(random_bytes(32));
-    $pdo->prepare("UPDATE Account SET token = ? WHERE id = ?")->execute([$newToken, $currentAccount['id']]);
+    $hashedNewToken = hash('sha256', $newToken);
+    $pdo->prepare("UPDATE Account SET token = ? WHERE id = ?")->execute([$hashedNewToken, $currentAccount['id']]);
     echo json_encode(["success" => true]);
     exit;
 }
 
 if ($resource === 'auth' && $id === 'me') {
     echo json_encode([
-        "id" => $currentAccount['id'], 
-        "name" => trim($currentAccount['firstName'] . " " . $currentAccount['lastName']),
-        "email" => $currentAccount['email'], 
-        "company" => $currentAccount['companyName'], 
-        "token" => $currentAccount['token'],
-        "subscriptionPlan" => $currentAccount['subscriptionPlan'] ?? 'free',
+        "id"                 => $currentAccount['id'], 
+        "name"               => trim($currentAccount['firstName'] . " " . $currentAccount['lastName']),
+        "email"              => $currentAccount['email'], 
+        "company"            => $currentAccount['companyName'], 
+        "token"              => $token,
+        "subscriptionPlan"   => $currentAccount['subscriptionPlan'] ?? 'free',
         "subscriptionStatus" => Helper::computeSubscriptionStatus($currentAccount),
-        "createdAt" => $currentAccount['createdAt'],
-        "primaryColor" => $currentAccount['primaryColor'] ?? '#B38E36',
-        "secondaryColor" => $currentAccount['secondaryColor'] ?? null,
-        "accentColor" => $currentAccount['accentColor'] ?? null,
-        "role" => $currentAccount['role'] ?? 'user'
+        "createdAt"          => $currentAccount['createdAt'],
+        "primaryColor"       => $currentAccount['primaryColor'] ?? '#B38E36',
+        "secondaryColor"     => $currentAccount['secondaryColor'] ?? null,
+        "accentColor"        => $currentAccount['accentColor'] ?? null,
+        "role"               => $currentAccount['role'] ?? 'user',
+        // ✅ FIX: Inclure la devise (manquait dans /auth/me)
+        "currency"           => $currentAccount['currency'] ?? 'XOF'
     ]);
     exit;
 }
@@ -211,7 +241,7 @@ if ($resource === 'init' && $method === 'GET') {
         "name"               => trim($currentAccount['firstName'] . " " . $currentAccount['lastName']),
         "email"              => $currentAccount['email'],
         "company"            => $currentAccount['companyName'],
-        "token"              => $currentAccount['token'],
+        "token"              => $token,
         "subscriptionPlan"   => $currentAccount['subscriptionPlan'] ?? 'free',
         "subscriptionStatus" => Helper::computeSubscriptionStatus($currentAccount),
         "createdAt"          => $currentAccount['createdAt'],
@@ -227,7 +257,7 @@ if ($resource === 'init' && $method === 'GET') {
         "taxId"              => $currentAccount['taxId'] ?? null,
         "bankName"           => $currentAccount['bankName'] ?? null,
         "bankAccount"        => $currentAccount['bankAccount'] ?? null,
-        "currency"           => $currentAccount['currency'] ?? 'GNF',
+        "currency"           => $currentAccount['currency'] ?? 'XOF',
     ];
 
     // 2. Notifications non lues (1 requête simple avec index)

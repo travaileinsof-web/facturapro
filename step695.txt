@@ -1,0 +1,157 @@
+<USER_REQUEST>
+1. CONTEXTE DU PROJET
+
+Tu travailles sur FacturaPro, un outil web destiné aux PME pour :
+
+
+créer des factures et des reçus,
+suivre leurs dépenses,
+gérer les relances de paiement (y compris les paiements partiels — factures commencées à payer mais non soldées).
+
+
+Le dashboard existant contient déjà un widget "Démarrage Rapide" (onboarding) et une première rangée de cadrans statistiques (Total encaissé, Bénéfice net, Chiffre d'affaires potentiel, Créances à recouvrer), actuellement à 0 XOF car aucune donnée n'a encore été saisie.
+
+Ta mission : concevoir et implémenter un module de statistiques complet, cohérent et évolutif, organisé en sections claires, sans surcharger l'interface.
+
+
+2. OBJECTIF
+
+Construire un système de statistiques structuré en 4 sections, calculées à partir des données réelles (factures, paiements, dépenses, relances) :
+
+Section A — Vue d'ensemble (déjà amorcée)
+
+
+Total encaissé (somme des paiements reçus, période sélectionnée)
+Bénéfice net (encaissé − dépenses)
+Chiffre d'affaires potentiel (total facturé, payé + en attente)
+Créances à recouvrer (facturé − encaissé)
+Nouveau : Taux de recouvrement (%) = encaissé / facturé total
+Chaque cadran affiche une variation en % vs période précédente (déjà présent, à conserver)
+
+
+Section B — Facturation
+
+
+Nombre de factures émises (période sélectionnée)
+Montant moyen par facture
+Répartition factures payées / partiellement payées / impayées (graphique en camembert ou barres empilées)
+Délai moyen de paiement (jours entre émission et paiement complet)
+Évolution du chiffre d'affaires facturé dans le temps (courbe, granularité jour/semaine/mois selon la période)
+
+
+Section C — Dépenses
+
+
+Total des dépenses (période sélectionnée)
+Répartition des dépenses par catégorie (camembert)
+Courbe comparative revenus vs dépenses dans le temps
+
+
+Section D — Relances / Impayés (section prioritaire, orientée action)
+
+
+Nombre et montant des factures en retard (échéance dépassée)
+Nombre et montant des factures partiellement payées, avec reste dû
+Montant total en retard de paiement
+Top 5 clients avec le plus grand retard cumulé (liste actionnable, avec bouton "Relancer")
+Nombre de relances envoyées vs relances ayant abouti à un paiement (taux d'efficacité)
+
+
+Section E (optionnelle, si le temps/scope le permet)
+
+
+Meilleurs clients par chiffre d'affaires généré
+Nouveaux clients sur la période
+
+
+
+3. CONTRAINTES FONCTIONNELLES
+
+
+Sélecteur de période global (ce mois / mois dernier / trimestre / année / personnalisé) qui recalcule toutes les sections.
+Devise : tous les montants doivent respecter la devise configurée par l'utilisateur (actuellement XOF), formatée correctement (espace comme séparateur de milliers, symbole après le montant).
+États vides : si aucune donnée n'existe encore (comme actuellement), chaque cadran/graphique doit afficher un état vide clair et engageant (ex: "Pas encore de données — créez votre première facture") plutôt qu'un graphique cassé ou un 0 sec.
+Performance : les calculs de statistiques doivent être faits côté backend (agrégations), pas recalculés à la volée côté frontend sur de gros volumes de données.
+Responsive : toutes les sections doivent s'adapter proprement en mobile (cadrans empilés verticalement, graphiques redimensionnés).
+Cohérence visuelle : respecter strictement les tokens de design existants (voir section 5 — Skill Design System) pour éviter les incohérences de padding/marges déjà identifiées sur les cadrans actuels.
+
+
+
+4. LIVRABLES ATTENDUS
+
+
+Modèle de données / requêtes d'agrégation nécessaires pour calculer chaque métrique (factures, paiements, dépenses, relances).
+Composants UI pour chaque section (cadrans, graphiques, listes actionnables).
+Sélecteur de période fonctionnel et connecté à l'ensemble des sections.
+Gestion des états vides et des états de chargement (skeleton loaders).
+Documentation courte de chaque métrique (formule de calcul) pour que l'équipe puisse la maintenir.   ________________________________________________________________________________________________________________________________________________________________________________                     SKILL — Design System & Règles d'Implémentation Statistiques FacturaPro
+
+Nom du skill
+
+facturapro-stats-dashboard
+
+Description
+
+Ce skill encode les règles de cohérence visuelle et fonctionnelle à respecter pour tout composant de type "cadran statistique" ou "graphique" ajouté au dashboard de FacturaPro. Il doit être consulté à chaque fois qu'un nouveau cadran, graphique, ou section de statistiques est créé ou modifié.
+
+Règles de design (cadrans / cartes statistiques)
+
+
+Padding interne uniforme : 20px sur tous les côtés, sans exception, quel que soit le nombre de lignes du titre.
+Titre du cadran : max-width ou padding-right suffisant pour ne jamais toucher l'icône ou le bord droit, même sur 2 lignes. Hauteur de carte fixe ou min-height pour absorber les titres longs sans casser l'alignement avec les autres cartes de la même rangée.
+Icône : toujours positionnée dans un cercle/carré de fond coloré léger, alignée en haut à droite, avec une marge constante par rapport aux bords (jamais collée).
+Valeur principale : taille de police plus grande (ex: 28–32px), poids semi-bold/bold, toujours suivie de l'unité monétaire.
+Indicateur de variation (ex: "0% vs mois dernier") : texte secondaire, gris, taille réduite, avec une flèche ou icône colorée (vert = hausse positive, rouge = baisse ou retard).
+Coins arrondis et ombre légère : cohérents avec les cartes déjà existantes (rayon ~12px, ombre douce).
+Grille : cadrans alignés en rangées de 4 sur desktop, 2 sur tablette, 1 sur mobile, avec un espacement (gap) constant entre les cartes (ex: 16px).
+
+
+Règles de contenu / calcul des métriques
+
+MétriqueFormuleTotal encaisséSomme des paiements reçus sur la périodeBénéfice netTotal encaissé − Total dépenses (période)Chiffre d'affaires potentielSomme des montants facturés (payés + en attente)Créances à recouvrerChiffre d'affaires potentiel − Total encaisséTaux de recouvrementTotal encaissé / Chiffre d'affaires potentiel × 100Délai moyen de paiementMoyenne (date de paiement complet − date d'émission) sur factures soldéesMontant en retardSomme des montants restant dus sur factures dont l'échéance est dépasséeTaux d'efficacité des relancesRelances ayant abouti à un paiement / Total relances envoyées × 100
+
+Règles d'états vides
+
+
+Toujours afficher un message contextuel + une icône légère, jamais un graphique vide ou un tableau blanc.
+Exemple : pour la section Relances sans aucune facture en retard → message positif ("Aucun retard de paiement 🎉") plutôt qu'un cadran vide neutre.
+Pour les graphiques (courbes/camemberts) sans données → afficher un état "pas encore de données" avec un bouton d'action pertinent (ex: "Créer une facture", "Ajouter une dépense").
+
+
+Règles de priorisation visuelle
+
+
+La section Relances / Impayés doit être visuellement mise en avant (couleur d'accent orange/rouge pour les montants en retard) car c'est la section la plus actionnable pour l'utilisateur.
+Les sections Facturation et Dépenses peuvent être présentées en onglets ou en accordéon sous la vue d'ensemble, pour ne pas surcharger le dashboard principal.
+
+
+Règles de code / architecture
+
+
+Toute agrégation de statistiques doit être calculée côté backend/API, jamais recalculée entièrement côté client à chaque re-render.
+Les composants de cadran doivent être génériques et réutilisables (un seul composant StatCard paramétrable par titre, valeur, icône, variation), pas un composant dupliqué par métrique.
+Les graphiques doivent utiliser une seule librairie cohérente dans tout le projet (éviter de mélanger plusieurs libs de charts).
+Le sélecteur de période doit être un état global partagé (context/store), pas géré localement par chaque section.
+
+
+
+Instructions finales pour l'IA d'implémentation
+
+
+Lis entièrement ce prompt et ce skill avant de commencer.
+Implémente d'abord la Section A (vue d'ensemble), puis B, C, D dans cet ordre.
+Applique systématiquement les règles de design du skill à chaque nouveau composant créé.
+Ne laisse aucun cadran ou graphique sans état vide géré.
+Documente chaque formule de calcul directement dans le code (commentaire ou fichier séparé stats-formulas.md).
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-07-16T11:10:10Z.
+
+The user's current state is as follows:
+Other open documents:
+- c:\Users\GBESSI\Desktop\OFFICIAL_PROJECTS\facturapro\src\components\Catalog.tsx (LANGUAGE_TSX)
+- c:\Users\GBESSI\Desktop\OFFICIAL_PROJECTS\facturapro\src\lib\store.ts (LANGUAGE_TYPESCRIPT)
+- c:\Users\GBESSI\Desktop\OFFICIAL_PROJECTS\facturapro\src\components\TourTutorial.tsx (LANGUAGE_TSX)
+- c:\Users\GBESSI\Desktop\OFFICIAL_PROJECTS\facturapro\src\components\Receipts.tsx (LANGUAGE_TSX)
+- c:\Users\GBESSI\Desktop\OFFICIAL_PROJECTS\facturapro\public\robots.txt (LANGUAGE_UNSPECIFIED)
+</ADDITIONAL_METADATA>

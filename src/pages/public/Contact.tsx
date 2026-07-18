@@ -129,7 +129,7 @@ export function Contact() {
                 </div>
                 <div>
                   <div style={{ fontSize: '10px', fontWeight: 500, color: 'var(--color-gold)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Email</div>
-                  <a href="mailto:contacts@einsofdigit.com" style={{ fontSize: '13px', color: 'var(--color-text)', fontWeight: 300, textDecoration: 'none' }}>contacts@einsofdigit.com</a>
+                  <a href="mailto:equipe@facturadigit.online" style={{ fontSize: '13px', color: 'var(--color-text)', fontWeight: 300, textDecoration: 'none' }}>equipe@facturadigit.online</a>
                 </div>
                 <div>
                   <div style={{ fontSize: '10px', fontWeight: 500, color: 'var(--color-gold)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Adresse</div>

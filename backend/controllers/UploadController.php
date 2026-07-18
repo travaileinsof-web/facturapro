@@ -29,6 +29,14 @@ class UploadController {
                 exit;
             }
 
+            $expectedExt = $allowedMimes[$mime];
+            $actualExt = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+            if ($actualExt !== $expectedExt && !($expectedExt === 'jpg' && $actualExt === 'jpeg')) {
+                http_response_code(400);
+                echo json_encode(["error" => "Incohérence entre l'extension du fichier et son contenu réel."]);
+                exit;
+            }
+
             $maxSize = 5 * 1024 * 1024; // 5 MB max
             if ($file['size'] > $maxSize) {
                 http_response_code(400);

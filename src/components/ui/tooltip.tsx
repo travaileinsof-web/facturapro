@@ -32,8 +32,8 @@ export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
       {children}
       {isVisible && (
         <div 
-          className="absolute z-50 px-3 py-2 text-xs text-white bg-gray-900 rounded-md whitespace-nowrap shadow-md"
-          style={getPositionStyles()}
+          className="absolute z-50 px-3 py-2 text-xs text-white bg-gray-900 rounded-md shadow-md w-64 text-center font-normal leading-relaxed"
+          style={{ ...getPositionStyles(), whiteSpace: 'normal', wordWrap: 'break-word' }}
         >
           {content}
           <div 

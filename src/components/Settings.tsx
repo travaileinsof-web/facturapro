@@ -4,16 +4,17 @@ import { useAppStore, apiFetch } from '../lib/store';
 import { Input } from './ui/input';
 import { toast } from 'sonner';
 import { useState, useRef, useEffect } from 'react';
-import { Eye, EyeOff, Upload, Loader2, Save, Building2, CreditCard, Lock, Mail, Zap, Palette, ChevronDown, Banknote, FileText } from 'lucide-react';
+import { Eye, EyeOff, Upload, Loader2, Save, Building2, CreditCard, Lock, Mail, Zap, Palette, ChevronDown, Banknote, FileText, HelpCircle } from 'lucide-react';
+import { Joyride, STATUS, Step } from 'react-joyride';
 import { PageHeader } from './ui/PageHeader';
 import { cn } from '../lib/utils';
 
 /* ── Section wrapper ─────────────────────────────────────────────── */
-function Section({ title, desc, icon: Icon, children, delay = 0 }: {
-  title: string; desc?: string; icon: any; children: React.ReactNode; delay?: number;
+function Section({ id, title, desc, icon: Icon, children, delay = 0, isMissing = false }: {
+  id?: string; title: string; desc?: string; icon: any; children: React.ReactNode; delay?: number; isMissing?: boolean;
 }) {
   return (
-    <div className="fp-card animate-[fp-fade-up_0.5s_ease_forwards] opacity-0" style={{ animationDelay: `${delay}s` }}>
+    <div id={id} className={cn("fp-card animate-[fp-fade-up_0.5s_ease_forwards] opacity-0", isMissing && "fp-missing-section")} style={{ animationDelay: `${delay}s` }}>
       <div style={{ borderBottom: '1px solid var(--color-border-subtle)', display: 'flex', alignItems: 'flex-start', padding: 'var(--space-4)', gap: 'var(--space-3)' }}>
         <div style={{ width: '40px', height: '40px', background: 'var(--color-primary-subtle)', borderRadius: 'var(--radius-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <Icon size={20} style={{ color: 'var(--color-primary)' }}/>
@@ -91,10 +92,55 @@ function ImageUploadField({ label, hint, value, onChange, onUploading }: { label
 }
 
 export function Settings() {
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const setTourRunning = useAppStore(state => state.setTourRunning);
+  
+  const [tourRun, setTourRun] = useState(false);
+
+  const tourSteps: Step[] = [
+    {
+      target: '#tour-profile',
+      content: "Renseignez d'abord les informations de votre entreprise (Nom, Adresse, etc.). Elles apparaîtront sur les en-têtes de vos factures et devis.",
+      placement: 'bottom',
+      disableBeacon: true,
+    },
+    {
+      target: '#tour-bank',
+      content: "Ajoutez ensuite vos informations bancaires et juridiques (IBAN, NIF, RCCM) pour que vos clients sachent comment vous payer légalement.",
+      placement: 'bottom',
+    },
+    {
+      target: '#tour-identity',
+      content: "Personnalisez l'apparence de vos documents en téléchargeant votre logo, votre cachet, votre signature et en choisissant votre couleur principale.",
+      placement: 'top',
+    },
+    {
+      target: '#tour-automation',
+      content: "Choisissez votre devise principale ici. Les réglages d'automatisation des relances se trouvent également dans cette section.",
+      placement: 'top',
+    },
+    {
+      target: '#tour-security',
+      content: "Modifiez votre mot de passe ici pour sécuriser l'accès à votre compte.",
+      placement: 'top',
+    },
+    {
+      target: '#tour-subscription',
+      content: "Enfin, consultez l'historique de vos paiements et gérez votre abonnement à FacturaPro.",
+      placement: 'top',
+    }
+  ];
+
+  const handleJoyrideCallback = (data: any) => {
+    const { status } = data;
+    if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status as string)) {
+      setTourRun(false);
+    }
+  };
 
   const { data: settings, refetch } = useQuery({
     queryKey: ['settings'],
@@ -107,9 +153,14 @@ export function Settings() {
 
   const { register, handleSubmit, watch, setValue } = useForm({ values: settings || {} });
 
+
+
   const onSubmit = async (data: any) => {
-    const currentCurrency = settings.currency || 'XOF';
-    const newCurrency = data.currency;
+    if (data.password && data.password !== data.confirmPassword) {
+      toast.error('Les nouveaux mots de passe ne correspondent pas.');
+      return;
+    }
+    // Currency is strictly GNF
 
     const payload = { 
       ...data,
@@ -120,26 +171,31 @@ export function Settings() {
       secondaryColor: watch('secondaryColor'),
       accentColor: watch('accentColor')
     };
+
     if (!payload.password) delete payload.password;
     const res = await apiFetch('/api/settings', { method: 'PUT', body: JSON.stringify(payload) });
     if (res.ok) {
       const updated = await res.json();
       const currentUser = useAppStore.getState().user;
+      // ✅ FIX BUG #2 : Le store reçoit la devise mise à jour depuis la réponse du backend
       useAppStore.getState().login({ ...currentUser, ...updated } as any);
       
       setValue('currentPassword', '');
       setValue('password', '');
+      setValue('confirmPassword', '');
       refetch();
 
-      if (currentCurrency !== newCurrency) {
-        toast.info(`La devise a été modifiée en ${newCurrency}. Cela s'appliquera uniquement aux nouvelles opérations.`);
-      }
-
-      toast.success("Paramètres mis à jour avec succès.");
+      toast.success("✅ Paramètres mis à jour avec succès.");
     } else {
-      toast.error("Erreur lors de l'enregistrement.");
+      let errorMsg = "Erreur lors de l'enregistrement.";
+      try {
+        const errData = await res.json();
+        if (errData.error) errorMsg = `Erreur serveur : ${errData.error}`;
+      } catch {}
+      toast.error(errorMsg, { duration: 8000 });
     }
   };
+
 
   if (!settings) return (
     <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 'var(--space-4)' }}>
@@ -157,44 +213,67 @@ export function Settings() {
 
   const selectStyle: React.CSSProperties = { ...inputStyle, cursor: 'pointer', appearance: 'none' };
 
+  const isProfileMissing = !settings.companyName;
+  const isBankMissing = !settings.taxId;
+  const isIdentityMissing = !settings.logo || !settings.primaryColor;
+
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="max-w-[960px] mx-auto" style={{ paddingBottom: 'var(--space-10)' }}>
+      {/* @ts-ignore: Suppress react-joyride typing issues */}
+      <Joyride
+        steps={tourSteps}
+        run={tourRun}
+        continuous
+        scrollToFirstStep
+        showProgress
+        showSkipButton
+        {...{ callback: handleJoyrideCallback } as any}
+        styles={{
+          options: {
+            primaryColor: settings.primaryColor || '#B38E36',
+            zIndex: 10000,
+          }
+        } as any}
+        locale={{
+          back: 'Précédent',
+          close: 'Fermer',
+          last: 'Terminer',
+          next: 'Suivant',
+          skip: 'Passer la visite',
+        }}
+      />
+      <style>{`
+        @keyframes pulse-halo {
+          0% { box-shadow: 0 0 0 0px var(--color-primary); }
+          70% { box-shadow: 0 0 0 6px transparent; }
+          100% { box-shadow: 0 0 0 0px transparent; }
+        }
+        .fp-missing-section {
+          border: 1px solid var(--color-primary) !important;
+          animation: pulse-halo 2s infinite;
+          opacity: 1 !important;
+        }
+      `}</style>
       <PageHeader
         title="Paramètres"
         description="Configurez votre profil, votre société et vos intégrations."
         icon={<FileText size={20} />}
         actions={
-          <button type="submit" className="fp-btn-primary flex items-center" style={{ gap: 'var(--space-2)' }}>
-            <Save size={15} /> Enregistrer
-          </button>
+          <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+            <button type="button" onClick={() => setTourRun(true)} className="fp-btn-outline flex items-center" style={{ gap: 'var(--space-2)' }}>
+              <HelpCircle size={15} /> Visite guidée
+            </button>
+            <button type="submit" className="fp-btn-primary flex items-center" style={{ gap: 'var(--space-2)' }}>
+              <Save size={15} /> Enregistrer
+            </button>
+          </div>
         }
       />
       <div style={{ display: 'flex', flexDirection: 'column', maxWidth: '700px', gap: 'var(--space-4)' }}>
 
-        <Section title="Sécurité du Compte" icon={Lock} delay={0.05}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-            <Field label="Mot de passe actuel (requis pour modifier)">
-              <input type={showPassword ? 'text' : 'password'} {...register('currentPassword')} style={inputStyle} placeholder="••••••••"
-                onFocus={e => { e.target.style.borderColor='var(--color-primary)'; e.target.style.boxShadow='inset 0 0 0 1px var(--color-primary)'; e.target.style.background='var(--color-bg-card)'; }}
-                onBlur={e => { e.target.style.borderColor='var(--color-border-default)'; e.target.style.boxShadow='inset 0 1px 2px rgba(0,0,0,0.02)'; e.target.style.background='var(--color-bg-page)'; }}
-              />
-            </Field>
-            <Field label="Nouveau mot de passe">
-              <div style={{ position: 'relative' }}>
-                <input type={showPassword ? 'text' : 'password'} {...register('password')} style={inputStyle} placeholder="Laisser vide pour ne pas modifier"
-                  onFocus={e => { e.target.style.borderColor='var(--color-primary)'; e.target.style.boxShadow='inset 0 0 0 1px var(--color-primary)'; e.target.style.background='var(--color-bg-card)'; }}
-                  onBlur={e => { e.target.style.borderColor='var(--color-border-default)'; e.target.style.boxShadow='inset 0 1px 2px rgba(0,0,0,0.02)'; e.target.style.background='var(--color-bg-page)'; }}
-                />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', display: 'flex' }}>
-                  {showPassword ? <EyeOff size={10}/> : <Eye size={10}/>}
-                </button>
-              </div>
-            </Field>
-          </div>
-        </Section>
-
         {/* Profil Entreprise */}
-        <Section title="Profil de l'Entreprise" desc="Ces informations apparaitront sur vos factures et devis." icon={Building2} delay={0.1}>
+        <Section id="tour-profile" title="Profil de l'Entreprise" desc="Ces informations apparaitront sur vos factures et devis." icon={Building2} delay={0.1} isMissing={isProfileMissing}>
           <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 'var(--space-4)' }}>
             <Field label="Nom de l'entreprise *">
               <input type="text" {...register('companyName')} style={inputStyle} placeholder="Nom officiel" />
@@ -222,7 +301,7 @@ export function Settings() {
         </Section>
 
         {/* Informations Bancaires */}
-        <Section title="Banque & Juridique" desc="Pour faciliter les paiements de vos clients." icon={CreditCard} delay={0.15}>
+        <Section id="tour-bank" title="Banque & Juridique" desc="Pour faciliter les paiements de vos clients." icon={CreditCard} delay={0.15} isMissing={isBankMissing}>
           <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 'var(--space-4)' }}>
             <Field label="Nom de la Banque">
               <input type="text" {...register('bankName')} style={inputStyle} placeholder="Ex: Société Générale" />
@@ -251,7 +330,7 @@ export function Settings() {
         </Section>
 
         {/* Identité Visuelle */}
-        <Section title="Identité Visuelle" desc="Personnalisez vos documents. Les images sont automatiquement envoyées au serveur." icon={Palette} delay={0.2}>
+        <Section id="tour-identity" title="Identité Visuelle" desc="Personnalisez vos documents. Les images sont automatiquement envoyées au serveur." icon={Palette} delay={0.2} isMissing={isIdentityMissing}>
           <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 'var(--space-4)' }}>
             <input type="hidden" {...register('logo')} />
             <input type="hidden" {...register('stamp')} />
@@ -284,96 +363,16 @@ export function Settings() {
           </div>
         </Section>
 
-        {/* Email & SMTP */}
-        <Section title="Serveur Email (SMTP)" desc="Configuration pour l'envoi automatique de mails." icon={Mail} delay={0.25}>
-          <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 'var(--space-4)' }}>
-            <div className="col-span-1 md:col-span-2">
-              <Field label="Hôte SMTP">
-                <input type="text" {...register('smtpHost')} style={inputStyle} placeholder="smtp.gmail.com" />
-              </Field>
-            </div>
-            <Field label="Port">
-              <input type="text" {...register('smtpPort')} style={inputStyle} placeholder="465 ou 587" />
-            </Field>
-            <Field label="Chiffrement">
-              <select {...register('smtpEncryption')} style={selectStyle}>
-                <option value="tls">TLS</option>
-                <option value="ssl">SSL</option>
-                <option value="none">Aucun</option>
-              </select>
-            </Field>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-            <Field label="Utilisateur SMTP">
-              <input type="text" {...register('smtpUser')} style={inputStyle} placeholder="contact@votredomaine.com" />
-            </Field>
-            <Field label="Mot de passe SMTP">
-              <input type="password" {...register('smtpPass')} style={inputStyle} placeholder={settings.smtpPassSet ? '•••••••••••• (laisser vide = inchangé)' : '••••••••••••'} autoComplete="new-password" />
-            </Field>
-          </div>
-          
-          <div style={{ background: 'var(--color-bg-page)', border: '1px solid var(--color-border-default)', borderRadius: 'var(--radius-md)', marginTop: 'var(--space-6)', padding: 'var(--space-4)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
-              <div onClick={() => setTutorialOpen(!tutorialOpen)} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)', flex: 1 }}>
-                <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: 'var(--space-1)', margin: 0 }}><Zap size={14}/> Aide à la configuration (Tutoriel)</h4>
-                <ChevronDown size={16} className={cn("transition-transform duration-200", tutorialOpen ? "rotate-180" : "")} style={{ color: 'var(--color-text-secondary)' }}/>
-              </div>
-              <button
-                type="button"
-                onClick={() => setTourRunning(true)}
-                style={{
-                  fontSize: 'var(--text-xs)',
-                  padding: '4px 12px',
-                  background: 'var(--color-primary-subtle)',
-                  color: 'var(--color-primary-hover)',
-                  border: '1px solid var(--color-primary)',
-                  borderRadius: 'var(--radius-sm)',
-                  cursor: 'pointer'
-                }}
-              >
-                Relancer la visite guidée
-              </button>
-            </div>
-            {tutorialOpen && (
-              <div className="mt-4 text-xs text-[var(--foreground-muted)] leading-relaxed">
-                <p className="mb-2.5"><strong>À quoi sert le SMTP ?</strong> Le SMTP est le protocole standard d'envoi d'emails. En renseignant ces informations, vous autorisez FacturaPro à expédier des factures directement depuis votre adresse mail professionnelle.</p>
-                
-                <h5 className="font-semibold text-[var(--foreground)]" style={{ marginTop: 'var(--space-4)', marginBottom: 'var(--space-1)' }}>Pour Gmail / Google Workspace :</h5>
-                <ul className="list-disc" style={{ paddingLeft: 'var(--space-4)', marginBottom: 'var(--space-2)' }}>
-                  <li><strong>Hôte :</strong> smtp.gmail.com</li>
-                  <li><strong>Port :</strong> 465 (SSL) ou 587 (TLS)</li>
-                  <li><strong>Mot de passe :</strong> Il ne s'agit <em>pas</em> de votre mot de passe habituel. Vous devez générer un "Mot de passe d'application". (Allez sur votre compte Google &gt; Sécurité &gt; Validation en deux étapes &gt; Mots de passe des applications).</li>
-                </ul>
 
-                <h5 className="font-semibold text-[var(--foreground)]" style={{ marginTop: 'var(--space-4)', marginBottom: 'var(--space-1)' }}>Pour Hostinger :</h5>
-                <ul className="list-disc" style={{ paddingLeft: 'var(--space-4)', marginBottom: 'var(--space-2)' }}>
-                  <li><strong>Hôte :</strong> smtp.hostinger.com</li>
-                  <li><strong>Port :</strong> 465 (SSL)</li>
-                  <li><strong>Mot de passe :</strong> Le mot de passe de votre boîte mail Hostinger.</li>
-                </ul>
-
-                <h5 className="font-semibold text-[var(--foreground)]" style={{ marginTop: 'var(--space-4)', marginBottom: 'var(--space-1)' }}>Pour OVH :</h5>
-                <ul className="list-disc" style={{ paddingLeft: 'var(--space-4)', marginBottom: 'var(--space-2)' }}>
-                  <li><strong>Hôte :</strong> ssl0.ovh.net</li>
-                  <li><strong>Port :</strong> 465 (SSL)</li>
-                  <li><strong>Mot de passe :</strong> Le mot de passe de votre boîte mail OVH.</li>
-                </ul>
-              </div>
-            )}
-          </div>
-        </Section>
 
         {/* Automatisation */}
-        <Section title="Automatisation & Facturation" desc="Configuration des relances et préférences globales." icon={Zap} delay={0.3}>
+        <Section id="tour-automation" title="Automatisation & Facturation" desc="Configuration des relances et préférences globales." icon={Zap} delay={0.3}>
           <div className="flex flex-col" style={{ gap: 'var(--space-4)' }}>
-            <Field label="Devise Principale">
-              <select {...register('currency')} style={selectStyle}>
-                <option value="XOF">FCFA (XOF)</option>
-                <option value="GNF">Franc Guinéen (GNF)</option>
-                <option value="EUR">Euro (€)</option>
-                <option value="USD">Dollar ($)</option>
-              </select>
-            </Field>
+            <div style={{ display: 'none' }}>
+              <Field label="Devise Principale">
+                <input type="hidden" {...register('currency')} value="GNF" />
+              </Field>
+            </div>
             
             <div style={{ display: 'flex', alignItems: 'center', opacity: 0.6, pointerEvents: 'none', marginTop: 'var(--space-2)', gap: 'var(--space-2)' }}>
               <input type="checkbox" id="autoRemindersEnabled" checked={false} readOnly style={{ width: '16px', height: '16px', cursor: 'not-allowed', accentColor: 'var(--color-primary)' }} />
@@ -388,11 +387,42 @@ export function Settings() {
             )}
           </div>
         </Section>
-
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', maxWidth: '700px', marginTop: 'var(--space-6)', gap: 'var(--space-4)' }}>
-        <Section title="Abonnement & Factures" desc="Gérez votre abonnement FacturaPro et téléchargez vos factures de paiement SaaS." icon={Banknote} delay={0.35}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'var(--space-6)', marginTop: 'var(--space-6)' }}>
+        <Section id="tour-security" title="Sécurité" desc="Modifiez votre mot de passe pour sécuriser votre compte." icon={Lock} delay={0.25}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+            <Field label="Mot de passe actuel">
+              <div style={{ position: 'relative' }}>
+                <input type={showCurrentPassword ? 'text' : 'password'} {...register('currentPassword')} style={{...inputStyle, paddingRight: '40px'}} placeholder="••••••••" />
+                <button type="button" onClick={() => setShowCurrentPassword(!showCurrentPassword)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'flex' }}>
+                  {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </Field>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+              <Field label="Nouveau mot de passe">
+                <div style={{ position: 'relative' }}>
+                  <input type={showPassword ? 'text' : 'password'} {...register('password')} style={{...inputStyle, paddingRight: '40px'}} placeholder="••••••••" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'flex' }}>
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </Field>
+              <Field label="Confirmation">
+                <div style={{ position: 'relative' }}>
+                  <input type={showConfirmPassword ? 'text' : 'password'} {...register('confirmPassword')} style={{...inputStyle, paddingRight: '40px'}} placeholder="••••••••" />
+                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)', display: 'flex' }}>
+                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </Field>
+            </div>
+            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', marginTop: '-8px' }}>Laissez vide si vous ne souhaitez pas modifier votre mot de passe.</p>
+          </div>
+        </Section>
+
+        <Section id="tour-subscription" title="Abonnement & Factures" desc="Gérez votre abonnement FacturaPro et téléchargez vos factures de paiement SaaS." icon={Banknote} delay={0.35}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
             <div style={{ background: 'var(--color-bg-page)', border: '1px solid var(--color-border-default)', borderRadius: 'var(--radius-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-4)' }}>
               <div>

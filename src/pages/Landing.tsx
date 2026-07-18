@@ -590,7 +590,7 @@ export function Landing() {
             <Reveal style={{ display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'center' }}>
               {[
                 { icon: icons.link, label: 'Site Web', val: 'einsofdigit.com', href: 'https://einsofdigit.com' },
-                { icon: icons.mail, label: 'Email', val: 'contacts@einsofdigit.com', href: 'mailto:contacts@einsofdigit.com' },
+                { icon: icons.mail, label: 'Email', val: 'equipe@facturadigit.online', href: 'mailto:equipe@facturadigit.online' },
                 { icon: icons.phone, label: 'Téléphone', val: '+224 624 77 06 18', href: 'tel:+224624770618' },
                 { icon: icons.map, label: 'Localisation', val: 'Conakry, République de Guinée', href: '#' },
               ].map(c => (

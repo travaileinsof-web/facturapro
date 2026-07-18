@@ -1,8 +1,9 @@
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { useEffect, useRef, useState, useMemo } from 'react';
-import { Users, FileText, Banknote, Clock, TrendingUp, TrendingDown, ArrowRight, Minus, Settings as SettingsIcon, Package, AlertCircle, Calendar, Target, AlertTriangle, CheckCircle2, ChevronRight } from 'lucide-react';
+import { Users, FileText, Banknote, Clock, TrendingUp, TrendingDown, ArrowRight, Minus, Settings as SettingsIcon, Package, AlertCircle, Calendar, Target, AlertTriangle, CheckCircle2, ChevronRight, Info } from 'lucide-react';
 import { formatCurrency, formatDate, useAppStore, apiFetch } from '../lib/store';
 import { PageHeader } from './ui/PageHeader';
+import { Tooltip } from './ui/tooltip';
 import { startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths, startOfQuarter, endOfQuarter, startOfYear, endOfYear, format } from 'date-fns';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, BarChart, Bar, PieChart, Pie, Cell, CartesianGrid } from 'recharts';
 
@@ -101,10 +102,10 @@ function EmptyList({ label, icon: Icon = Package, actionText, onAction }: { labe
 
 function KpiCard({
   label, value, isCurrency = false, isPercent = false, icon: Icon, color = 'var(--color-primary)',
-  trend, delay = 0,
+  trend, delay = 0, infoText
 }: {
   label: string; value: number; isCurrency?: boolean; isPercent?: boolean;
-  icon: any; color?: string; trend?: number; delay?: number;
+  icon: any; color?: string; trend?: number; delay?: number; infoText?: string;
 }) {
   const animated = useCountUp(value, 1000);
   const display = isCurrency ? formatCurrency(animated) : isPercent ? `${animated}%` : animated.toLocaleString('fr-FR');
@@ -112,7 +113,14 @@ function KpiCard({
   return (
     <div className="fp-kpi-card relative overflow-hidden flex flex-col bg-[var(--surface-1)] border border-[var(--border)] rounded-2xl" style={{ padding: '20px', opacity: 0, animation: `fp-fade-up 0.5s ease ${delay}s forwards`, minHeight: '130px' }}>
       <div className="flex items-start justify-between gap-4" style={{ marginBottom: '16px' }}>
-        <div className="text-sm font-semibold text-[var(--foreground-subtle)]" style={{ flex: 1, lineHeight: '1.4', paddingRight: '8px', wordBreak: 'break-word', maxWidth: 'calc(100% - 48px)' }}>{label}</div>
+        <div className="text-sm font-semibold text-[var(--foreground-subtle)] flex items-center gap-1.5" style={{ flex: 1, lineHeight: '1.4', paddingRight: '8px', wordBreak: 'break-word', maxWidth: 'calc(100% - 48px)' }}>
+          {label}
+          {infoText && (
+            <Tooltip content={infoText}>
+              <Info size={14} className="text-[var(--foreground-muted)] hover:text-[var(--foreground)] cursor-help transition-colors" />
+            </Tooltip>
+          )}
+        </div>
         <div className="w-8 h-8 flex items-center justify-center shrink-0 rounded-md" style={{ background: `${color}15`, border: `1px solid ${color}30` }}>
           <Icon size={16} style={{ color }}/>
         </div>
@@ -138,7 +146,7 @@ function KpiCard({
 function OnboardingWidget({ stats, user, setCurrentModule }: { stats: any, user: any, setCurrentModule: any }) {
   if (!stats) return null;
   const { overview } = stats;
-  const hasSettings = user?.smtpHost && user?.primaryColor;
+  const hasSettings = user?.primaryColor;
   const hasClient = stats?.setup?.clientCount > 0; 
   const hasCatalog = stats?.setup?.itemCount > 0;
   const hasInvoice = stats?.setup?.invoiceCount > 0;
@@ -239,7 +247,8 @@ export function Dashboard() {
             <select
               value={statsPeriod}
               onChange={(e) => setStatsPeriod(e.target.value)}
-              className="appearance-none bg-[var(--surface-1)] border border-[var(--border)] rounded-lg text-sm font-medium text-[var(--foreground)] pl-10 pr-8 py-2.5 focus:outline-none focus:border-[var(--gold)] shadow-sm cursor-pointer"
+              className="appearance-none bg-[var(--surface-1)] border border-[var(--border)] rounded-lg text-sm font-medium text-[var(--foreground)] py-2.5 focus:outline-none focus:border-[var(--gold)] shadow-sm cursor-pointer"
+              style={{ paddingLeft: '40px', paddingRight: '32px' }}
             >
               <option value="this_day">Aujourd'hui</option>
               <option value="this_week">Cette semaine</option>
@@ -291,43 +300,63 @@ export function Dashboard() {
 
           {/* SECTION D : RELANCES / IMPAYÉS (Mise en avant) */}
           <div className="fp-card border-l-4 border-l-red-500 overflow-hidden" style={{ padding: '24px' }}>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center">
+            <div className="flex items-center gap-3 mb-6" style={{ marginBottom: '32px' }}>
+              <div className="rounded-full bg-red-500/10 flex items-center justify-center" style={{ width: '40px', height: '40px', flexShrink: 0, borderRadius: '50%' }}>
                 <AlertTriangle size={20} className="text-red-500" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-[var(--foreground)]">Relances & Impayés</h2>
-                <p className="text-sm text-[var(--foreground-subtle)]">Agissez sur vos factures en retard pour améliorer votre trésorerie.</p>
+                <p className="text-sm text-[var(--foreground-subtle)]" style={{ marginTop: '4px' }}>Agissez sur vos factures en retard pour améliorer votre trésorerie.</p>
               </div>
             </div>
 
             {stats.unpaid.lateCount === 0 && stats.unpaid.partialCount === 0 ? (
               <EmptyList label="Excellente nouvelle ! Vous n'avez aucun retard de paiement. 🎉" icon={CheckCircle2} />
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="col-span-1 flex flex-col gap-4">
-                  <div className="bg-[var(--surface-2)] rounded-xl p-6 border border-red-500/20 flex flex-col justify-center">
-                    <p className="text-sm text-[var(--foreground-subtle)] font-medium mb-2">Factures Échues</p>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8" style={{ gap: '32px' }}>
+                <div className="col-span-1 flex flex-col gap-4" style={{ gap: '24px' }}>
+                  <div className="bg-[var(--surface-2)] rounded-xl border border-red-500/20 flex flex-col justify-center" style={{ padding: '24px' }}>
+                    <div className="text-sm text-[var(--foreground-subtle)] font-medium mb-2 flex items-center gap-1.5">
+                      Factures Échues
+                      <Tooltip content="Factures dont la Date d'échéance est explicitement dépassée.">
+                        <Info size={14} className="text-[var(--foreground-muted)] hover:text-[var(--foreground)] cursor-help transition-colors" />
+                      </Tooltip>
+                    </div>
                     <p className="text-3xl font-bold text-red-500 mb-1">{formatCurrency(stats.unpaid.totalOverdue)}</p>
                     <p className="text-sm text-[var(--foreground-muted)]">{stats.unpaid.lateCount} factures concernées</p>
                   </div>
                   
                   {/* AJOUT : Paiements Partiels */}
-                  <div className="bg-[var(--surface-2)] rounded-xl p-6 border border-orange-500/20 flex flex-col justify-center">
-                    <p className="text-sm text-[var(--foreground-subtle)] font-medium mb-2">Paiements Partiels (Reste dû)</p>
+                  <div className="bg-[var(--surface-2)] rounded-xl border border-orange-500/20 flex flex-col justify-center" style={{ padding: '24px' }}>
+                    <div className="text-sm text-[var(--foreground-subtle)] font-medium mb-2 flex items-center gap-1.5">
+                      Paiements Partiels (Reste dû)
+                      <Tooltip content="Reste à payer sur les factures qui ont déjà reçu un acompte.">
+                        <Info size={14} className="text-[var(--foreground-muted)] hover:text-[var(--foreground)] cursor-help transition-colors" />
+                      </Tooltip>
+                    </div>
                     <p className="text-3xl font-bold text-orange-500 mb-1">{formatCurrency(stats.unpaid.partialAmount)}</p>
                     <p className="text-sm text-[var(--foreground-muted)]">{stats.unpaid.partialCount} factures concernées</p>
                   </div>
 
-                  <div className="bg-[var(--surface-2)] rounded-xl p-6 border border-[var(--border)] flex flex-col justify-center">
-                    <p className="text-sm text-[var(--foreground-subtle)] font-medium mb-2">Efficacité des Relances</p>
+                  <div className="bg-[var(--surface-2)] rounded-xl border border-[var(--border)] flex flex-col justify-center" style={{ padding: '24px' }}>
+                    <div className="text-sm text-[var(--foreground-subtle)] font-medium mb-2 flex items-center gap-1.5">
+                      Efficacité des Relances
+                      <Tooltip content="Pourcentage de relances envoyées ayant abouti à un paiement.">
+                        <Info size={14} className="text-[var(--foreground-muted)] hover:text-[var(--foreground)] cursor-help transition-colors" />
+                      </Tooltip>
+                    </div>
                     <p className="text-3xl font-bold text-[var(--foreground)] mb-1">{stats.unpaid.reminderEfficiency}%</p>
                     <p className="text-sm text-[var(--foreground-muted)]">Sur {stats.unpaid.totalReminders} relance(s) envoyée(s)</p>
                   </div>
                 </div>
 
                 <div className="col-span-2">
-                  <h3 className="text-sm font-bold text-[var(--foreground)] mb-4">Top 5 Clients à Relancer</h3>
+                  <h3 className="text-sm font-bold text-[var(--foreground)] mb-4 flex items-center gap-1.5" style={{ marginBottom: '24px' }}>
+                    Top 5 Clients à Relancer
+                    <Tooltip content="Classement des clients ayant le plus grand montant de factures échues (Date d'échéance dépassée).">
+                      <Info size={14} className="text-[var(--foreground-muted)] hover:text-[var(--foreground)] cursor-help transition-colors" />
+                    </Tooltip>
+                  </h3>
                   {stats.unpaid.topLateClients.length === 0 ? (
                     <EmptyList label="Aucun client en retard." />
                   ) : (
@@ -376,15 +405,30 @@ export function Dashboard() {
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginTop: '24px' }}>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4" style={{ display: 'grid', gap: '16px' }}>
                     <div className="bg-[var(--surface-2)] rounded-xl p-5 border border-[var(--border)]" style={{ padding: '20px' }}>
-                      <p className="text-sm text-[var(--foreground-subtle)] mb-1">Nombre de factures</p>
+                      <div className="text-sm text-[var(--foreground-subtle)] mb-1 flex items-center gap-1.5">
+                        Nombre de factures
+                        <Tooltip content="Total des factures émises sur la période.">
+                          <Info size={14} className="text-[var(--foreground-muted)] hover:text-[var(--foreground)] cursor-help transition-colors" />
+                        </Tooltip>
+                      </div>
                       <p className="text-2xl font-bold">{stats.billing.nbInvoices}</p>
                     </div>
                     <div className="bg-[var(--surface-2)] rounded-xl p-5 border border-[var(--border)]" style={{ padding: '20px' }}>
-                      <p className="text-sm text-[var(--foreground-subtle)] mb-1">Montant moyen</p>
+                      <div className="text-sm text-[var(--foreground-subtle)] mb-1 flex items-center gap-1.5">
+                        Montant moyen
+                        <Tooltip content="Valeur moyenne d'une facture sur la période.">
+                          <Info size={14} className="text-[var(--foreground-muted)] hover:text-[var(--foreground)] cursor-help transition-colors" />
+                        </Tooltip>
+                      </div>
                       <p className="text-2xl font-bold">{formatCurrency(stats.billing.avgInvoice)}</p>
                     </div>
                     <div className="bg-[var(--surface-2)] rounded-xl p-5 border border-[var(--border)]" style={{ padding: '20px' }}>
-                      <p className="text-sm text-[var(--foreground-subtle)] mb-1">Délai moyen de paiement</p>
+                      <div className="text-sm text-[var(--foreground-subtle)] mb-1 flex items-center gap-1.5">
+                        Délai moyen de paiement
+                        <Tooltip content="Nombre de jours moyen entre l'émission d'une facture et son paiement complet.">
+                          <Info size={14} className="text-[var(--foreground-muted)] hover:text-[var(--foreground)] cursor-help transition-colors" />
+                        </Tooltip>
+                      </div>
                       <p className="text-2xl font-bold">{stats.billing.avgPaymentDelay} jours</p>
                     </div>
                   </div>
@@ -393,22 +437,37 @@ export function Dashboard() {
                   {stats.billing.statusCount && (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" style={{ display: 'grid', gap: '16px' }}>
                       <div className="flex flex-col bg-green-500/10 p-4 rounded-xl border border-green-500/20" style={{ padding: '16px' }}>
-                        <p className="text-xs font-semibold text-green-700 uppercase tracking-wide">Factures Payées</p>
+                        <div className="text-xs font-semibold text-green-700 uppercase tracking-wide flex items-center gap-1.5">
+                          Factures Payées
+                          <Tooltip content="Répartition du statut de toutes les factures émises sur la période.">
+                            <Info size={14} className="text-green-700/50 hover:text-green-700 cursor-help transition-colors" />
+                          </Tooltip>
+                        </div>
                         <p className="text-xl font-bold text-green-700 mt-2">{stats.billing.statusCount['payée'] || 0}</p>
                       </div>
                       <div className="flex flex-col bg-orange-500/10 p-4 rounded-xl border border-orange-500/20" style={{ padding: '16px' }}>
-                        <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide">Partiellement Payées</p>
+                        <div className="text-xs font-semibold text-orange-700 uppercase tracking-wide flex items-center gap-1.5">
+                          Partiellement Payées
+                          <Tooltip content="Répartition du statut de toutes les factures émises sur la période.">
+                            <Info size={14} className="text-orange-700/50 hover:text-orange-700 cursor-help transition-colors" />
+                          </Tooltip>
+                        </div>
                         <p className="text-xl font-bold text-orange-700 mt-2">{stats.billing.statusCount['partielle'] || 0}</p>
                       </div>
                       <div className="flex flex-col bg-blue-500/10 p-4 rounded-xl border border-blue-500/20" style={{ padding: '16px' }}>
-                        <p className="text-xs font-semibold text-blue-700 uppercase tracking-wide">Envoyées / En Attente</p>
+                        <div className="text-xs font-semibold text-blue-700 uppercase tracking-wide flex items-center gap-1.5">
+                          Envoyées / En Attente
+                          <Tooltip content="Répartition du statut de toutes les factures émises sur la période.">
+                            <Info size={14} className="text-blue-700/50 hover:text-blue-700 cursor-help transition-colors" />
+                          </Tooltip>
+                        </div>
                         <p className="text-xl font-bold text-blue-700 mt-2">{stats.billing.statusCount['envoyée'] || 0}</p>
                       </div>
                     </div>
                   )}
 
                   {stats.billing.caEvolution && stats.billing.caEvolution.length > 0 ? (
-                    <div>
+                    <div style={{ marginTop: '40px' }}>
                       <h3 className="text-sm font-bold mb-4">Évolution du Chiffre d'Affaires</h3>
                       <div className="h-[250px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
@@ -446,7 +505,7 @@ export function Dashboard() {
                    
                    {/* AJOUT : Courbe comparative revenus vs dépenses dans le temps */}
                    {combinedEvolution.length > 0 && (
-                      <div className="mb-8">
+                      <div className="mb-8" style={{ marginTop: '40px' }}>
                         <h3 className="text-sm font-bold mb-4">Revenus vs Dépenses</h3>
                         <div className="h-[250px] w-full">
                           <ResponsiveContainer width="100%" height="100%">

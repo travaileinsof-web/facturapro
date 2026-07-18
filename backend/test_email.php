@@ -15,15 +15,16 @@ require_once __DIR__ . '/libs/PHPMailer/SMTP.php';
 $pdo = new PDO('sqlite:' . DB_PATH);
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-// Récupérer le premier compte avec SMTP configuré
-$stmt = $pdo->query("SELECT * FROM Account WHERE smtpHost IS NOT NULL AND smtpHost != '' AND smtpUser IS NOT NULL AND smtpUser != '' LIMIT 1");
+// Récupérer la configuration SMTP globale
+$stmt = $pdo->query("SELECT * FROM PlatformSettings WHERE id = 'global'");
 $account = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$account) {
-    die("❌ Aucun compte avec une configuration SMTP trouvée.\n   → Allez dans Paramètres > Configuration E-mail et renseignez votre hôte SMTP, email et mot de passe.\n");
+if (!$account || empty($account['smtpUser']) || empty($account['smtpPass'])) {
+    die("❌ Aucune configuration SMTP globale trouvée.\n   → Allez dans le panel SuperAdmin et renseignez votre hôte SMTP, email et mot de passe.\n");
 }
 
-echo "✅ Compte trouvé : {$account['companyName']}\n";
+$companyName = $account['companyName'] ?? 'FacturaPro';
+echo "✅ Configuration globale trouvée : {$companyName}\n";
 echo "   SMTP Host : {$account['smtpHost']}\n";
 echo "   SMTP Port : {$account['smtpPort']}\n";
 echo "   SMTP User : {$account['smtpUser']}\n\n";

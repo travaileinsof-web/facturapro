@@ -9,23 +9,15 @@ import {
   ChevronRight, Building2, ShieldAlert
 } from 'lucide-react';
 import { useAppStore } from './lib/store';
-import { Dashboard }  from './components/Dashboard';
-import { Clients }    from './components/Clients';
-import { Catalog }    from './components/Catalog';
-import { Expenses }   from './components/Expenses';
-import { Reminders }  from './components/Reminders';
-import { Invoices }   from './components/Invoices';
-import { Receipts }   from './components/Receipts';
-import { ChatIA }     from './components/ChatIA';
-import { Settings }   from './components/Settings';
-import { Companies }  from './components/Companies';
-import { Pricing }    from './components/Pricing';
+import { ModuleRouter } from './components/ModuleRouter';
+import { Pricing } from './components/Pricing';
 import { Popover, PopoverContent, PopoverTrigger } from './components/ui/popover';
 import { cn } from './lib/utils';
 import { toast } from 'sonner';
 import { TourTutorial } from './components/TourTutorial';
 import { ChatbotWidget } from './components/ChatbotWidget';
 import DOMPurify from 'dompurify';
+import { Sidebar, FPLogo, NAV, getTrialHoursRemaining } from './components/Sidebar';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,206 +31,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-const NAV = [
-  { id: 'dashboard', label: 'Tableau de bord', icon: LayoutDashboard,  group: 'main' },
-  { id: 'clients',   label: 'Clients',          icon: Users,            group: 'main' },
-  { id: 'catalog',   label: 'Catalogue',         icon: LayoutList,       group: 'main' },
-  { id: 'invoices',  label: 'Factures',          icon: FileText,         group: 'main' },
-  { id: 'receipts',  label: 'Reçus',             icon: ReceiptIcon,      group: 'main' },
-  { id: 'expenses',  label: 'Dépenses',          icon: Wallet,           group: 'main' },
-  { id: 'reminders', label: 'Relances',          icon: AlertTriangle,    group: 'main' },
-  { id: 'chat',      label: 'Assistant IA',      icon: MessageSquare,    group: 'tools' },
-  { id: 'companies', label: 'Entreprises',       icon: Building2,        group: 'tools' },
-  { id: 'pricing',   label: 'Abonnement',        icon: TrendingUp,       group: 'tools' },
-  { id: 'settings',  label: 'Paramètres',        icon: SettingsIcon,     group: 'tools' },
-];
-
-function getTrialHoursRemaining(createdAt?: string) {
-  if (!createdAt) return 24;
-  const createStr = createdAt.includes('Z') ? createdAt : createdAt.replace(' ', 'T') + 'Z';
-  const expireDate = new Date(new Date(createStr).getTime() + 24 * 60 * 60 * 1000);
-  return Math.max(0, Math.ceil((expireDate.getTime() - Date.now()) / (1000 * 60 * 60)));
-}
-
-/* ─── Logo SVG ─────────────────────────────────────────────────────── */
-function FPLogo({ size = 26 }: { size?: number }) {
-  return (
-    <div 
-      className="flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(201,168,76,0.3)]"
-      style={{
-        width: size, height: size,
-        background: 'linear-gradient(135deg, #C9A84C 0%, #E2C878 100%)'
-      }}
-    >
-      <svg width={size * 0.5} height={size * 0.5} viewBox="0 0 24 24" fill="none"
-        stroke="#0A0A0F" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <line x1="16" y1="13" x2="8" y2="13"/>
-        <line x1="16" y1="17" x2="8" y2="17"/>
-      </svg>
-    </div>
-  );
-}
-
-/* ─── Sidebar ───────────────────────────────────────────────────────── */
-function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open: boolean; onClose: () => void; isCollapsed: boolean; onToggleCollapse: () => void }) {
-  const { currentModule, setCurrentModule, user, logout } = useAppStore();
-  const navigate = useNavigate();
-
-  const isTrial = user?.subscriptionStatus === 'trial' || user?.subscriptionStatus === 'trial_expired' || !user?.subscriptionStatus;
-  const isExpired = user?.subscriptionStatus === 'expired';
-  const trialHours = getTrialHoursRemaining(user?.createdAt);
-  const initials = (user?.name || user?.company || 'U').charAt(0).toUpperCase();
-
-  const handleNav = (id: string) => { setCurrentModule(id as any); onClose(); };
-
-  const mainItems  = NAV.filter(n => n.group === 'main');
-  const toolsItems = NAV.filter(n => n.group === 'tools');
-
-  return (
-    <>
-      {/* Mobile backdrop */}
-      {open && (
-        <div onClick={onClose} style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.5)',
-          zIndex: 98, backdropFilter: 'blur(2px)',
-        }} className="sidebar-hide" />
-      )}
-
-      <aside className={`app-sidebar ${open ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''} border-r-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)]`}
-        style={{ transform: open ? 'translateX(0)' : undefined, zIndex: 100 }}>
-
-        {/* ── Logo ── */}
-        <div className="shrink-0 relative" style={{ padding: 'var(--space-5)' }}>
-          <div className={cn("flex items-center", isCollapsed ? "justify-center" : "justify-between")}>
-            <Link to="/" className="flex items-center no-underline" style={{ gap: 'var(--space-2)' }}>
-              <FPLogo size={isCollapsed ? 32 : 26} />
-              <div className="sidebar-shrink">
-                <div className="font-display font-bold text-[14px] text-[var(--foreground)] tracking-tight">FacturaPro</div>
-                <div className="text-[9px] text-[var(--gold)] font-bold tracking-[1.5px] uppercase opacity-80">Business Suite</div>
-              </div>
-            </Link>
-            {!isCollapsed && (
-              <button 
-                onClick={onClose} 
-                className="sidebar-hide mobile-only flex bg-transparent border-none cursor-pointer text-[var(--foreground-subtle)] hover:text-[var(--foreground)] transition-colors duration-150"
-                style={{ padding: 'var(--space-1)' }}
-              >
-                <X size={14}/>
-              </button>
-            )}
-          </div>
-          <button 
-            onClick={onToggleCollapse} 
-            className="pub-nav-desktop hover:shadow-sm absolute right-[-12px] top-[22px] w-6 h-6 bg-[var(--surface-1)] border border-[var(--border)] rounded-full flex items-center justify-center cursor-pointer z-10 text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
-            title={isCollapsed ? 'Agrandir' : 'Réduire'}
-          >
-            <ChevronRight size={14} className={cn("transition-transform duration-200", isCollapsed ? "rotate-0" : "rotate-180")} />
-          </button>
-        </div>
-
-        {/* ── Divider ── */}
-        <div className="h-px bg-[var(--border)]" style={{ margin: '0 var(--space-4) var(--space-4)' }} />
-
-        {/* ── Nav ── */}
-        <nav className="flex-1 overflow-y-auto px-2 flex flex-col" style={{ paddingTop: 'var(--space-6)', paddingBottom: 'var(--space-6)', gap: 'var(--space-1)' }}>
-          <span style={{ fontSize: '11px', fontWeight: '800', color: 'var(--color-text-placeholder)', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '0 var(--space-4)', marginBottom: 'var(--space-2)' }}>Principal</span>
-          {mainItems.map((item, i) => {
-            const Icon = item.icon;
-            const active = currentModule === item.id;
-            return (
-              <button key={item.id} id={`nav-${item.id}`} onClick={() => handleNav(item.id)}
-                className={`app-nav-item ${active ? 'active' : ''}`}
-                title={isCollapsed ? item.label : undefined}
-                style={{ opacity: 0, animation: `fp-fade-up 0.35s ease ${i * 0.035}s forwards`, justifyContent: isCollapsed ? 'center' : 'flex-start', padding: 'var(--space-2) var(--space-4)', gap: 'var(--space-3)', height: '44px', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-1)' }}>
-                <Icon className="nav-icon" style={{ width: '18px', height: '18px', flexShrink: 0 }} strokeWidth={2}/>
-                {!isCollapsed && <span style={{ flex: 1, textAlign: 'left', fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>{item.label}</span>}
-              </button>
-            );
-          })}
-
-          <span style={{ fontSize: '11px', fontWeight: '800', color: 'var(--color-text-placeholder)', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '0 var(--space-4)', marginTop: 'var(--space-6)', marginBottom: 'var(--space-2)' }}>Outils</span>
-          {toolsItems.map((item, i) => {
-            const Icon = item.icon;
-            const active = currentModule === item.id;
-            const isComingSoon = ['chat', 'companies'].includes(item.id);
-            return (
-              <button key={item.id} id={`nav-${item.id}`} onClick={() => handleNav(item.id)}
-                className={`app-nav-item ${active ? 'active' : ''}`}
-                title={isCollapsed ? item.label : undefined}
-                style={{ opacity: 0, animation: `fp-fade-up 0.35s ease ${(mainItems.length + i) * 0.035}s forwards`, justifyContent: isCollapsed ? 'center' : 'flex-start', padding: 'var(--space-2) var(--space-4)', gap: 'var(--space-3)', height: '44px', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-1)' }}>
-                <Icon className="nav-icon" style={{ width: '18px', height: '18px', flexShrink: 0 }} strokeWidth={2}/>
-                {!isCollapsed && (
-                  <span style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', textAlign: 'left' }}>
-                    <span style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-weight-medium)' }}>{item.label}</span>
-                    {isComingSoon && <span style={{ background: 'rgba(184,134,11,0.1)', color: 'var(--gold)', border: '1px solid rgba(184,134,11,0.3)', padding: '2px 6px', fontSize: '9px', borderRadius: 'var(--radius-sm)', fontWeight: '800', letterSpacing: '0.5px' }}>BIENTÔT</span>}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* ── User + Plan footer ── */}
-        <div className="sidebar-footer-zone" style={{ padding: 'var(--space-3)', gap: 'var(--space-2)' }}>
-          {/* Identité utilisateur */}
-          <div className={`flex items-center gap-2 ${isCollapsed ? 'justify-center' : ''}`}>
-            <div style={{
-              width: '28px', height: '28px', flexShrink: 0,
-              borderRadius: 'var(--radius-sm)',
-              background: 'var(--color-bg-page)',
-              border: '1px solid var(--color-border-default)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '11px', fontWeight: 'var(--font-weight-bold)',
-              color: 'var(--color-text-secondary)',
-            }}>
-              {initials}
-            </div>
-            <div className="sidebar-shrink" style={{ minWidth: 0, lineHeight: 1.2 }}>
-              <div style={{ fontSize: '12px', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.company || user?.name || 'Utilisateur'}</div>
-              <div style={{ fontSize: '11px', color: 'var(--color-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.company && user?.name && user.name !== user.company ? user.name : user?.email}</div>
-            </div>
-          </div>
-
-          {/* Trial Banner Ultra-Compact */}
-          {isTrial && !isCollapsed && (
-            <div style={{ background: 'var(--color-primary-subtle)', border: '1px solid rgba(184,134,11,0.2)', padding: 'var(--space-2)', borderRadius: 'var(--radius-sm)' }}>
-              <div className="flex justify-between items-center" style={{ marginBottom: '4px' }}>
-                <div style={{ fontSize: '10px', color: 'var(--color-primary)', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', textTransform: 'uppercase' }}>
-                  <Zap size={10}/> {trialHours}h restantes
-                </div>
-                <button
-                  onClick={() => setCurrentModule('pricing' as any)}
-                  style={{ fontSize: '10px', color: 'var(--color-primary)', fontWeight: 'bold', textDecoration: 'underline' }}
-                >
-                  S'abonner
-                </button>
-              </div>
-              <div style={{ height: '3px', background: 'var(--color-border-default)', borderRadius: 'var(--radius-full)' }}>
-                <div style={{ height: '100%', width: `${Math.round((trialHours / 24) * 100)}%`, background: 'var(--color-primary)', borderRadius: 'var(--radius-full)' }}/>
-              </div>
-            </div>
-          )}
-
-          {/* Déconnexion */}
-          <button
-            onClick={() => { logout(); navigate('/'); }}
-            className={`flex items-center gap-2 w-full ${isCollapsed ? 'justify-center' : 'justify-start'}`}
-            style={{ height: '28px', fontSize: '12px', color: 'var(--color-text-secondary)', borderRadius: 'var(--radius-sm)', padding: '0 var(--space-2)', transition: 'all 0.15s' }}
-            title="Se déconnecter"
-            onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'var(--color-bg-page)'; el.style.color = 'var(--color-danger)'; }}
-            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.color = 'var(--color-text-secondary)'; }}
-          >
-            <LogOut size={13}/> <span className="sidebar-shrink">Se déconnecter</span>
-          </button>
-        </div>
-      </aside>
-    </>
-  );
-}
 
 /* ─── App Layout ────────────────────────────────────────────────────── */
 function AppLayout() {
@@ -258,33 +50,23 @@ function AppLayout() {
   const [notifications, setNotifications] = useState<any[]>([]);
 
   const { tourRunning, setTourRunning } = useAppStore();
-  const [hasCheckedSmtp, setHasCheckedSmtp] = useState(false);
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
-    if (user && !hasCheckedSmtp && user.role !== 'employee') {
-      if (!user.smtpHost) {
-        toast.info("Veuillez configurer votre serveur SMTP dans les paramètres.", { duration: 8000 });
-        const hasSeenTour = localStorage.getItem('fp_tour_completed');
-        if (!hasSeenTour) {
-          timeoutId = setTimeout(() => setTourRunning(true), 1000);
-        } else {
-          timeoutId = setTimeout(() => useAppStore.getState().setCurrentModule('settings' as any), 1000);
-        }
+    if (user && user.role !== 'employee') {
+      const hasSeenTour = localStorage.getItem('fp_tour_completed');
+      if (!hasSeenTour) {
+        timeoutId = setTimeout(() => setTourRunning(true), 1000);
       }
-      setHasCheckedSmtp(true);
     }
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [user, hasCheckedSmtp, setTourRunning]);
+  }, [user, setTourRunning]);
 
   const handleTourFinish = () => {
     setTourRunning(false);
     localStorage.setItem('fp_tour_completed', 'true');
-    if (user && !user.smtpHost) {
-      useAppStore.getState().setCurrentModule('settings' as any);
-    }
   };
 
   const fetchNotifications = async () => {
@@ -715,39 +497,9 @@ function AppLayout() {
         {/* Main content */}
         <main style={{ flex: 1, overflow: 'auto', padding: 'clamp(24px, 4vw, 40px)', position: 'relative' }}>
           
-          {user && !user.smtpHost && currentModule !== 'settings' && user.role !== 'employee' && (
-            <div style={{ position: 'absolute', inset: 0, zIndex: 50, background: 'var(--color-bg-page)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-6)' }}>
-              <div style={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border-default)', borderRadius: 'var(--radius-xl)', padding: 'var(--space-8)', maxWidth: '460px', textAlign: 'center', boxShadow: 'var(--shadow-xl)' }}>
-                <SettingsIcon size={48} style={{ color: 'var(--color-primary)', margin: '0 auto var(--space-4)' }} />
-                <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 'var(--font-weight-bold)', marginBottom: 'var(--space-2)', color: 'var(--color-text-primary)' }}>Configuration requise</h2>
-                <p style={{ color: 'var(--color-text-secondary)', marginBottom: 'var(--space-6)', lineHeight: 1.5 }}>
-                  Pour profiter pleinement de FacturaPro et envoyer vos documents, vous devez finaliser la configuration de votre serveur SMTP et de votre identité visuelle.
-                </p>
-                <button 
-                  onClick={() => useAppStore.getState().setCurrentModule('settings' as any)}
-                  className="fp-btn-primary"
-                  style={{ width: '100%', justifyContent: 'center' }}
-                >
-                  Aller aux paramètres
-                </button>
-              </div>
-            </div>
-          )}
 
-          {/* Module container */}
-          <div key={animKey} style={{ opacity: 0, animation: 'fp-fade-up 0.35s ease forwards' }}>
-            {currentModule === 'dashboard' && <Dashboard />}
-            {currentModule === 'clients'   && <Clients />}
-            {currentModule === 'catalog'   && <Catalog />}
-            {currentModule === 'invoices'  && <Invoices />}
-            {currentModule === 'receipts'  && <Receipts />}
-            {currentModule === 'expenses'  && <Expenses />}
-            {currentModule === 'reminders' && <Reminders />}
-            {currentModule === 'chat'      && <ComingSoonOverlay featureName="Assistant IA" />}
-            {currentModule === 'companies' && <ComingSoonOverlay featureName="Multi-Entreprise" />}
-            {currentModule === 'settings'  && <Settings />}
-            {currentModule === 'pricing'   && <Pricing />}
-          </div>
+
+          <ModuleRouter animKey={animKey} />
 
           {/* Floating Chat/Help Orb */}
           <button
@@ -767,21 +519,7 @@ function AppLayout() {
   );
 }
 
-function ComingSoonOverlay({ featureName }: { featureName: string }) {
-  const { setCurrentModule } = useAppStore();
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '60vh', textAlign: 'center', padding: 'var(--space-5)' }}>
-      <div style={{ width: 64, height: 64, background: 'var(--gold-dim)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 'var(--space-5)' }}>
-        <Zap size={28} style={{ color: 'var(--gold)' }} />
-      </div>
-      <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--foreground)', marginBottom: 'var(--space-3)' }}>Bientôt disponible</h2>
-      <p style={{ color: 'var(--foreground-subtle)', maxWidth: '400px', lineHeight: 1.5, marginBottom: 'var(--space-5)' }}>
-        La fonctionnalité <strong style={{ color: 'var(--foreground)' }}>{featureName}</strong> est en cours de développement. 
-        Elle sera très bientôt disponible pour enrichir votre expérience sur FacturaPro.
-      </p>
-    </div>
-  );
-}
+
 
 export default function App() {
   return (

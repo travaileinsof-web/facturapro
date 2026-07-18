@@ -45,7 +45,7 @@ class Router {
                 ChatController::handle($pdo, $method, $accountId, $body, $currentAccount);
                 break;
             case 'share':
-                ShareController::handle($method, $body, $currentAccount);
+                ShareController::handle($pdo, $method, $body, $currentAccount);
                 break;
             case 'v1':
                 if ($id === 'payment') {

@@ -3,15 +3,11 @@ require_once __DIR__ . '/config.php';
 $pdo = new PDO("sqlite:" . DB_PATH);
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-$stmt = $pdo->query("SELECT * FROM Account WHERE email = 'comptable@gmail.com'");
+$stmt = $pdo->query("SELECT * FROM PlatformSettings WHERE id = 'global'");
 $account = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$account) {
-    die("Aucun compte trouvé.\n");
-}
-
-if (empty($account['smtpUser']) || empty($account['smtpPass'])) {
-    die("SMTP non configuré pour le compte {$account['email']}.\n");
+if (!$account || empty($account['smtpUser']) || empty($account['smtpPass'])) {
+    die("Configuration SMTP globale non trouvée ou incomplète.\n");
 }
 
 require_once __DIR__ . '/libs/PHPMailer/Exception.php';
@@ -42,7 +38,7 @@ try {
     $mail->Port       = $account['smtpPort'] ? (int)$account['smtpPort'] : 587;
     
     $mail->setFrom($account['smtpUser'], 'Test FacturaPro');
-    $mail->addAddress($account['email']); // Send to self
+    $mail->addAddress($account['smtpUser']); // Send to self
     
     $mail->isHTML(true);
     $mail->Subject = 'Test SMTP FacturaPro';
