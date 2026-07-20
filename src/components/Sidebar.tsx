@@ -67,7 +67,7 @@ export function Sidebar({ open, onClose, isCollapsed, onToggleCollapse }: { open
         <div className="shrink-0 relative" style={{ padding: 'var(--space-5)' }}>
           <div className={cn("flex items-center", isCollapsed ? "justify-center" : "justify-between")}>
             <Link to="/" className="flex items-center no-underline" style={{ gap: 'var(--space-2)' }}>
-              <Logo width={isCollapsed ? 32 : 140} showText={!isCollapsed} />
+              <Logo width={isCollapsed ? 32 : 110} showText={!isCollapsed} />
             </Link>
             {!isCollapsed && (
               <button 

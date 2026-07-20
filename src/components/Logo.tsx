@@ -12,7 +12,7 @@ export function Logo({ className = '', width = 200, showText = true }: LogoProps
   return (
     <div className={`flex flex-col items-center justify-center ${className}`} style={{ width }}>
       <img 
-        src="/logo.png" 
+        src="/logo-dark.png" 
         alt="FacturaPro Logo" 
         style={{ width: '100%', height: 'auto', objectFit: 'contain' }}
       />

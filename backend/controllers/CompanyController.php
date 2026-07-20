@@ -56,7 +56,7 @@ class CompanyController {
                 $body['stamp'] ?? null,
                 $body['signature'] ?? null,
                 $body['primaryColor'] ?? '#0f172a',
-                $body['currency'] ?? 'XOF',
+                $body['currency'] ?? 'GNF',
                 $body['smtpHost'] ?? null,
                 $body['smtpPort'] ?? null,
                 $body['smtpUser'] ?? null,

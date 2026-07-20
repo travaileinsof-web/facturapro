@@ -2,16 +2,23 @@
 class UploadController {
     public static function handle($method, $accountId) {
         if ($method === 'POST') {
-            if (empty($_FILES['file'])) {
+            if (empty($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
                 http_response_code(400);
-                echo json_encode(["error" => "Aucun fichier reçu."]);
+                $errorMsg = empty($_FILES['file']) ? "Aucun fichier reçu." : "Erreur lors de l'upload (code " . $_FILES['file']['error'] . "). Vérifiez la taille du fichier.";
+                echo json_encode(["error" => $errorMsg]);
                 exit;
             }
 
             $file = $_FILES['file'];
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mime = finfo_file($finfo, $file['tmp_name']);
-            finfo_close($finfo);
+            if (function_exists('finfo_open')) {
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mime = finfo_file($finfo, $file['tmp_name']);
+                finfo_close($finfo);
+            } elseif (function_exists('mime_content_type')) {
+                $mime = mime_content_type($file['tmp_name']);
+            } else {
+                $mime = $file['type'];
+            }
 
             $allowedMimes = [
                 'image/jpeg' => 'jpg',

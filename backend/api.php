@@ -135,6 +135,15 @@ if (($resource === 'v1' && $id === 'webhooks' && $subAction === 'djomy') || ($re
     exit;
 }
 
+if ($resource === 'v1' && $id === 'promo' && $subAction === 'count') {
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM Account WHERE subscriptionPlan IN ('annuel', 'premium') AND subscriptionStatus = 'active'");
+    $stmt->execute();
+    $count = (int)$stmt->fetchColumn();
+    $left = max(0, 100 - $count);
+    echo json_encode(['placesLeft' => $left]);
+    exit;
+}
+
 if ($resource === 'fix_corruption' || $resource === 'fix_corruption.php') {
     require_once __DIR__ . '/fix_corruption.php';
     exit;
@@ -233,7 +242,7 @@ if ($resource === 'auth' && $id === 'me') {
         "accentColor"        => $currentAccount['accentColor'] ?? null,
         "role"               => $currentAccount['role'] ?? 'user',
         // ✅ FIX: Inclure la devise (manquait dans /auth/me)
-        "currency"           => $currentAccount['currency'] ?? 'XOF'
+        "currency"           => $currentAccount['currency'] ?? 'GNF'
     ]);
     exit;
 }
@@ -268,7 +277,7 @@ if ($resource === 'init' && $method === 'GET') {
         "taxId"              => $currentAccount['taxId'] ?? null,
         "bankName"           => $currentAccount['bankName'] ?? null,
         "bankAccount"        => $currentAccount['bankAccount'] ?? null,
-        "currency"           => $currentAccount['currency'] ?? 'XOF',
+        "currency"           => $currentAccount['currency'] ?? 'GNF',
     ];
 
     // 2. Notifications non lues (1 requête simple avec index)

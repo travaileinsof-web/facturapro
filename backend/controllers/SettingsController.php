@@ -128,7 +128,7 @@ class SettingsController {
                 // ✅ FIX : S'assurer que la devise est bien présente dans la réponse
                 // pour que le store Zustand frontend se mette à jour immédiatement
                 if (!isset($mappedUpdatedAccount['currency'])) {
-                    $mappedUpdatedAccount['currency'] = $updatedAccount['currency'] ?? 'XOF';
+                    $mappedUpdatedAccount['currency'] = $updatedAccount['currency'] ?? 'GNF';
                 }
 
                 $pdo->commit();

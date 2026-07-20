@@ -31,7 +31,7 @@ function CompanyForm({
   const [form, setForm] = useState<any>(initial || {
     name: '', slogan: '', address: '', phone: '', email: '', website: '',
     taxId: '', bankName: '', bankAccount: '', primaryColor: '#0f172a',
-    currency: 'XOF',
+    currency: 'GNF',
   });
 
 
@@ -79,22 +79,9 @@ function CompanyForm({
             <label style={labelStyle}>Site web</label>
             <input style={inputStyle} value={form.website || ''} onChange={e => set('website', e.target.value)} placeholder="https://..." />
           </div>
-          <div>
+          <div style={{ display: 'none' }}>
             <label style={labelStyle}>Devise</label>
-            <select
-              style={{ ...inputStyle, cursor: 'pointer', appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', paddingRight: '36px' }}
-              value={form.currency || 'XOF'}
-              onChange={e => set('currency', e.target.value)}
-            >
-              <option value="XOF">XOF — Franc CFA (BCEAO)</option>
-              <option value="XAF">XAF — Franc CFA (BEAC)</option>
-              <option value="EUR">EUR — Euro</option>
-              <option value="USD">USD — Dollar</option>
-              <option value="CAD">CAD — Dollar Canadien</option>
-              <option value="MAD">MAD — Dirham Marocain</option>
-              <option value="GNF">GNF — Franc Guinéen</option>
-              <option value="CDF">CDF — Franc Congolais</option>
-            </select>
+            <input type="hidden" value="GNF" />
           </div>
           <div>
             <label style={labelStyle}>Banque</label>

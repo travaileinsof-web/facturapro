@@ -9,7 +9,7 @@ try {
 
     // Columns to ensure on Account
     $accountCols = [
-        'currency' => "VARCHAR(10) DEFAULT 'XOF'",
+        'currency' => "VARCHAR(10) DEFAULT 'GNF'",
         'autoRemindersEnabled' => "INTEGER DEFAULT 0",
         'autoReminderDays' => "VARCHAR(50) DEFAULT '[-5, -3, 0]'"
     ];
@@ -25,7 +25,7 @@ try {
 
     // Columns to ensure on Company
     $companyCols = [
-        'currency' => "VARCHAR(10) DEFAULT 'XOF'",
+        'currency' => "VARCHAR(10) DEFAULT 'GNF'",
         'smtpHost' => "VARCHAR(255) NULL",
         'smtpPort' => "VARCHAR(10) NULL",
         'smtpEncryption' => "VARCHAR(50) DEFAULT 'tls'",

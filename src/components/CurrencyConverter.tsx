@@ -4,7 +4,7 @@ import { useAppStore, formatCurrency } from '../lib/store';
 import { toast } from 'sonner';
 
 export function CurrencyConverter() {
-  const storeCurrency = useAppStore(s => s.user?.currency) || 'XOF';
+  const storeCurrency = useAppStore(s => s.user?.currency) || 'GNF';
   
   const [open, setOpen] = useState(false);
   const [amountInput, setAmountInput] = useState<string>('');

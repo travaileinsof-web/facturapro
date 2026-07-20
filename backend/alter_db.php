@@ -13,7 +13,7 @@ $missingCols = [
     'smtpEncryption' => "VARCHAR(50) DEFAULT 'tls'",
     'smtpUser' => 'VARCHAR(255) NULL',
     'smtpPass' => 'VARCHAR(255) NULL',
-    'currency' => "VARCHAR(10) DEFAULT 'XOF'",
+    'currency' => "VARCHAR(10) DEFAULT 'GNF'",
     'autoRemindersEnabled' => 'INTEGER DEFAULT 0',
     'autoReminderDays' => "VARCHAR(50) DEFAULT '[-5, -3, 0]'"
 ];

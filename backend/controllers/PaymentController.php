@@ -66,7 +66,7 @@ class PaymentController {
         }
 
         $accountId = $currentAccount['id'];
-        $amount = 1000; // 1000 GNF
+        $amount = 500000; // 500 000 GNF
         $reference = 'SUB-' . uniqid() . '-' . time();
 
         // 1. Enregistrer dans SubscriptionPayment
@@ -95,8 +95,8 @@ class PaymentController {
             'merchantPaymentReference' => $reference,
             'returnUrl' => rtrim($origin, '/') . '/dashboard?payment=success&ref=' . $reference,
             'cancelUrl' => rtrim($origin, '/') . '/dashboard?payment=cancel',
-            'webhookUrl' => 'https://facturapro.com/api/v1/webhooks/djomy',
-            'callbackUrl' => 'https://facturapro.com/api/v1/webhooks/djomy',
+            'webhookUrl' => rtrim($origin, '/') . '/api/v1/webhooks/djomy',
+            'callbackUrl' => rtrim($origin, '/') . '/api/v1/webhooks/djomy',
             'metadata' => [
                 'reference' => $reference,
                 'accountId' => $accountId

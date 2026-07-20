@@ -220,11 +220,11 @@ export function Dashboard() {
     // FIX PERFORMANCE: Fusion O(N*M) remplacée par une Hash Map O(N)
     const map = new Map<string, { revenu: number, depense: number }>();
     
-    (stats.billing.caEvolution || []).forEach((d: any) => {
+    (stats.billing?.caEvolution || []).forEach((d: any) => {
       map.set(d.date, { revenu: d.amount, depense: 0 });
     });
     
-    (stats.expenses.evolution || []).forEach((d: any) => {
+    (stats.expenses?.evolution || []).forEach((d: any) => {
       if (map.has(d.date)) {
         map.get(d.date)!.depense = d.amount;
       } else {
@@ -290,11 +290,11 @@ export function Dashboard() {
           <div>
             <h2 className="text-lg font-bold text-[var(--foreground)] mb-4">Vue d'ensemble</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              <KpiCard label="Total Encaissé" value={stats.overview.encaisse} isCurrency icon={Banknote} color="#10B981" delay={0.1} trend={stats.overview.encaisseTrend} />
-              <KpiCard label="Bénéfice Net" value={stats.overview.netProfit} isCurrency icon={TrendingUp} color="#3B82F6" delay={0.2} trend={stats.overview.profitTrend} />
-              <KpiCard label="CA Potentiel" value={stats.overview.potentiel} isCurrency icon={Target} color="var(--gold)" delay={0.3} trend={stats.overview.potentielTrend} />
-              <KpiCard label="Créances" value={stats.overview.creances} isCurrency icon={Clock} color="#F59E0B" delay={0.4} trend={stats.overview.creancesTrend} />
-              <KpiCard label="Recouvrement" value={stats.overview.recoveryRate} isPercent icon={CheckCircle2} color="#8B5CF6" delay={0.5} trend={stats.overview.recoveryRateTrend} />
+              <KpiCard label="Total Encaissé" value={stats.overview?.encaisse || 0} isCurrency icon={Banknote} color="#10B981" delay={0.1} trend={stats.overview?.encaisseTrend} />
+              <KpiCard label="Bénéfice Net" value={stats.overview?.netProfit || 0} isCurrency icon={TrendingUp} color="#3B82F6" delay={0.2} trend={stats.overview?.profitTrend} />
+              <KpiCard label="CA Potentiel" value={stats.overview?.potentiel || 0} isCurrency icon={Target} color="var(--gold)" delay={0.3} trend={stats.overview?.potentielTrend} />
+              <KpiCard label="Créances" value={stats.overview?.creances || 0} isCurrency icon={Clock} color="#F59E0B" delay={0.4} trend={stats.overview?.creancesTrend} />
+              <KpiCard label="Recouvrement" value={stats.overview?.recoveryRate || 0} isPercent icon={CheckCircle2} color="#8B5CF6" delay={0.5} trend={stats.overview?.recoveryRateTrend} />
             </div>
           </div>
 
@@ -466,7 +466,7 @@ export function Dashboard() {
                     </div>
                   )}
 
-                  {stats.billing.caEvolution && stats.billing.caEvolution.length > 0 ? (
+                  {stats.billing?.caEvolution && stats.billing.caEvolution.length > 0 ? (
                     <div style={{ marginTop: '40px' }}>
                       <h3 className="text-sm font-bold mb-4">Évolution du Chiffre d'Affaires</h3>
                       <div className="h-[250px] w-full">
@@ -500,7 +500,7 @@ export function Dashboard() {
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ display: 'flex', flexDirection: 'column', gap: '32px', marginTop: '24px' }}>
                    <div className="bg-[var(--surface-2)] rounded-xl p-5 mb-6 text-center max-w-sm mx-auto border border-[var(--border)]" style={{ padding: '20px', marginBottom: '24px', marginLeft: 'auto', marginRight: 'auto' }}>
                       <p className="text-sm text-[var(--foreground-subtle)] mb-1">Total des Dépenses</p>
-                      <p className="text-3xl font-bold text-red-500">{formatCurrency(stats.expenses.total)}</p>
+                      <p className="text-3xl font-bold text-red-500">{formatCurrency(stats.expenses?.total || 0)}</p>
                    </div>
                    
                    {/* AJOUT : Courbe comparative revenus vs dépenses dans le temps */}

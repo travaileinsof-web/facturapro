@@ -106,7 +106,7 @@ foreach ($accounts as $account) {
                         $bodyHtml = "<h2>Bonjour " . htmlspecialchars($inv['clientName']) . ",</h2>";
                         $bodyHtml .= "<p>" . nl2br(htmlspecialchars($account['whatsappMessage'] ?: "Voici un rappel concernant votre facture.")) . "</p>";
                         $bodyHtml .= "<p><strong>Facture N° :</strong> " . $inv['number'] . "<br/>";
-                        $bodyHtml .= "<strong>Montant :</strong> " . number_format($inv['total'], 2, ',', ' ') . " " . ($account['currency'] ?? 'XOF') . "<br/>";
+                        $bodyHtml .= "<strong>Montant :</strong> " . number_format($inv['total'], 2, ',', ' ') . " " . ($account['currency'] ?? 'GNF') . "<br/>";
                         if ($diffInDays < 0) {
                             $bodyHtml .= "<strong>Échéance dans :</strong> " . abs($diffInDays) . " jours</p>";
                         } elseif ($diffInDays == 0) {

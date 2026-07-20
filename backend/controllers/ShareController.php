@@ -68,78 +68,27 @@ class ShareController {
                 $to = $body['to'] ?? '';
                 $subject = $body['subject'] ?? 'Votre document';
                 $message = $body['message'] ?? 'Veuillez trouver votre document en pièce jointe.';
+                $companyName = $currentAccount['companyName'] ?? 'FacturaPro';
+                $userEmail = $currentAccount['email'] ?? '';
                 
+                require_once __DIR__ . '/../core/SystemMailer.php';
                 
-                require_once __DIR__ . '/../libs/PHPMailer/Exception.php';
-                require_once __DIR__ . '/../libs/PHPMailer/PHPMailer.php';
-                require_once __DIR__ . '/../libs/PHPMailer/SMTP.php';
+                // On utilise l'API Resend pour éviter les blocages SMTP
+                $attachment = [
+                    'filename' => $filename,
+                    'content' => $base64String
+                ];
                 
-                $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
-                try {
-                    $stmt = $pdo->query("SELECT * FROM PlatformSettings WHERE id = 'global'");
-                    $settings = $stmt->fetch();
-                    
-                    if (!$settings || empty($settings['smtpUser']) || empty($settings['smtpPass'])) {
-                        http_response_code(500);
-                        echo json_encode(["error" => "Configuration email (SMTP) globale manquante. Contactez l'administrateur."]);
-                        exit;
-                    }
-
-                    $mail->isSMTP();
-                    $mail->CharSet    = 'UTF-8'; // Correction des caractères spéciaux
-                    $mail->Encoding   = 'base64'; // FIX: Empêche la corruption des accents par les serveurs SMTP (7bit/8bit)
-                    $mail->Host       = $settings['smtpHost'] ?? 'smtp.gmail.com';
-                    $mail->SMTPAuth   = true;
-                    
-                    $mail->Username   = $settings['smtpUser']; 
-                    $mail->Password   = $settings['smtpPass']; 
-                    
-                    $portRaw = $settings['smtpPort'] ?? 587;
-                    $port = $portRaw ? (int)$portRaw : 587;
-                    
-                    $encryptionRaw = $settings['smtpEncryption'] ?? ($port === 465 ? 'ssl' : 'tls');
-                    $encryption = strtolower($encryptionRaw);
-                    if ($encryption === 'ssl') {
-                        $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
-                    } elseif ($encryption === 'none') {
-                        $mail->SMTPSecure = false;
-                        $mail->SMTPAutoTLS = false;
-                    } else {
-                        $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-                    }
-                    
-                    $mail->Port       = $port;
-                    
-                    $companyName = $currentAccount['companyName'] ?? $currentAccount['companyname'] ?? 'FacturaPro';
-                    $mail->setFrom($settings['smtpUser'], $companyName);
-                    
-                    $userEmail = $currentAccount['email'] ?? '';
-                    if ($userEmail) {
-                        $mail->addReplyTo($userEmail, $companyName);
-                    }
-                    
-                    $mail->addAddress($to);
-                    
-                    $mail->isHTML(true);
-                    $mail->Subject = $subject;
-                    // FIX: Nettoyage strict compatible UTF-8
-                    $mail->Body    = nl2br(htmlspecialchars($message, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-                    
-                    // FIX: Nettoyer le nom du fichier pour la compatibilité des clients mail
-                    $safeFilename = preg_replace('/[^a-zA-Z0-9_\.-]/', '_', $filename);
-                    
-                    $mail->addStringAttachment($pdfData, $safeFilename, 'base64', 'application/pdf');
-                    
-                    $mail->send();
-                    echo json_encode(["success" => true, "message" => "Email envoyé"]);
-                } catch (Exception $e) {
+                $result = SystemMailer::sendViaResend($to, $subject, nl2br(htmlspecialchars($message)), $attachment, $userEmail);
+                
+                if ($result['success']) {
+                    echo json_encode(["success" => true, "message" => "Email envoyé via API"]);
+                } else {
                     http_response_code(500);
-                    $errorMsg = $mail->ErrorInfo;
-                    if (stripos($errorMsg, 'Could not authenticate') !== false || stripos($errorMsg, 'Could not connect to SMTP host') !== false) {
-                        $errorMsg = "Le service d'envoi d'emails de la plateforme est momentanément indisponible. Veuillez réessayer plus tard ou contacter le support.";
-                    }
-                    echo json_encode(["error" => $errorMsg]);
+                    echo json_encode(["error" => "Erreur d'envoi API: " . $result['error']]);
                 }
+            } else {
+                http_response_code(400);        
             }
         }
     }

@@ -12,6 +12,8 @@ $endpointId = $env['DB_ENDPOINT_ID'] ?? '';
 
 define('DB_DSN', 'pgsql:host=' . DB_HOST . ';port=5432;dbname=' . DB_NAME . ';sslmode=require;connect_timeout=5' . ($endpointId ? ';options=endpoint=' . $endpointId : ''));
 
+define('RESEND_API_KEY', $env['RESEND_API_KEY'] ?? 're_XwKBtnrW_2naWuuHHf4SmBPFP5J67HwuK');
+
 // Fix pour PostgreSQL qui renvoie toutes les colonnes en minuscules
 $GLOBALS['camelCaseCols'] = [
     'passwordhash' => 'passwordHash', 'companyname' => 'companyName',
@@ -82,7 +84,7 @@ if (!class_exists('MyPDOStatement')) {
 // =============================================================
 define('SUBSCRIPTION_PLANS', [
     'free'    => ['name' => 'Essai Gratuit', 'duration_days' => 1,   'price_gnf' => 0],
-    'annuel'  => ['name' => 'Annuel',        'duration_days' => 365, 'price_gnf' => 1000],
+    'annuel'  => ['name' => 'Annuel',        'duration_days' => 365, 'price_gnf' => 500000],
 ]);
 
 // =============================================================

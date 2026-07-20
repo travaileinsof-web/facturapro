@@ -350,7 +350,19 @@ const icons = {
 // ── Landing Page ──────────────────────────────────────────────────────────────
 export function Landing() {
   const [scrolled, setScrolled] = useState(false);
+  const [promoCount, setPromoCount] = useState<number | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetch('/api/v1/promo/count')
+      .then(res => res.json())
+      .then(data => {
+        if (data && typeof data.placesLeft === 'number') {
+          setPromoCount(data.placesLeft);
+        }
+      })
+      .catch(err => console.error("Promo fetch error:", err));
+  }, []);
 
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 10);
@@ -497,7 +509,7 @@ export function Landing() {
                   <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '4px' }}>Forfait Unique (Annuel)</div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '6px' }}>
                     <span style={{ fontSize: '13px', fontWeight: 700, color: 'rgba(255,255,255,0.35)' }}>GNF</span>
-                    <span style={{ fontSize: '60px', fontWeight: 900, letterSpacing: '-3px', background: 'linear-gradient(135deg, #00FFB0, #00D084)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>1 000</span>
+                    <span style={{ fontSize: '60px', fontWeight: 900, letterSpacing: '-3px', background: 'linear-gradient(135deg, #00FFB0, #00D084)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1 }}>500 000</span>
                   </div>
                   <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.28)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ textDecoration: 'line-through' }}>1 000 000 GNF</span>
@@ -518,6 +530,12 @@ export function Landing() {
                     </div>
                   ))}
                 </div>
+
+                {promoCount !== null && promoCount > 0 && (
+                  <div style={{ marginBottom: '24px', padding: '12px', background: 'rgba(252, 211, 77, 0.15)', color: '#FDE68A', borderRadius: '8px', fontSize: '13px', fontWeight: 600, textAlign: 'center', border: '1px solid rgba(252, 211, 77, 0.3)' }}>
+                    🔥 Promo de lancement : Seulement {promoCount} places restantes à 500 000 GNF !
+                  </div>
+                )}
 
                 <button className="btn btn-cta" onClick={() => navigate('/register')} style={{ width: '100%', justifyContent: 'center', fontSize: '14.5px', padding: '15px', borderRadius: '12px', fontWeight: 700 }}>
                   Commencer maintenant {icons.arrow}

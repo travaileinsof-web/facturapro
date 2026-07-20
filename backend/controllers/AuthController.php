@@ -29,10 +29,10 @@ class AuthController {
                 $stmt->execute([$accountId, $email, $hash, $hashedToken, $companyName, $firstName, $lastName, $phone]);
                 
                 // Génération de la Proforma d'abonnement
-                $invoiceId = uniqid('sub_inv_');
-                $invoiceNumber = 'INV-SUB-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4));
+                $invoiceId = uniqid('inv_');
+                $invoiceNumber = 'FA-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4));
                 $stmtInv = $pdo->prepare("INSERT INTO SubscriptionInvoice (id, accountId, invoiceNumber, amount) VALUES (?, ?, ?, ?)");
-                $stmtInv->execute([$invoiceId, $accountId, $invoiceNumber, 1000]);
+                $stmtInv->execute([$invoiceId, $accountId, $invoiceNumber, 500000]);
                 
                 // Envoi de l'Email de Bienvenue
                 require_once __DIR__ . '/../core/SystemMailer.php';
@@ -110,7 +110,7 @@ class AuthController {
                     "accentColor" => $acc['accentColor'] ?? $acc['accentcolor'] ?? null,
                     "role" => $acc['role'] ?? 'user',
                     // ✅ FIX: Inclure la devise pour que le store Zustand soit correct dès la connexion
-                    "currency" => $acc['currency'] ?? $acc['currency'] ?? 'XOF'
+                    "currency" => $acc['currency'] ?? $acc['currency'] ?? 'GNF'
                 ]);
             } else {
                 if ($attempt) {

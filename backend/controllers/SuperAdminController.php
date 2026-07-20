@@ -226,7 +226,7 @@ class SuperAdminController {
             $stmt->execute([$expiresAt, $targetId]);
             
             // Générer un reçu fictif
-            $amount = 1000;
+            $amount = 500000;
             $receiptId = uniqid('sub_rec_');
             $receiptNumber = 'REC-SUB-MANUAL-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4));
             $stmtRec = $pdo->prepare("INSERT INTO SubscriptionReceipt (id, accountId, receiptNumber, subscriptionInvoiceId, amount) VALUES (?, ?, ?, NULL, ?)");

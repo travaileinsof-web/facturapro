@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CheckCircle2, Loader2, X, TrendingUp } from 'lucide-react';
 import { useAppStore, apiFetch } from '../lib/store';
 import { PageHeader } from './ui/PageHeader';
@@ -9,6 +9,18 @@ export function Pricing() {
   const [phone, setPhone] = useState((user as any)?.phone || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [promoCount, setPromoCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch('/api/v1/promo/count')
+      .then(res => res.json())
+      .then(data => {
+        if (data && typeof data.placesLeft === 'number') {
+          setPromoCount(data.placesLeft);
+        }
+      })
+      .catch(err => console.error("Promo fetch error:", err));
+  }, []);
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +54,7 @@ export function Pricing() {
 
   const plan = {
     name: 'Forfait Unique (Annuel)',
-    price: '1 000 GNF',
+    price: '500 000 GNF',
     period: '/ an',
     description: 'La solution complète pour votre entreprise.',
     features: ['Factures illimitées', 'Clients illimités', 'Logo & signature', 'Export PDF', 'Support prioritaire 24/7', 'Assistant IA (Bientôt)'],
@@ -85,10 +97,20 @@ export function Pricing() {
           <h3 style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a', marginBottom: 'var(--space-2)' }}>{plan.name}</h3>
           <p style={{ fontSize: '14px', color: '#64748b', minHeight: '40px', marginBottom: 'var(--space-5)' }}>{plan.description}</p>
           
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--space-1)', marginBottom: 'var(--space-5)' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--space-1)', marginBottom: 'var(--space-2)' }}>
             <span style={{ fontSize: '36px', fontWeight: 800, color: '#0f172a', letterSpacing: '-1px' }}>{plan.price}</span>
             <span style={{ fontSize: '14px', color: '#64748b', fontWeight: 500 }}>{plan.period}</span>
           </div>
+          
+          <div style={{ fontSize: '14px', color: '#64748b', marginBottom: 'var(--space-5)', textDecoration: 'line-through' }}>
+            Tarif normal: 1 000 000 GNF
+          </div>
+
+          {promoCount !== null && promoCount > 0 && (
+            <div style={{ marginBottom: 'var(--space-5)', padding: 'var(--space-2)', background: '#fef3c7', color: '#b45309', borderRadius: '6px', fontSize: '13px', fontWeight: 600, textAlign: 'center' }}>
+              🔥 Promo : Il ne reste que {promoCount} places à ce prix !
+            </div>
+          )}
 
           {(() => {
             const isSubscribed = user?.subscriptionStatus === 'active' && (user?.subscriptionPlan === 'annuel' || user?.subscriptionPlan === 'premium');
@@ -159,7 +181,7 @@ export function Pricing() {
                 style={{ width: '100%', padding: 'var(--space-3)', background: '#059669', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '15px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--space-2)', opacity: loading ? 0.7 : 1 }}
               >
                 {loading && <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />}
-                Procéder au paiement (1 000 GNF)
+                Procéder au paiement (500 000 GNF)
               </button>
             </form>
             
