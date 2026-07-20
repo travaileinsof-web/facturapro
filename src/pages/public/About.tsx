@@ -118,7 +118,7 @@ export function About() {
                   'Confidentialité stricte des données — vos données ne sont pas revendues, jamais',
                   'Support réactif en français — une vraie équipe guinéenne, pas un bot',
                   'Innovation continue par l\'Intelligence Artificielle — pour automatiser ce qui prend du temps',
-                  'Prix juste et transparent — 1 000 GNF/an, tout inclus, sans surprise',
+                  'Prix juste et transparent — 500 000 GNF/an, tout inclus, sans surprise',
                 ].map((item, i) => (
                   <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', fontSize: '13px', color: 'var(--color-text-muted)', fontWeight: 300, lineHeight: 1.6 }}>
                     <span style={{ color: 'var(--color-gold)', fontSize: '14px', lineHeight: 1, flexShrink: 0, marginTop: '3px' }}>✓</span>

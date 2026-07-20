@@ -54,7 +54,7 @@ const PRICING_FAQ_JSON = {
     {
       "@type": "Question",
       "name": "Combien coûte FacturaPro en Guinée ?",
-      "acceptedAnswer": { "@type": "Answer", "text": "FacturaPro coûte 1 000 GNF par an. C'est un tarif fixe, tout inclus, sans frais cachés ni abonnement mensuel. C'est le logiciel de facturation le plus accessible du marché guinéen." }
+      "acceptedAnswer": { "@type": "Answer", "text": "FacturaPro coûte 500 000 GNF par an. C'est un tarif fixe, tout inclus, sans frais cachés ni abonnement mensuel. C'est le logiciel de facturation le plus accessible du marché guinéen." }
     },
     {
       "@type": "Question",
@@ -64,7 +64,7 @@ const PRICING_FAQ_JSON = {
     {
       "@type": "Question",
       "name": "Que comprend l'abonnement annuel FacturaPro ?",
-      "acceptedAnswer": { "@type": "Answer", "text": "L'abonnement à 1 000 GNF/an inclut : factures illimitées, reçus de paiement, gestion clients illimitée, envoi par WhatsApp et Email, multi-devises (GNF, FCFA, USD, EUR), export PDF haute qualité, catalogue de services, tableau de bord analytique et support technique." }
+      "acceptedAnswer": { "@type": "Answer", "text": "L'abonnement à 500 000 GNF/an inclut : factures illimitées, reçus de paiement, gestion clients illimitée, envoi par WhatsApp et Email, multi-devises (GNF, FCFA, USD, EUR), export PDF haute qualité, catalogue de services, tableau de bord analytique et support technique." }
     },
     {
       "@type": "Question",
@@ -82,8 +82,8 @@ const PRICING_FAQ_JSON = {
 /* ── Pricing Page ───────────────────────────────────────────────────────── */
 export function Pricing() {
   usePageSEO({
-    title: 'Tarifs FacturaPro – 1 000 GNF/an, essai gratuit 24h | Facturation PME Guinée',
-    description: 'Un seul tarif clair : 1 000 GNF par an pour facturer sans limite. Essai gratuit de 24h, sans engagement. Le prix le plus simple du marché en Guinée.',
+    title: 'Tarifs FacturaPro – 500 000 GNF/an, essai gratuit 24h | Facturation PME Guinée',
+    description: 'Un seul tarif clair : 500 000 GNF par an pour facturer sans limite. Essai gratuit de 24h, sans engagement. Le prix le plus simple du marché en Guinée.',
     canonical: 'https://facturapro.com/tarifs',
   });
 
@@ -109,13 +109,13 @@ export function Pricing() {
         </Reveal>
         <Reveal delay={0.1}>
           <h1 style={{ fontSize: 'clamp(32px, 5vw, 56px)', fontWeight: 400, color: 'var(--color-text)', letterSpacing: '-1px', marginBottom: '24px', fontFamily: '"Playfair Display", serif' }}>
-            Un prix simple : 1 000 GNF par an.
+            Un prix simple : 500 000 GNF par an.
           </h1>
         </Reveal>
         {/* Paragraphe GEO */}
         <Reveal delay={0.2}>
           <p style={{ fontSize: '15px', color: 'var(--color-text-muted)', maxWidth: '640px', margin: '0 auto 16px', lineHeight: 1.8, fontWeight: 300 }}>
-            FacturaPro coûte 1 000 GNF par an — un tarif fixe, tout inclus, sans frais cachés. Vous bénéficiez d'un essai gratuit de 24h sans carte bancaire pour tester toutes les fonctionnalités.
+            FacturaPro coûte 500 000 GNF par an — un tarif fixe, tout inclus, sans frais cachés. Vous bénéficiez d'un essai gratuit de 24h sans carte bancaire pour tester toutes les fonctionnalités.
           </p>
           <p style={{ fontSize: '14px', color: 'var(--color-text-muted)', maxWidth: '500px', margin: '0 auto', fontWeight: 300, fontStyle: 'italic' }}>
             Le logiciel de facturation le plus accessible du marché guinéen. Un seul tarif, toutes les fonctionnalités incluses.
@@ -156,7 +156,7 @@ export function Pricing() {
 
               {/* Prix */}
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '12px' }}>
-                <span style={{ fontSize: '56px', fontWeight: 300, color: 'var(--color-gold)', letterSpacing: '-2px', fontFamily: '"Playfair Display", serif' }}>1 000</span>
+                <span style={{ fontSize: '56px', fontWeight: 300, color: 'var(--color-gold)', letterSpacing: '-2px', fontFamily: '"Playfair Display", serif' }}>500 000</span>
                 <div>
                   <div style={{ fontSize: '16px', fontWeight: 400, color: 'var(--color-text)', letterSpacing: '0.5px' }}>GNF</div>
                   <div style={{ fontSize: '12px', color: 'var(--color-text-muted)', fontWeight: 300, textTransform: 'uppercase', letterSpacing: '0.5px' }}>par an</div>
@@ -214,7 +214,7 @@ export function Pricing() {
             <div style={{ background: 'transparent', borderLeft: '1px solid rgba(212, 175, 55, 0.3)', paddingLeft: '24px', marginBottom: '64px' }}>
               <h3 style={{ fontSize: '14px', fontWeight: 500, color: 'var(--color-text)', marginBottom: '12px', letterSpacing: '0.5px' }}>Pourquoi un tarif annuel fixe ?</h3>
               <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: 1.8, margin: 0, fontWeight: 300 }}>
-                Les logiciels internationaux facturent souvent en devise étrangère, par mois, avec des fonctionnalités en option. Chez FacturaPro, <strong style={{ color: 'var(--color-gold)', fontWeight: 400 }}>1 000 GNF par an</strong>, c'est tout. Pas de mensualité, pas de surprises, pas de conversion de devise à la fin du mois.
+                Les logiciels internationaux facturent souvent en devise étrangère, par mois, avec des fonctionnalités en option. Chez FacturaPro, <strong style={{ color: 'var(--color-gold)', fontWeight: 400 }}>500 000 GNF par an</strong>, c'est tout. Pas de mensualité, pas de surprises, pas de conversion de devise à la fin du mois.
               </p>
             </div>
           </Reveal>
@@ -225,7 +225,7 @@ export function Pricing() {
               <h2 style={{ fontSize: '20px', fontWeight: 400, color: 'var(--color-text)', letterSpacing: '-0.5px', fontFamily: '"Playfair Display", serif' }}>Questions fréquentes sur le prix</h2>
             </Reveal>
             <div style={{ display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 1 }}>
-              <Reveal delay={0}><FaqItem q="Combien coûte FacturaPro en Guinée ?" a="FacturaPro coûte 1 000 GNF par an — tout inclus. Pas de frais mensuel, pas de fonctionnalité en option. C'est le tarif le plus simple et le plus transparent du marché guinéen." /></Reveal>
+              <Reveal delay={0}><FaqItem q="Combien coûte FacturaPro en Guinée ?" a="FacturaPro coûte 500 000 GNF par an — tout inclus. Pas de frais mensuel, pas de fonctionnalité en option. C'est le tarif le plus simple et le plus transparent du marché guinéen." /></Reveal>
               <Reveal delay={0.1}><FaqItem q="Y a-t-il un essai gratuit ?" a="Oui. Vous bénéficiez d'un essai gratuit de 24h dès l'inscription. Aucune carte bancaire requise. Vous accédez à toutes les fonctionnalités sans restriction pendant cette période." /></Reveal>
               <Reveal delay={0.2}><FaqItem q="Que comprend l'abonnement ?" a="Tout : factures illimitées, reçus, gestion clients, envoi par WhatsApp et Email, multi-devises, export PDF, catalogue de services, tableau de bord, et support technique prioritaire. Pas de module en option." /></Reveal>
               <Reveal delay={0.3}><FaqItem q="Puis-je payer en GNF ou Mobile Money ?" a="Oui. Les modalités de paiement de l'abonnement sont en GNF. Contactez notre support WhatsApp au +224 624 77 06 18 pour plus d'informations sur les modes de paiement disponibles." /></Reveal>

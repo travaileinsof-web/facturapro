@@ -405,7 +405,7 @@ export function Admin() {
                 <select value={editData.subscriptionPlan} onChange={e => setEditData(d => ({...d, subscriptionPlan:e.target.value}))} style={{ width:'100%', padding:'10px', background:'#0a0f1e', border:'1px solid #1e2d4a', borderRadius:'8px', color:'#f0f6ff', fontSize:'13px', outline:'none' }}>
                   <option value="free">Essai Gratuit</option>
                   <option value="mensuel">Mensuel (100 000 GNF)</option>
-                  <option value="annuel">Premium (1 000 000 GNF)</option>
+                  <option value="annuel">Premium (500 000 GNF)</option>
                 </select>
               </div>
               <div>

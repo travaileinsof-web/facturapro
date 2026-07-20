@@ -144,7 +144,7 @@ const HOME_FAQ_JSON = {
     {
       "@type": "Question",
       "name": "Combien coûte FacturaPro et y a-t-il une période d'essai ?",
-      "acceptedAnswer": { "@type": "Answer", "text": "FacturaPro coûte 1 000 GNF par an, sans frais cachés. Vous bénéficiez d'un essai gratuit de 24h sans avoir besoin de carte bancaire pour tester toutes les fonctionnalités." }
+      "acceptedAnswer": { "@type": "Answer", "text": "FacturaPro coûte 500 000 GNF par an, sans frais cachés. Vous bénéficiez d'un essai gratuit de 24h sans avoir besoin de carte bancaire pour tester toutes les fonctionnalités." }
     },
     {
       "@type": "Question",
@@ -159,7 +159,7 @@ export function Home() {
 
   usePageSEO({
     title: 'FacturaPro – Logiciel de facturation pour PME en Guinée | RCCM, NIF, WhatsApp',
-    description: 'Créez et envoyez vos factures conformes (RCCM, NIF, TVA 18%) par WhatsApp depuis votre téléphone. 1 000 GNF/an, essai gratuit 24h. Pour les PME de Conakry à Nzérékoré.',
+    description: 'Créez et envoyez vos factures conformes (RCCM, NIF, TVA 18%) par WhatsApp depuis votre téléphone. 500 000 GNF/an, essai gratuit 24h. Pour les PME de Conakry à Nzérékoré.',
     canonical: 'https://facturapro.com/',
   });
 
@@ -198,7 +198,7 @@ export function Home() {
               </p>
 
               <p style={{ fontSize: '14px', color: 'var(--color-text-muted)', lineHeight: 1.8, marginBottom: '40px', fontWeight: 300 }}>
-                Utilisé à <strong>Conakry, Kankan, Labé, Nzérékoré</strong> — 1 000 GNF/an, essai gratuit 24h.
+                Utilisé à <strong>Conakry, Kankan, Labé, Nzérékoré</strong> — 500 000 GNF/an, essai gratuit 24h.
               </p>
 
               <Reveal delay={200}>
@@ -331,7 +331,7 @@ export function Home() {
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <Reveal delay={0}><FaqItem q="Qu'est-ce que FacturaPro et à qui s'adresse-t-il ?" a="FacturaPro est un logiciel de facturation conçu spécifiquement pour les PME en Guinée. Il permet de créer des factures conformes (RCCM, NIF, TVA 18%) et de les envoyer par WhatsApp ou Email, depuis votre téléphone, à Conakry, Kankan, Labé, Nzérékoré, Boké, Kindia ou Mamou." /></Reveal>
             <Reveal delay={100}><FaqItem q="Quelles sont les mentions obligatoires sur une facture en Guinée ?" a="Une facture conforme en Guinée doit obligatoirement mentionner le RCCM (Registre du Commerce), le NIF (Numéro d'Identification Fiscale) et l'adresse du vendeur. La TVA est de 18% pour les entreprises assujetties (chiffre d'affaires annuel ≥ 1 milliard GNF). FacturaPro intègre automatiquement ces mentions." /></Reveal>
-            <Reveal delay={200}><FaqItem q="Combien coûte FacturaPro ?" a="1 000 GNF par an, tout inclus. Vous disposez d'un essai gratuit de 24h pour tester toutes les fonctionnalités sans carte bancaire. C'est le tarif le plus simple du marché pour une PME guinéenne." /></Reveal>
+            <Reveal delay={200}><FaqItem q="Combien coûte FacturaPro ?" a="500 000 GNF par an, tout inclus. Vous disposez d'un essai gratuit de 24h pour tester toutes les fonctionnalités sans carte bancaire. C'est le tarif le plus simple du marché pour une PME guinéenne." /></Reveal>
             <Reveal delay={300}><FaqItem q="Puis-je envoyer mes factures par WhatsApp et Email depuis FacturaPro ?" a="Oui, c'est l'une des fonctionnalités principales. Vous générez votre facture PDF et vous pouvez l'envoyer directement sur WhatsApp à votre client ou par Email, sans passer par un autre outil." /></Reveal>
             <Reveal delay={400}><FaqItem q="FacturaPro fonctionne-t-il sur téléphone mobile ?" a="Oui. FacturaPro fonctionne directement depuis votre navigateur sur smartphone. Pas besoin d'installer une application — créez et envoyez vos factures depuis votre téléphone, où que vous soyez en Guinée." /></Reveal>
           </div>
@@ -360,7 +360,7 @@ export function Home() {
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(212, 175, 55, 0.4)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-gold)'; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'; (e.currentTarget as HTMLElement).style.color = 'var(--color-text)'; }}
                 >
-                  Tarifs (1 000 GNF/an)
+                  Tarifs (500 000 GNF/an)
                 </Link>
               </div>
             </Reveal>
