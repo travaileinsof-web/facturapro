@@ -41,15 +41,19 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
     return data;
   };
 
-  const fetchWithDbRetry = async (url: string, options: RequestInit, maxRetries = 3): Promise<any> => {
+  const fetchWithDbRetry = async (url: string, options: RequestInit, maxRetries = 6): Promise<any> => {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         return await safeFetch(url, options);
       } catch (err: any) {
-        if (err?.code === 'DB_UNAVAILABLE' && attempt < maxRetries) {
-          // Attente silencieuse de 5 secondes avant de réessayer
-          await sleep(5000);
-          continue;
+        if (err?.code === 'DB_UNAVAILABLE') {
+          if (attempt < maxRetries) {
+            // Attente silencieuse de 5 secondes avant de réessayer
+            await sleep(5000);
+            continue;
+          } else {
+            throw new Error("Le serveur est en cours de démarrage, veuillez patienter et cliquer à nouveau.");
+          }
         }
         throw err;
       }
