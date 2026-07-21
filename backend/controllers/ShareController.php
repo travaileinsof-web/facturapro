@@ -79,7 +79,7 @@ class ShareController {
                     'content' => $base64String
                 ];
                 
-                $result = SystemMailer::sendViaResend($to, $subject, nl2br(htmlspecialchars($message)), $attachment, $userEmail);
+                $result = SystemMailer::sendDocument($pdo, $to, $subject, nl2br(htmlspecialchars($message)), $attachment, $userEmail);
                 
                 if ($result['success']) {
                     echo json_encode(["success" => true, "message" => "Email envoyé via API"]);

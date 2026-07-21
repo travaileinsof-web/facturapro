@@ -87,6 +87,35 @@ class SystemMailer {
         return $mail;
     }
 
+    public static function sendDocument($pdo, $toEmail, $subject, $html, $attachment, $replyTo = null) {
+        if (defined('RESEND_API_KEY') && trim(RESEND_API_KEY) !== '' && trim(RESEND_API_KEY) !== 're_XwKBtnrW_2naWuuHHf4SmBPFP5J67HwuK') {
+            return self::sendViaResend($toEmail, $subject, $html, $attachment, $replyTo);
+        }
+
+        $mail = self::getMailer($pdo);
+        if (!$mail) return ['success' => false, 'error' => 'SMTP non configuré et API Resend non disponible.'];
+
+        try {
+            $mail->addAddress($toEmail);
+            if ($replyTo) {
+                $mail->addReplyTo($replyTo);
+            }
+            $mail->Subject = $subject;
+            $mail->Body = $html;
+            
+            if ($attachment) {
+                // attachment content is base64 string
+                $mail->addStringAttachment(base64_decode($attachment['content']), $attachment['filename'], 'base64', 'application/pdf');
+            }
+            
+            $mail->send();
+            return ['success' => true];
+        } catch (Exception $e) {
+            error_log("Email sendDocument error: " . $mail->ErrorInfo);
+            return ['success' => false, 'error' => $mail->ErrorInfo];
+        }
+    }
+
     public static function sendWelcomeEmail($pdo, $toEmail, $firstName, $invoiceNumber) {
         $stmt = $pdo->query("SELECT * FROM PlatformSettings WHERE id = 'global'");
         $settings = $stmt->fetch();
@@ -121,7 +150,7 @@ class SystemMailer {
             </div>
         ";
 
-        if (defined('RESEND_API_KEY') && RESEND_API_KEY) {
+        if (defined('RESEND_API_KEY') && trim(RESEND_API_KEY) !== '' && trim(RESEND_API_KEY) !== 're_XwKBtnrW_2naWuuHHf4SmBPFP5J67HwuK') {
             $result = self::sendViaResend($toEmail, $subject, $html);
             return $result['success'];
         }
@@ -172,7 +201,7 @@ class SystemMailer {
             </div>
         ";
 
-        if (defined('RESEND_API_KEY') && RESEND_API_KEY) {
+        if (defined('RESEND_API_KEY') && trim(RESEND_API_KEY) !== '' && trim(RESEND_API_KEY) !== 're_XwKBtnrW_2naWuuHHf4SmBPFP5J67HwuK') {
             $result = self::sendViaResend($toEmail, $subject, $html);
             return $result['success'];
         }
