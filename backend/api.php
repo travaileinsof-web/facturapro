@@ -81,7 +81,7 @@ try {
     error_log("DB Connection failed: " . $e->getMessage());
     http_response_code(503);
     echo json_encode([
-        "error" => "Base de données indisponible. Nouvelle tentative automatique...",
+        "error" => "Erreur PDO exacte: " . $e->getMessage(),
         "code"  => "DB_UNAVAILABLE"
     ]);
     exit;
