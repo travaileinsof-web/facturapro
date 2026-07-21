@@ -79,7 +79,7 @@ export function Receipts() {
     placeholderData: keepPreviousData,
   });
 
-  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<ReceiptFormValues>({
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors, isSubmitting } } = useForm<ReceiptFormValues>({
     resolver: zodResolver(receiptSchema),
     defaultValues: {
       clientId: '',
@@ -543,8 +543,10 @@ export function Receipts() {
             </DialogBody>
           </form>
           <DialogFooter>
-            <button type="button" className="fp-btn-outline" onClick={() => setIsModalOpen(false)}>Annuler</button>
-            <button type="submit" form="receipt-form" className="fp-btn-primary">Enregistrer le Reçu</button>
+            <button type="button" className="fp-btn-outline" onClick={() => setIsModalOpen(false)} disabled={isSubmitting}>Annuler</button>
+            <button type="submit" form="receipt-form" className="fp-btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? 'Enregistrement...' : 'Enregistrer le Reçu'}
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
