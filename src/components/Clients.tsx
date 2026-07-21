@@ -548,7 +548,7 @@ export function Clients() {
         open={!!clientToDelete}
         onOpenChange={(open) => !open && setClientToDelete(null)}
         title="Supprimer ce client ?"
-        description="Cette action est irréversible. Toutes les factures et documents associés à ce client pourraient être impactés ou supprimés."
+        description="ATTENTION : Cette action est totalement irréversible. Toutes les données associées (factures, devis, reçus, historiques de relance) seront supprimées en cascade."
         confirmLabel="Supprimer"
         cancelLabel="Annuler"
         variant="danger"

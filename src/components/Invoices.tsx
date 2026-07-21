@@ -528,7 +528,7 @@ export function Invoices() {
                      <button className="text-xs font-semibold bg-[var(--surface)] border border-[#25D366] text-[#25D366] cursor-pointer rounded-md hover:bg-[#25D366] hover:text-white transition-colors" style={{ padding: 'var(--space-2) var(--space-3)' }} onClick={() => shareViaWhatsApp(inv)}>WA</button>
                      <button className="text-xs font-semibold bg-[var(--surface)] border border-[var(--border-hover)] text-[var(--foreground)] cursor-pointer rounded-md hover:bg-[var(--surface-2)] transition-colors" style={{ padding: 'var(--space-2) var(--space-3)' }} onClick={() => shareViaEmail(inv)}>@</button>
                      <button className="text-xs font-semibold bg-[var(--surface)] border border-[var(--border-hover)] text-[var(--foreground)] cursor-pointer rounded-md hover:bg-[var(--surface-2)] transition-colors" style={{ padding: 'var(--space-2) var(--space-3)' }} onClick={() => openEdit(inv)}>Modifier</button>
-                     <button className="text-xs font-semibold bg-transparent border border-red-200 text-[var(--destructive)] cursor-pointer rounded-md hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" style={{ padding: 'var(--space-2) var(--space-3)' }} title={inv.receipts?.length ? "Impossible : Reçus associés" : ""} onClick={() => { if(!inv.receipts?.length) setInvoiceToDelete(inv.id); }}>Sup.</button>
+                     <button className="text-xs font-semibold bg-transparent border border-red-200 text-[var(--destructive)] cursor-pointer rounded-md hover:bg-red-50 transition-colors" style={{ padding: 'var(--space-2) var(--space-3)' }} onClick={() => setInvoiceToDelete(inv.id)}>Sup.</button>
                    </div>
                  </td>
               </tr>
@@ -743,7 +743,7 @@ export function Invoices() {
         open={!!invoiceToDelete}
         onOpenChange={(open) => !open && setInvoiceToDelete(null)}
         title="Supprimer cette facture ?"
-        description="Cette action est irréversible. Les reçus associés pourraient être impactés."
+        description="ATTENTION : Cette action est totalement irréversible. Toutes les données associées (reçus, paiements, rappels) seront supprimées en cascade."
         confirmLabel="Supprimer"
         cancelLabel="Annuler"
         variant="danger"

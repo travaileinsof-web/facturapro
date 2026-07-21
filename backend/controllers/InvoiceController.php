@@ -233,11 +233,13 @@ class InvoiceController {
             $stmt->execute([$id, $accountId]);
             echo json_encode($stmt->fetch());
         } elseif ($method === 'DELETE' && $id) {
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM Receipt WHERE proformaInvoiceId = ? AND accountId = ?");
+            // Suppression en cascade : Relances de cette facture
+            $stmt = $pdo->prepare("DELETE FROM InvoiceReminderLog WHERE invoiceId = ? AND accountId = ?");
             $stmt->execute([$id, $accountId]);
-            if ($stmt->fetchColumn() > 0) {
-                http_response_code(400); echo json_encode(["error" => "Impossible : reçus liés"]); exit;
-            }
+
+            // Suppression en cascade : Reçus de cette facture
+            $stmt = $pdo->prepare("DELETE FROM Receipt WHERE proformaInvoiceId = ? AND accountId = ?");
+            $stmt->execute([$id, $accountId]);
             $stmt = $pdo->prepare("DELETE FROM ProformaInvoice WHERE id = ? AND accountId = ?");
             $stmt->execute([$id, $accountId]);
             echo json_encode(["success" => true]);

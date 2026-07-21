@@ -143,16 +143,17 @@ class ClientController {
             $stmt->execute([$id, $accountId]);
             echo json_encode($stmt->fetch());
         } elseif ($method === 'DELETE' && $id) {
-            $stmt = $pdo->prepare("SELECT COUNT(*) FROM ProformaInvoice WHERE clientId = ? AND accountId = ?");
+            // Suppression en cascade : Relances liées aux factures du client
+            $stmt = $pdo->prepare("DELETE FROM InvoiceReminderLog WHERE invoiceId IN (SELECT id FROM ProformaInvoice WHERE clientId = ? AND accountId = ?) AND accountId = ?");
+            $stmt->execute([$id, $accountId, $accountId]);
+
+            // Suppression en cascade : Reçus du client
+            $stmt = $pdo->prepare("DELETE FROM Receipt WHERE clientId = ? AND accountId = ?");
             $stmt->execute([$id, $accountId]);
-            if ($stmt->fetchColumn() > 0) {
-                http_response_code(400); echo json_encode(["error" => "Impossible : le client a des factures ou devis liés"]); exit;
-            }
-            $stmt2 = $pdo->prepare("SELECT COUNT(*) FROM Receipt WHERE clientId = ? AND accountId = ?");
-            $stmt2->execute([$id, $accountId]);
-            if ($stmt2->fetchColumn() > 0) {
-                http_response_code(400); echo json_encode(["error" => "Impossible : le client a des paiements (reçus) liés"]); exit;
-            }
+
+            // Suppression en cascade : Factures et devis du client
+            $stmt = $pdo->prepare("DELETE FROM ProformaInvoice WHERE clientId = ? AND accountId = ?");
+            $stmt->execute([$id, $accountId]);
             $stmt = $pdo->prepare("DELETE FROM Client WHERE id = ? AND accountId = ?");
             $stmt->execute([$id, $accountId]);
             echo json_encode(["success" => true]);

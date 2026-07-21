@@ -7,6 +7,7 @@ import { Textarea } from './ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
 import { useForm } from 'react-hook-form';
+import { ConfirmDialog } from './ui/ConfirmDialog';
 import { PageHeader } from './ui/PageHeader';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -29,6 +30,7 @@ export function Expenses() {
   const refreshExpenses = useAppStore(state => state.refreshExpenses);
   const triggerRefresh = useAppStore(state => state.triggerRefresh);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [expenseToDelete, setExpenseToDelete] = useState<string | null>(null);
 
   const { data: expenses, isLoading, refetch } = useQuery({
     queryKey: ['expenses', refreshExpenses],
@@ -85,12 +87,13 @@ export function Expenses() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Voulez-vous supprimer cette dépense ?')) return;
+  const handleDelete = async () => {
+    if (!expenseToDelete) return;
     try {
-      const res = await apiFetch(`/api/expenses/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/expenses/${expenseToDelete}`, { method: 'DELETE' });
       if (res.ok) {
         toast.success('Dépense supprimée');
+        setExpenseToDelete(null);
         triggerRefresh('expenses');
         triggerRefresh('stats');
       } else {
@@ -149,7 +152,7 @@ export function Expenses() {
                   <td style={{ color: 'var(--foreground-muted)', maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{exp.description || '—'}</td>
                   <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--destructive)' }}>-{formatCurrency(exp.amount)}</td>
                   <td style={{ textAlign: 'right' }}>
-                    <button className="fp-btn-danger" onClick={() => handleDelete(exp.id)}>
+                    <button className="fp-btn-danger" onClick={() => setExpenseToDelete(exp.id)}>
                       Supprimer
                     </button>
                   </td>
@@ -200,6 +203,17 @@ export function Expenses() {
           </form>
         </DialogContent>
       </Dialog>
+      
+      <ConfirmDialog
+        open={!!expenseToDelete}
+        onOpenChange={(open) => !open && setExpenseToDelete(null)}
+        title="Supprimer cette dépense ?"
+        description="ATTENTION : Cette action est totalement irréversible. La dépense sera retirée de votre historique et vos statistiques financières (bénéfice net, charges) seront recalculées."
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        variant="danger"
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

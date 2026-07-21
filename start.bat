@@ -3,19 +3,11 @@ echo ==========================================
 echo Démarrage de FacturaPro (Dev Environment)
 echo ==========================================
 
-REM Check if php is in PATH, otherwise use XAMPP php if it exists
-where php >nul 2>nul
-if %ERRORLEVEL% == 0 (
-    set PHP_CMD=php
-) else (
-    if exist "C:\xampp\php\php.exe" (
-        set PHP_CMD="C:\xampp\php\php.exe"
-    ) else (
-        echo [ERREUR] PHP n'est pas reconnu et XAMPP n'a pas ete trouve.
-        echo Veuillez installer PHP ou l'ajouter a vos variables d'environnement.
-        pause
-        exit /b
-    )
+set PHP_CMD="C:\xampp\php\php.exe"
+if not exist %PHP_CMD% (
+    echo [ERREUR] XAMPP PHP n'a pas ete trouve a l'emplacement C:\xampp\php\php.exe.
+    pause
+    exit /b
 )
 
 echo [1/2] Démarrage du backend PHP sur le port 8000...

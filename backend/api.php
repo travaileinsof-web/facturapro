@@ -341,5 +341,5 @@ try {
     // PREVENT ERROR LEAK
     error_log("API Error: " . $e->getMessage());
     http_response_code(500);
-    echo json_encode(["error" => "Erreur interne du serveur."]);
+    echo json_encode(["error" => "Erreur interne du serveur: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine()]);
 }

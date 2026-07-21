@@ -3,8 +3,9 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { formatCurrency, useAppStore, apiFetch } from '../lib/store';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogBody } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogFooter } from './ui/dialog';
 import { useForm } from 'react-hook-form';
+import { ConfirmDialog } from './ui/ConfirmDialog';
 import { toast } from 'sonner';
 import { PlusIcon, PackageIcon, Plus, FolderOpen, Search } from 'lucide-react';
 import { PageHeader } from './ui/PageHeader';
@@ -16,6 +17,7 @@ export function Catalog() {
   const currency = useAppStore(state => state.user?.currency) || 'FCFA';
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data: items, isLoading } = useQuery({
@@ -65,12 +67,13 @@ export function Catalog() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Voulez-vous supprimer cet élément ?')) return;
+  const handleDelete = async () => {
+    if (!itemToDelete) return;
     try {
-      const res = await apiFetch(`/api/catalog/${id}`, { method: 'DELETE' });
+      const res = await apiFetch(`/api/catalog/${itemToDelete}`, { method: 'DELETE' });
       if (res.ok) { 
         toast.success('Élément supprimé'); 
+        setItemToDelete(null);
         triggerRefresh('catalog'); 
       } else {
         const isJson = res.headers.get('content-type')?.includes('application/json');
@@ -163,7 +166,7 @@ export function Catalog() {
                   <td style={{ textAlign: 'right' }}>
                     <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
                       <button className="fp-btn-ghost" onClick={() => openEdit(item)}>Modifier</button>
-                      <button className="fp-btn-danger" onClick={() => handleDelete(item.id)}>Supprimer</button>
+                      <button className="fp-btn-danger" onClick={() => setItemToDelete(item.id)}>Supprimer</button>
                     </div>
                   </td>
                 </tr>
@@ -241,6 +244,17 @@ export function Catalog() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={!!itemToDelete}
+        onOpenChange={(open) => !open && setItemToDelete(null)}
+        title="Supprimer cet élément du catalogue ?"
+        description="ATTENTION : Cette action est totalement irréversible. L'élément sera retiré de votre catalogue (les factures existantes utilisant cet élément ne seront pas affectées car elles en gardent une copie)."
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        variant="danger"
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }
