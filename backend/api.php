@@ -166,6 +166,20 @@ if ($resource === 'migrate_add_currency' || $resource === 'migrate_add_currency.
 }
 
 // ==========================================
+// KEEP-ALIVE ROUTE (POUR EMPECHER LA BDD DE S'ENDORMIR)
+// ==========================================
+if ($resource === 'ping') {
+    try {
+        $stmt = $pdo->query("SELECT 1");
+        echo json_encode(["status" => "Database is awake and ready", "time" => time()]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode(["error" => "Database waking up..."]);
+    }
+    exit;
+}
+
+// ==========================================
 // MIDDLEWARE: VERIFY TOKEN
 // ==========================================
 $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
