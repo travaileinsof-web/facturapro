@@ -141,7 +141,7 @@ class InvoiceController {
             $paymentTerms = substr(Validator::sanitizeString($body['paymentTerms'] ?? null), 0, 250);
             $vatWithholdingApplied = !empty($body['vatWithholdingApplied']) ? 1 : 0;
             $vatExemptReason = substr(Validator::sanitizeString($body['vatExemptReason'] ?? null), 0, 250);
-            $sourceDocumentId = substr(Validator::sanitizeString($body['sourceDocumentId'] ?? null), 0, 50);
+            $sourceDocumentId = !empty($body['sourceDocumentId']) ? substr(Validator::sanitizeString($body['sourceDocumentId']), 0, 50) : null;
 
             $stmt = $pdo->prepare("INSERT INTO ProformaInvoice (id, accountId, number, clientId, items, subtotal, taxRate, taxAmount, discount, total, status, type, notes, dueDate, \"validityDate\", \"paymentTerms\", \"vatWithholdingApplied\", \"vatExemptReason\", \"sourceDocumentId\") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([

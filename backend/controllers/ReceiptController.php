@@ -89,7 +89,7 @@ class ReceiptController {
             }
             $number = sprintf("REC-%s-%04d", $year, $seq);
 
-            $invId = $body['proformaInvoiceId']??null;
+            $invId = !empty($body['proformaInvoiceId']) ? $body['proformaInvoiceId'] : null;
             $paymentDate = (empty($body['paymentDate']) || !strtotime($body['paymentDate'])) ? date('Y-m-d H:i:s') : date('Y-m-d H:i:s', strtotime($body['paymentDate']));
             $receivedBy = substr(Validator::sanitizeString($body['receivedBy'] ?? null), 0, 250);
             $paymentMethod = substr(Validator::sanitizeString($body['paymentMethod'] ?? null), 0, 50);
