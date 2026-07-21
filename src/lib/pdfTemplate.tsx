@@ -418,6 +418,7 @@ export function buildReceiptHTML(receipt: any, settings: any): string {
     </div>
 
     <!-- Services Details (If linked to invoice) -->
+    <!-- Services Details (If linked to invoice) -->
     ${receipt.invoice ? `
     <div style="margin-bottom:50px;">
       <div style="font-size:10px;font-weight:800;color:${color};text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid ${color};padding-bottom:4px;margin-bottom:16px;display:inline-block;">
@@ -457,12 +458,36 @@ export function buildReceiptHTML(receipt: any, settings: any): string {
         </div>
       </div>
     </div>
-    ` : ''}
+    ` : `
+    <div style="margin-bottom:50px;">
+      <div style="font-size:10px;font-weight:800;color:${color};text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid ${color};padding-bottom:4px;margin-bottom:16px;display:inline-block;">
+        MOTIF DU PAIEMENT (REÇU LIBRE)
+      </div>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:${light};">
+            <th style="padding:16px 20px;font-size:10px;font-weight:800;color:${color};text-transform:uppercase;letter-spacing:1px;text-align:left;border-bottom:2px solid ${color};">DESCRIPTION</th>
+            <th style="padding:16px 20px;font-size:10px;font-weight:800;color:${color};text-transform:uppercase;letter-spacing:1px;text-align:right;border-bottom:2px solid ${color};">MONTANT REÇU</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:16px 20px; border-bottom:1px solid #f1f5f9; vertical-align:top;">
+              <div style="font-size:12px; font-weight:800; color:#111; white-space:pre-wrap;">${escapeHTML(receipt.notes || 'Paiement ponctuel / divers')}</div>
+            </td>
+            <td style="padding:16px 20px; border-bottom:1px solid #f1f5f9; text-align:right; font-size:12px; font-weight:700; color:#111; vertical-align:top;">
+              ${formatCurrency(receipt.amount)}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    `}
 
     <!-- Notes & Signature -->
     <div style="display:flex;justify-content:space-between;align-items:flex-end;">
       <div style="flex:1; padding-right:40px;">
-        ${receipt.notes ? `
+        ${receipt.notes && receipt.invoice ? `
         <div style="margin-bottom:24px;">
           <div style="font-size:10px; font-weight:800; color:${color}; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid ${color}; padding-bottom:4px; margin-bottom:8px; display:inline-block;">Notes</div>
           <div style="font-size:11px; color:#475569; line-height:1.6; white-space:pre-wrap;">${escapeHTML(receipt.notes)}</div>

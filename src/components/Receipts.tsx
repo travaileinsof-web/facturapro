@@ -536,8 +536,14 @@ export function Receipts() {
               </div>
 
               <div style={{ marginTop: 'var(--space-5)' }}>
-                <Field label="Notes Complémentaires">
-                  <textarea {...register('notes')} />
+                <Field label={!watchInvoiceId ? "Motif du paiement (Requis)" : "Notes Complémentaires"} required={!watchInvoiceId}>
+                  <textarea 
+                    {...register('notes', { required: !watchInvoiceId ? 'Le motif est obligatoire pour un reçu non lié à une facture' : false })} 
+                    className="fp-input w-full" 
+                    rows={3} 
+                    placeholder={!watchInvoiceId ? "Détails de la prestation, motif de l'encaissement..." : "Références bancaires, remarques..."}
+                  />
+                  {errors.notes && <p className="text-sm text-red-500 mt-1">{errors.notes.message}</p>}
                 </Field>
               </div>
             </DialogBody>
