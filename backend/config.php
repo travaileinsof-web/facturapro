@@ -10,7 +10,7 @@ define('DB_USER', $env['DB_USER'] ?? 'neondb_owner');
 define('DB_PASS', $env['DB_PASS'] ?? '');
 $endpointId = $env['DB_ENDPOINT_ID'] ?? '';
 
-define('DB_DSN', 'pgsql:host=' . DB_HOST . ';port=5432;dbname=' . DB_NAME . ';sslmode=require;connect_timeout=5' . ($endpointId ? ';options=endpoint=' . $endpointId : ''));
+define('DB_DSN', 'pgsql:host=' . DB_HOST . ';port=5432;dbname=' . DB_NAME . ';sslmode=require;connect_timeout=15' . ($endpointId ? ';options=endpoint=' . $endpointId : ''));
 
 define('RESEND_API_KEY', $env['RESEND_API_KEY'] ?? 're_XwKBtnrW_2naWuuHHf4SmBPFP5J67HwuK');
 
