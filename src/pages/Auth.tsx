@@ -47,12 +47,8 @@ export function Auth({ mode }: { mode: 'login' | 'register' }) {
         return await safeFetch(url, options);
       } catch (err: any) {
         if (err?.code === 'DB_UNAVAILABLE' && attempt < maxRetries) {
-          // Compte à rebours automatique
-          for (let s = 5; s >= 1; s--) {
-            setError(`⏳ Base de données en démarrage... nouvelle tentative dans ${s}s (essai ${attempt}/${maxRetries})`);
-            await sleep(1000);
-          }
-          setError('');
+          // Attente silencieuse de 5 secondes avant de réessayer
+          await sleep(5000);
           continue;
         }
         throw err;
